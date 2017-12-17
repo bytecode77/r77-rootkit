@@ -1,0 +1,16 @@
+.vs/
+bin/
+obj/
+Debug/
+Release/
+ipch/
+TestResults/
+*.suo
+*.user
+*.sdf
+*.opensdf
+*.opendb
+*.VC.db
+[Tt]humbs.db
+
+$Build/
