@@ -77,33 +77,33 @@ xcopy /Y $(TargetPath) $(SolutionDir)$Build</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\main.cpp" />
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\buffer.c" />
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\hde32.c" />
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\hde64.c" />
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\hook.c" />
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\trampoline.c" />
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\Rootkit.cpp" />
+    <ClCompile Include="..\r77-src\main.cpp" />
+    <ClCompile Include="..\r77-src\MinHook\buffer.c" />
+    <ClCompile Include="..\r77-src\MinHook\HDE\hde32.c" />
+    <ClCompile Include="..\r77-src\MinHook\HDE\hde64.c" />
+    <ClCompile Include="..\r77-src\MinHook\hook.c" />
+    <ClCompile Include="..\r77-src\MinHook\trampoline.c" />
+    <ClCompile Include="..\r77-src\Rootkit.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileBothDirInformationEx.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileDirectoryInformationEx.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileFullDirInformationEx.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileIdBothDirInformationEx.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileIdFullDirInformationEx.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileInformationClassEx.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileNamesInformationEx.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\buffer.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\hde32.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\hde64.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\pstdint.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\table32.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\table64.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\MinHook.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\trampoline.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\r77.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\Rootkit.h" />
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\SystemProcessInformationEx.h" />
+    <ClInclude Include="..\r77-src\FileBothDirInformationEx.h" />
+    <ClInclude Include="..\r77-src\FileDirectoryInformationEx.h" />
+    <ClInclude Include="..\r77-src\FileFullDirInformationEx.h" />
+    <ClInclude Include="..\r77-src\FileIdBothDirInformationEx.h" />
+    <ClInclude Include="..\r77-src\FileIdFullDirInformationEx.h" />
+    <ClInclude Include="..\r77-src\FileInformationClassEx.h" />
+    <ClInclude Include="..\r77-src\FileNamesInformationEx.h" />
+    <ClInclude Include="..\r77-src\MinHook\buffer.h" />
+    <ClInclude Include="..\r77-src\MinHook\HDE\hde32.h" />
+    <ClInclude Include="..\r77-src\MinHook\HDE\hde64.h" />
+    <ClInclude Include="..\r77-src\MinHook\HDE\pstdint.h" />
+    <ClInclude Include="..\r77-src\MinHook\HDE\table32.h" />
+    <ClInclude Include="..\r77-src\MinHook\HDE\table64.h" />
+    <ClInclude Include="..\r77-src\MinHook\MinHook.h" />
+    <ClInclude Include="..\r77-src\MinHook\trampoline.h" />
+    <ClInclude Include="..\r77-src\r77.h" />
+    <ClInclude Include="..\r77-src\Rootkit.h" />
+    <ClInclude Include="..\r77-src\SystemProcessInformationEx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

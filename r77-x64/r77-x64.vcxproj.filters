@@ -12,82 +12,82 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\hde32.c">
-      <Filter>r77-src\MinHook\HDE</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\hde64.c">
-      <Filter>r77-src\MinHook\HDE</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\buffer.c">
-      <Filter>r77-src\MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\hook.c">
-      <Filter>r77-src\MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\MinHook\trampoline.c">
-      <Filter>r77-src\MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\main.cpp">
+    <ClCompile Include="..\r77-src\main.cpp">
       <Filter>r77-src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\PoC%27s\r77\r77-src\Rootkit.cpp">
+    <ClCompile Include="..\r77-src\Rootkit.cpp">
       <Filter>r77-src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\r77-src\MinHook\HDE\hde32.c">
+      <Filter>r77-src\MinHook\HDE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\r77-src\MinHook\HDE\hde64.c">
+      <Filter>r77-src\MinHook\HDE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\r77-src\MinHook\buffer.c">
+      <Filter>r77-src\MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\r77-src\MinHook\hook.c">
+      <Filter>r77-src\MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\r77-src\MinHook\trampoline.c">
+      <Filter>r77-src\MinHook</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\hde32.h">
+    <ClInclude Include="..\r77-src\SystemProcessInformationEx.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\FileBothDirInformationEx.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\FileDirectoryInformationEx.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\FileFullDirInformationEx.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\FileIdBothDirInformationEx.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\FileIdFullDirInformationEx.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\FileInformationClassEx.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\FileNamesInformationEx.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\r77.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\Rootkit.h">
+      <Filter>r77-src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r77-src\MinHook\HDE\hde32.h">
       <Filter>r77-src\MinHook\HDE</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\hde64.h">
+    <ClInclude Include="..\r77-src\MinHook\HDE\hde64.h">
       <Filter>r77-src\MinHook\HDE</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\pstdint.h">
+    <ClInclude Include="..\r77-src\MinHook\HDE\pstdint.h">
       <Filter>r77-src\MinHook\HDE</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\table32.h">
+    <ClInclude Include="..\r77-src\MinHook\HDE\table32.h">
       <Filter>r77-src\MinHook\HDE</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\HDE\table64.h">
+    <ClInclude Include="..\r77-src\MinHook\HDE\table64.h">
       <Filter>r77-src\MinHook\HDE</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\buffer.h">
+    <ClInclude Include="..\r77-src\MinHook\buffer.h">
       <Filter>r77-src\MinHook</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\MinHook.h">
+    <ClInclude Include="..\r77-src\MinHook\MinHook.h">
       <Filter>r77-src\MinHook</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\MinHook\trampoline.h">
+    <ClInclude Include="..\r77-src\MinHook\trampoline.h">
       <Filter>r77-src\MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileBothDirInformationEx.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileDirectoryInformationEx.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileFullDirInformationEx.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileIdBothDirInformationEx.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileIdFullDirInformationEx.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileInformationClassEx.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\FileNamesInformationEx.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\r77.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\Rootkit.h">
-      <Filter>r77-src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\PoC%27s\r77\r77-src\SystemProcessInformationEx.h">
-      <Filter>r77-src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
