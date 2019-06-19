@@ -13,5 +13,7 @@ TestResults/
 *.VC.db
 *.aps
 [Tt]humbs.db
+*~*.xlsx
+*~*.docx
 
 $Build/
