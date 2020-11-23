@@ -35,7 +35,7 @@ However, the same hooking techniques are used by security software in order to s
 
 ## ToDo List
 
-This is a **work in progress** / beta state and not ready-made to be used. Following tasks are on the agenda, prior to final release:
+This is a **work in progress / beta** state and not ready-made to be used. Following tasks are on the agenda, prior to final release:
 
 - **Installation:** The exemplary installation app should also consider injection into running processes.
 - **Deinstallation:** The installation app should detach running threads and successively delete locked DLL files.
