@@ -45,6 +45,7 @@ This is a **work in progress / beta** state and not ready-made to be used. Follo
 ## Downloads
 
 [![](http://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 0.6.0.zip](https://bytecode77.com/downloads/r77Rootkit%200.6.0.zip)
+(**ZIP Password:** bytecode77)
 
 ## Project Page
 
