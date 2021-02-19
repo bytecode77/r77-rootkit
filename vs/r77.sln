@@ -1,0 +1,279 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsole", "TestConsole\TestConsole.csproj", "{E55F7214-8CC4-4E1D-AEDB-C908D23902A4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1BA54A13-B390-47B3-9628-B58A2BBA193B} = {1BA54A13-B390-47B3-9628-B58A2BBA193B}
+		{1BE51916-D47D-4659-88C9-9724F2C95E47} = {1BE51916-D47D-4659-88C9-9724F2C95E47}
+		{DF38C03E-768F-4354-8E05-2AE694D49A93} = {DF38C03E-768F-4354-8E05-2AE694D49A93}
+		{06AF1D64-F2FC-4767-8794-7313C7BB0A40} = {06AF1D64-F2FC-4767-8794-7313C7BB0A40}
+		{9A75F17E-D406-4B23-BBA8-71E0580A49BB} = {9A75F17E-D406-4B23-BBA8-71E0580A49BB}
+		{28BFB388-60E4-48FF-959C-FAABA9BD5520} = {28BFB388-60E4-48FF-959C-FAABA9BD5520}
+		{937886DC-9D79-4E80-BCAE-D34F695ED3DF} = {937886DC-9D79-4E80-BCAE-D34F695ED3DF}
+		{B2003AEA-53B0-41DA-A1B1-803B6F3C8C7B} = {B2003AEA-53B0-41DA-A1B1-803B6F3C8C7B}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SlnBin", "SlnBin", "{AA27A8EA-A3AF-4E2E-904B-4D52E76C93B3}"
+	ProjectSection(SolutionItems) = preProject
+		..\SlnBin\BytecodeApi.dll = ..\SlnBin\BytecodeApi.dll
+		..\SlnBin\BytecodeApi.UI.dll = ..\SlnBin\BytecodeApi.UI.dll
+		..\SlnBin\BytecodeApi.UI.xml = ..\SlnBin\BytecodeApi.UI.xml
+		..\SlnBin\BytecodeApi.xml = ..\SlnBin\BytecodeApi.xml
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "r77-x64", "r77-x64\r77-x64.vcxproj", "{06AF1D64-F2FC-4767-8794-7313C7BB0A40}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "r77-x86", "r77-x86\r77-x86.vcxproj", "{1BA54A13-B390-47B3-9628-B58A2BBA193B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Detach32", "Detach32\Detach32.vcxproj", "{9A75F17E-D406-4B23-BBA8-71E0580A49BB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Detach64", "Detach64\Detach64.vcxproj", "{B2003AEA-53B0-41DA-A1B1-803B6F3C8C7B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Uninstall", "Uninstall\Uninstall.vcxproj", "{F0005D08-6278-4BFE-B492-F86CCEC797D5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{00D7268A-92A9-4CD4-ADDF-175E9BF16AE0} = {00D7268A-92A9-4CD4-ADDF-175E9BF16AE0}
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Inject32", "Inject32\Inject32.vcxproj", "{28BFB388-60E4-48FF-959C-FAABA9BD5520}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Inject64", "Inject64\Inject64.vcxproj", "{937886DC-9D79-4E80-BCAE-D34F695ED3DF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Uninstall64", "Uninstall64\Uninstall64.vcxproj", "{00D7268A-92A9-4CD4-ADDF-175E9BF16AE0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcessList32", "ProcessList32\ProcessList32.vcxproj", "{DF38C03E-768F-4354-8E05-2AE694D49A93}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcessList64", "ProcessList64\ProcessList64.vcxproj", "{1BE51916-D47D-4659-88C9-9724F2C95E47}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{86F8C733-F773-4AD8-9282-3F99953261FD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F9ACA875-3756-47C7-ACA6-4AE8C07428CB}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\GlobalAssemblyInfo.cs = ..\src\GlobalAssemblyInfo.cs
+		..\src\ntdll.h = ..\src\ntdll.h
+		..\src\r77api.cpp = ..\src\r77api.cpp
+		..\src\r77api.h = ..\src\r77api.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Detach", "Detach", "{0252A729-48E9-4B01-A5E3-0BB37CCAB10F}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\Detach\Detach.cpp = ..\src\Detach\Detach.cpp
+		..\src\Detach\Detach.h = ..\src\Detach\Detach.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Inject", "Inject", "{849C729B-DFAC-4398-972F-C916A6901344}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\Inject\Inject.cpp = ..\src\Inject\Inject.cpp
+		..\src\Inject\Inject.h = ..\src\Inject\Inject.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProcessList", "ProcessList", "{4178E373-5BBA-4C15-9B8E-A26CA17535C9}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\ProcessList\ProcessList.cpp = ..\src\ProcessList\ProcessList.cpp
+		..\src\ProcessList\ProcessList.h = ..\src\ProcessList\ProcessList.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "r77", "r77", "{F9701B99-C959-4B41-A333-2E5A819DE7D6}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\r77\Config.cpp = ..\src\r77\Config.cpp
+		..\src\r77\Config.h = ..\src\r77\Config.h
+		..\src\r77\Debug.cpp = ..\src\r77\Debug.cpp
+		..\src\r77\Debug.h = ..\src\r77\Debug.h
+		..\src\r77\detours.h = ..\src\r77\detours.h
+		..\src\r77\Hooks.cpp = ..\src\r77\Hooks.cpp
+		..\src\r77\Hooks.h = ..\src\r77\Hooks.h
+		..\src\r77\r77.h = ..\src\r77\r77.h
+		..\src\r77\ReflectiveDll.cpp = ..\src\r77\ReflectiveDll.cpp
+		..\src\r77\ReflectiveDll.h = ..\src\r77\ReflectiveDll.h
+		..\src\r77\Register.cpp = ..\src\r77\Register.cpp
+		..\src\r77\Register.h = ..\src\r77\Register.h
+		..\src\r77\Rootkit.cpp = ..\src\r77\Rootkit.cpp
+		..\src\r77\Rootkit.h = ..\src\r77\Rootkit.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Uninstall", "Uninstall", "{5CD983ED-1FDF-4F02-9824-4DE63AD30A30}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\Uninstall\Uninstall.cpp = ..\src\Uninstall\Uninstall.cpp
+		..\src\Uninstall\Uninstall.h = ..\src\Uninstall\Uninstall.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Uninstall64", "Uninstall64", "{5A578679-90DA-4CAE-A27F-C9A6E5FDAA0A}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\Uninstall64\Uninstall64.cpp = ..\src\Uninstall64\Uninstall64.cpp
+		..\src\Uninstall64\Uninstall64.h = ..\src\Uninstall64\Uninstall64.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "x64", "x64", "{9E4A0D38-D955-4858-8E0A-533DE4468296}"
+	ProjectSection(SolutionItems) = preProject
+		..\SlnBin\x64\detours.lib = ..\SlnBin\x64\detours.lib
+		..\SlnBin\x64\detours.pdb = ..\SlnBin\x64\detours.pdb
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "x86", "x86", "{3CA151CE-92D7-41B8-98E3-AA8FF632A9D6}"
+	ProjectSection(SolutionItems) = preProject
+		..\SlnBin\x86\detours.lib = ..\SlnBin\x86\detours.lib
+		..\SlnBin\x86\detours.pdb = ..\SlnBin\x86\detours.pdb
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildTask", "BuildTask\BuildTask.csproj", "{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Install", "Install\Install.vcxproj", "{BCE48DAE-232E-4B3D-B5B5-D0B29BB7E9DE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4D71336E-6EF6-4DF1-8457-B94DC3D73FE7} = {4D71336E-6EF6-4DF1-8457-B94DC3D73FE7}
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InstallService32", "InstallService32\InstallService32.vcxproj", "{7271AFD1-10F6-4589-95B7-3ABF98E7B2CA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1BA54A13-B390-47B3-9628-B58A2BBA193B} = {1BA54A13-B390-47B3-9628-B58A2BBA193B}
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InstallService64", "InstallService64\InstallService64.vcxproj", "{E3104B33-DB3D-4C83-B393-1E05E1FF2B10}"
+	ProjectSection(ProjectDependencies) = postProject
+		{06AF1D64-F2FC-4767-8794-7313C7BB0A40} = {06AF1D64-F2FC-4767-8794-7313C7BB0A40}
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF} = {AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Install", "Install", "{EDF82557-A8A0-4D3B-8EEA-876AA31D5BE7}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\Install\Install.cpp = ..\src\Install\Install.cpp
+		..\src\Install\Install.h = ..\src\Install\Install.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "InstallService", "InstallService", "{F4C656D1-8E26-4B38-96B8-3BF21BA2637C}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\InstallService\InstallService.cpp = ..\src\InstallService\InstallService.cpp
+		..\src\InstallService\InstallService.h = ..\src\InstallService\InstallService.h
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallStager", "InstallStager\InstallStager.csproj", "{4D71336E-6EF6-4DF1-8457-B94DC3D73FE7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E3104B33-DB3D-4C83-B393-1E05E1FF2B10} = {E3104B33-DB3D-4C83-B393-1E05E1FF2B10}
+		{7271AFD1-10F6-4589-95B7-3ABF98E7B2CA} = {7271AFD1-10F6-4589-95B7-3ABF98E7B2CA}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "InstallStager", "InstallStager", "{FB4DDDB6-6A4F-45E1-9B15-17477CCB3631}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\InstallStager\InstallStager.cs = ..\src\InstallStager\InstallStager.cs
+		..\src\InstallStager\RunPE.cs = ..\src\InstallStager\RunPE.cs
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E55F7214-8CC4-4E1D-AEDB-C908D23902A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E55F7214-8CC4-4E1D-AEDB-C908D23902A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E55F7214-8CC4-4E1D-AEDB-C908D23902A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E55F7214-8CC4-4E1D-AEDB-C908D23902A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06AF1D64-F2FC-4767-8794-7313C7BB0A40}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{06AF1D64-F2FC-4767-8794-7313C7BB0A40}.Debug|Any CPU.Build.0 = Debug|x64
+		{06AF1D64-F2FC-4767-8794-7313C7BB0A40}.Release|Any CPU.ActiveCfg = Release|x64
+		{06AF1D64-F2FC-4767-8794-7313C7BB0A40}.Release|Any CPU.Build.0 = Release|x64
+		{1BA54A13-B390-47B3-9628-B58A2BBA193B}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{1BA54A13-B390-47B3-9628-B58A2BBA193B}.Debug|Any CPU.Build.0 = Debug|Win32
+		{1BA54A13-B390-47B3-9628-B58A2BBA193B}.Release|Any CPU.ActiveCfg = Release|Win32
+		{1BA54A13-B390-47B3-9628-B58A2BBA193B}.Release|Any CPU.Build.0 = Release|Win32
+		{9A75F17E-D406-4B23-BBA8-71E0580A49BB}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{9A75F17E-D406-4B23-BBA8-71E0580A49BB}.Debug|Any CPU.Build.0 = Debug|Win32
+		{9A75F17E-D406-4B23-BBA8-71E0580A49BB}.Release|Any CPU.ActiveCfg = Release|Win32
+		{9A75F17E-D406-4B23-BBA8-71E0580A49BB}.Release|Any CPU.Build.0 = Release|Win32
+		{B2003AEA-53B0-41DA-A1B1-803B6F3C8C7B}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{B2003AEA-53B0-41DA-A1B1-803B6F3C8C7B}.Debug|Any CPU.Build.0 = Debug|x64
+		{B2003AEA-53B0-41DA-A1B1-803B6F3C8C7B}.Release|Any CPU.ActiveCfg = Release|x64
+		{B2003AEA-53B0-41DA-A1B1-803B6F3C8C7B}.Release|Any CPU.Build.0 = Release|x64
+		{F0005D08-6278-4BFE-B492-F86CCEC797D5}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{F0005D08-6278-4BFE-B492-F86CCEC797D5}.Debug|Any CPU.Build.0 = Debug|Win32
+		{F0005D08-6278-4BFE-B492-F86CCEC797D5}.Release|Any CPU.ActiveCfg = Release|Win32
+		{F0005D08-6278-4BFE-B492-F86CCEC797D5}.Release|Any CPU.Build.0 = Release|Win32
+		{28BFB388-60E4-48FF-959C-FAABA9BD5520}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{28BFB388-60E4-48FF-959C-FAABA9BD5520}.Debug|Any CPU.Build.0 = Debug|Win32
+		{28BFB388-60E4-48FF-959C-FAABA9BD5520}.Release|Any CPU.ActiveCfg = Release|Win32
+		{28BFB388-60E4-48FF-959C-FAABA9BD5520}.Release|Any CPU.Build.0 = Release|Win32
+		{937886DC-9D79-4E80-BCAE-D34F695ED3DF}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{937886DC-9D79-4E80-BCAE-D34F695ED3DF}.Debug|Any CPU.Build.0 = Debug|x64
+		{937886DC-9D79-4E80-BCAE-D34F695ED3DF}.Release|Any CPU.ActiveCfg = Release|x64
+		{937886DC-9D79-4E80-BCAE-D34F695ED3DF}.Release|Any CPU.Build.0 = Release|x64
+		{00D7268A-92A9-4CD4-ADDF-175E9BF16AE0}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{00D7268A-92A9-4CD4-ADDF-175E9BF16AE0}.Debug|Any CPU.Build.0 = Debug|x64
+		{00D7268A-92A9-4CD4-ADDF-175E9BF16AE0}.Release|Any CPU.ActiveCfg = Release|x64
+		{00D7268A-92A9-4CD4-ADDF-175E9BF16AE0}.Release|Any CPU.Build.0 = Release|x64
+		{DF38C03E-768F-4354-8E05-2AE694D49A93}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{DF38C03E-768F-4354-8E05-2AE694D49A93}.Debug|Any CPU.Build.0 = Debug|Win32
+		{DF38C03E-768F-4354-8E05-2AE694D49A93}.Release|Any CPU.ActiveCfg = Release|Win32
+		{DF38C03E-768F-4354-8E05-2AE694D49A93}.Release|Any CPU.Build.0 = Release|Win32
+		{1BE51916-D47D-4659-88C9-9724F2C95E47}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{1BE51916-D47D-4659-88C9-9724F2C95E47}.Debug|Any CPU.Build.0 = Debug|x64
+		{1BE51916-D47D-4659-88C9-9724F2C95E47}.Release|Any CPU.ActiveCfg = Release|x64
+		{1BE51916-D47D-4659-88C9-9724F2C95E47}.Release|Any CPU.Build.0 = Release|x64
+		{86F8C733-F773-4AD8-9282-3F99953261FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86F8C733-F773-4AD8-9282-3F99953261FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86F8C733-F773-4AD8-9282-3F99953261FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86F8C733-F773-4AD8-9282-3F99953261FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFB848D0-68F8-42D1-A1C8-99DFBE034FCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCE48DAE-232E-4B3D-B5B5-D0B29BB7E9DE}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{BCE48DAE-232E-4B3D-B5B5-D0B29BB7E9DE}.Debug|Any CPU.Build.0 = Debug|Win32
+		{BCE48DAE-232E-4B3D-B5B5-D0B29BB7E9DE}.Release|Any CPU.ActiveCfg = Release|Win32
+		{BCE48DAE-232E-4B3D-B5B5-D0B29BB7E9DE}.Release|Any CPU.Build.0 = Release|Win32
+		{7271AFD1-10F6-4589-95B7-3ABF98E7B2CA}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{7271AFD1-10F6-4589-95B7-3ABF98E7B2CA}.Debug|Any CPU.Build.0 = Debug|Win32
+		{7271AFD1-10F6-4589-95B7-3ABF98E7B2CA}.Release|Any CPU.ActiveCfg = Release|Win32
+		{7271AFD1-10F6-4589-95B7-3ABF98E7B2CA}.Release|Any CPU.Build.0 = Release|Win32
+		{E3104B33-DB3D-4C83-B393-1E05E1FF2B10}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{E3104B33-DB3D-4C83-B393-1E05E1FF2B10}.Debug|Any CPU.Build.0 = Debug|x64
+		{E3104B33-DB3D-4C83-B393-1E05E1FF2B10}.Release|Any CPU.ActiveCfg = Release|x64
+		{E3104B33-DB3D-4C83-B393-1E05E1FF2B10}.Release|Any CPU.Build.0 = Release|x64
+		{4D71336E-6EF6-4DF1-8457-B94DC3D73FE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D71336E-6EF6-4DF1-8457-B94DC3D73FE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D71336E-6EF6-4DF1-8457-B94DC3D73FE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D71336E-6EF6-4DF1-8457-B94DC3D73FE7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0252A729-48E9-4B01-A5E3-0BB37CCAB10F} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{849C729B-DFAC-4398-972F-C916A6901344} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{4178E373-5BBA-4C15-9B8E-A26CA17535C9} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{F9701B99-C959-4B41-A333-2E5A819DE7D6} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{5CD983ED-1FDF-4F02-9824-4DE63AD30A30} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{5A578679-90DA-4CAE-A27F-C9A6E5FDAA0A} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{9E4A0D38-D955-4858-8E0A-533DE4468296} = {AA27A8EA-A3AF-4E2E-904B-4D52E76C93B3}
+		{3CA151CE-92D7-41B8-98E3-AA8FF632A9D6} = {AA27A8EA-A3AF-4E2E-904B-4D52E76C93B3}
+		{EDF82557-A8A0-4D3B-8EEA-876AA31D5BE7} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{F4C656D1-8E26-4B38-96B8-3BF21BA2637C} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{FB4DDDB6-6A4F-45E1-9B15-17477CCB3631} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A070C206-A2CD-4C8A-878F-A43650D1A3B1}
+	EndGlobalSection
+EndGlobal

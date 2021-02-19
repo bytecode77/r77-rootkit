@@ -17,3 +17,8 @@ TestResults/
 *~*.docx
 
 $Build/
+vs/Install/Resources/
+vs/InstallStager/Resources/
+vs/InstallService32/Resources/
+vs/InstallService64/Resources/
+vs/Uninstall/Resources/

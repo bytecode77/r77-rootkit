@@ -1,0 +1,54 @@
+﻿<Window
+	x:Class="Example.MainWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:local="clr-namespace:Example"
+	xmlns:global="clr-namespace:Global"
+	mc:Ignorable="d"
+	Title="r77 Rootkit Example File" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize" UseLayoutRounding="True">
+	<DockPanel>
+		<Border DockPanel.Dock="Bottom" Padding="15,10" Background="#f0f0f0">
+			<Grid>
+				<Button Content="Close" HorizontalAlignment="Right" Click="btnClose_Click" />
+				<StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+					<ComboBox MinWidth="130" SelectedIndex="0" SelectionChanged="cmbCpuUsage_SelectionChanged">
+						<ComboBoxItem Content="CPU Usage: 0%" DataContext="0" />
+						<ComboBoxItem Content="CPU Usage: 50%" DataContext="50" />
+						<ComboBoxItem Content="CPU Usage: 100%" DataContext="100" />
+					</ComboBox>
+					<Image Source="/Example;component/Resources/Help16.png" Margin="5,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonDown="btnCpuUsageHelp_MouseLeftButtonDown" />
+				</StackPanel>
+			</Grid>
+		</Border>
+		<DockPanel Margin="20">
+			<Image Source="/Example;component/Resources/Example32.png" Margin="0,0,10,0" VerticalAlignment="Top" />
+			<StackPanel>
+				<TextBlock Text="{Binding FileName, Mode=OneWay}" Margin="0,3,0,10" VerticalAlignment="Center" FontSize="18" Foreground="#0066cc">
+					<Run Text=" (PID: " /><Run Text="{Binding ProcessId, Mode=OneWay}" /><Run Text=")" />
+				</TextBlock>
+				<StackPanel Visibility="{Binding Message1Visibility}">
+					<TextBlock Text="This executable's filename starts with &quot;" Margin="0,0,0,10">
+						<Run Text="{x:Static global:Config.HidePrefix}" /><Run Text="&quot;" />
+					</TextBlock>
+					<TextBlock>
+						<Run Text="  • A task manager that is injected with r77 will not display this process." />
+						<LineBreak />
+						<Run Text="  • File Explorer (or any other file browser) will not display this file." />
+						<LineBreak />
+						<Run Text="  • etc... (see documentation)" />
+					</TextBlock>
+				</StackPanel>
+				<DockPanel Visibility="{Binding Message2Visibility}">
+					<Image Source="/Example;component/Resources/Warning16.png" Margin="0,0,8,0" VerticalAlignment="Top" />
+					<TextBlock Text="Rename this executable's file to start with &quot;">
+						<Run Text="{x:Static global:Config.HidePrefix}" /><Run Text="&quot;." />
+						<LineBreak />
+						<Run Text="It will be hidden by r77." />
+					</TextBlock>
+				</DockPanel>
+			</StackPanel>
+		</DockPanel>
+	</DockPanel>
+</Window>
