@@ -89,7 +89,7 @@ Please read the [technical documentation](https://bytecode77.com/downloads/r77%2
 
 ## Downloads
 
-[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.0.0.zip](https://bytecode77.com/downloads/r77Rootkit%201.0.0.zip)
+[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.0.1.zip](https://bytecode77.com/downloads/r77Rootkit%201.0.1.zip)
 (**ZIP Password:** bytecode77)<br />
 [![](https://bytecode77.com/public/fileicons/pdf.png) Technical Documentation](https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf)
 
