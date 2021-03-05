@@ -28,6 +28,8 @@
 					<MenuItem Header="_Detach All" Command="{Binding DetachAllCommand}" />
 				</MenuItem>
 				<MenuItem Header="_Help">
+					<MenuItem Header="Technical _Documentation" ui:MenuItemService.ImageSource="/TestConsole;component/Resources/Pdf16.png" Command="{Binding HelpCommand}" CommandParameter="Documentation" />
+					<Separator />
 					<MenuItem Header="_About" ui:MenuItemService.ImageSource="/TestConsole;component/Resources/Information16.png" Command="{Binding HelpCommand}" CommandParameter="About" />
 				</MenuItem>
 			</Menu>

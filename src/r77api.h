@@ -1,5 +1,6 @@
 #pragma warning(disable: 6258) // Using TerminateThread does not allow proper thread clean up.
 #pragma warning(disable: 26812) // The enum type is unscoped. Prefer 'enum class' over 'enum'
+#pragma comment(lib, "ntdll.lib")
 #pragma comment(lib, "shlwapi.lib")
 
 #include <Windows.h>
@@ -334,6 +335,7 @@ BOOL DeleteScheduledTask(LPCWSTR name);
 /// <para>The DLL must export a function called "ReflectiveDllMain".</para>
 /// <para>The bitness of the target process must match that of the current process.</para>
 /// <para>The integrity level of the target process must be at least medium.</para>
+/// <para>The process must not be critical.</para>
 /// </summary>
 /// <param name="processId">The process to inject the DLL in.</param>
 /// <param name="dll">A buffer with the DLL file.</param>
