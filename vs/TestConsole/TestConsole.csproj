@@ -157,6 +157,9 @@
     <Resource Include="Resources\AboutGitHub16.png" />
     <Resource Include="Resources\AboutWebsite16.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Pdf16.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper

@@ -1,5 +1,7 @@
 using BytecodeApi;
 using BytecodeApi.Extensions;
+using BytecodeApi.IO.FileSystem;
+using BytecodeApi.IO.Http;
 using BytecodeApi.Threading;
 using BytecodeApi.UI;
 using BytecodeApi.UI.Data;
@@ -192,6 +194,25 @@ namespace TestConsole
 		{
 			switch (parameter)
 			{
+				case "Documentation":
+					try
+					{
+						byte[] pdf = HttpClient.Default.CreateGetRequest("https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf").ReadBytes();
+						TempDirectory.ExecuteFile("Technical Documentation.pdf", pdf);
+					}
+					catch (Exception ex)
+					{
+						Log(new LogMessage
+						(
+							LogMessageType.Error,
+							new LogTextItem("Error downloading"),
+							new LogFileItem("Technical Documentation.pdf"),
+							new LogTextItem("Please visit"),
+							new LogLinkItem("https://bytecode77.com/r77-rootkit", () => Process.Start("https://bytecode77.com/r77-rootkit")),
+							new LogDetailsItem("Error Details: " + ex.Message)
+						));
+					}
+					break;
 				case "About":
 					IsAboutVisible = true;
 					break;
