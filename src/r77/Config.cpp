@@ -64,6 +64,21 @@ bool Config::IsProcessNameHidden(UNICODE_STRING processName)
 		return false;
 	}
 }
+bool Config::IsPathHidden(LPCWSTR path)
+{
+	if (Configuration && path)
+	{
+		for (DWORD i = 0; i < Configuration->HiddenPathCount; i++)
+		{
+			if (!lstrcmpiW(Configuration->HiddenPaths[i], path))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
 bool Config::IsTcpLocalPortHidden(USHORT port)
 {
 	if (Configuration)

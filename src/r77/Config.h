@@ -46,6 +46,15 @@ public:
 	/// </returns>
 	static bool IsProcessNameHidden(UNICODE_STRING processName);
 	/// <summary>
+	/// Determines whether a file or directory should be hidden based on its full path.
+	/// </summary>
+	/// <param name="path">The full path to check.</param>
+	/// <returns>
+	/// true, if the file or directory with the specified full path should be hidden;
+	/// otherwise, false.
+	/// </returns>
+	static bool IsPathHidden(LPCWSTR path);
+	/// <summary>
 	/// Determines whether a local TCP port should be hidden.
 	/// </summary>
 	/// <param name="port">The TCP port to check.</param>

