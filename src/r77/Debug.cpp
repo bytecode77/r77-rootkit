@@ -4,19 +4,11 @@ void Debug::Message(LPCWSTR title, LPCWSTR str)
 {
 	MessageBoxW(NULL, str, title, MB_OK);
 }
-void Debug::Message(LPCWSTR title, const UNICODE_STRING &str)
+void Debug::Message(LPCWSTR title, UNICODE_STRING str)
 {
-	PWCHAR chars = NULL;
-
-	if (str.Buffer)
-	{
-		chars = new WCHAR[str.Length + 1];
-		wmemcpy(chars, str.Buffer, str.Length);
-		chars[str.Length] = L'\0';
-	}
-
+	PWCHAR chars = ConvertUnicodeStringToString(str);
 	Message(title, chars);
-	delete[] chars;
+	if (chars) delete[] chars;
 }
 void Debug::Message(LPCWSTR title, ULONG number)
 {

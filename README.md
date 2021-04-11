@@ -4,7 +4,7 @@
 
 r77 is a ring 3 Rootkit that hides following entities from all processes:
 
- - Files, directories, named pipes, scheduled tasks
+ - Files, directories, junctions, named pipes, scheduled tasks
  - Processes
  - CPU usage
  - Registry keys & values
@@ -18,7 +18,9 @@ All entities where the name starts with `"$77"` are hidden.
 
 ![](https://bytecode77.com/images/pages/r77-rootkit/hiding.png)
 
-The dynamic configuration system allows to hide processes by **PID** and TCP & UDP connections of specific ports. Any process can write to this registry key, either in HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER (of any user).
+## Configuration System
+
+The dynamic configuration system allows to hide processes by **PID** and by **name**, file system items by **full path**, and TCP & UDP connections of specific ports. Any process can write to this registry key, either in HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER (of any user).
 
 ![](https://bytecode77.com/images/pages/r77-rootkit/config.png)
 
@@ -89,7 +91,7 @@ Please read the [technical documentation](https://bytecode77.com/downloads/r77%2
 
 ## Downloads
 
-[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.0.1.zip](https://bytecode77.com/downloads/r77Rootkit%201.0.1.zip)
+[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.1.0.zip](https://bytecode77.com/downloads/r77Rootkit%201.1.0.zip)
 (**ZIP Password:** bytecode77)<br />
 [![](https://bytecode77.com/public/fileicons/pdf.png) Technical Documentation](https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf)
 
