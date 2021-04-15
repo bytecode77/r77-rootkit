@@ -79,6 +79,21 @@ bool Config::IsPathHidden(LPCWSTR path)
 
 	return false;
 }
+bool Config::IsServiceNameHidden(LPCWSTR serviceName)
+{
+	if (Configuration && serviceName)
+	{
+		for (DWORD i = 0; i < Configuration->HiddenServiceNameCount; i++)
+		{
+			if (!lstrcmpiW(Configuration->HiddenServiceNames[i], serviceName))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
 bool Config::IsTcpLocalPortHidden(USHORT port)
 {
 	if (Configuration)

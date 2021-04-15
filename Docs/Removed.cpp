@@ -50,35 +50,6 @@ NTSTATUS NTAPI Hooks::HookedNtQueryInformationProcess(HANDLE process, nt::PROCES
 	return status;
 }
 
-BOOL WINAPI Hooks::HookedEnumServiceGroupW(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, DWORD reserved)
-{
-	BOOL result = OriginalEnumServiceGroupW(serviceManager, serviceType, serviceState, services, servicesLength, bytesNeeded, servicesReturned, resumeHandle, reserved);
-
-	if (result && services && servicesReturned)
-	{
-		//resumeHandle = NULL;
-		LPENUM_SERVICE_STATUSW serviceList = (LPENUM_SERVICE_STATUSW)services;
-
-		for (DWORD i = 0; i < *servicesReturned; i++)
-		{
-			//if (Rootkit::HasPrefix(serviceList[i].lpServiceName))
-			{
-				//for (DWORD j = i + 1; j < *servicesReturned - 1; j++)
-				//{
-				//	serviceList[j].lpServiceName = serviceList[j + 1].lpServiceName;
-				//	serviceList[j].lpDisplayName = serviceList[j + 1].lpDisplayName;
-				//	serviceList[j].ServiceStatus = serviceList[j + 1].ServiceStatus;
-				//	memcpy(&serviceList[j], &serviceList[j + 1], sizeof(ENUM_SERVICE_STATUSW));
-				//}
-
-				//(*servicesReturned)--;
-			}
-		}
-	}
-
-	return result;
-}
-
 typedef enum _PROCESS_INFORMATION_CLASS
 {
 	ProcessBasicInformation,
@@ -192,8 +163,3 @@ typedef struct _KERNEL_USER_TIMES
 	LARGE_INTEGER KernelTime;
 	LARGE_INTEGER UserTime;
 } KERNEL_USER_TIMES, *PKERNEL_USER_TIMES;
-
-typedef BOOL(WINAPI *ENUMSERVICEGROUPW)(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, DWORD reserved);
-typedef BOOL(WINAPI *ENUMSERVICESSTATUSA)(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPENUM_SERVICE_STATUS services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle);
-typedef BOOL(WINAPI *ENUMSERVICESSTATUSEXA)(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCSTR groupName);
-typedef BOOL(WINAPI *ENUMSERVICESSTATUSEXW)(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName);

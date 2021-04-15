@@ -55,6 +55,15 @@ public:
 	/// </returns>
 	static bool IsPathHidden(LPCWSTR path);
 	/// <summary>
+	/// Determines whether a service should be hidden based on a specific name.
+	/// </summary>
+	/// <param name="serviceName">The service name to check.</param>
+	/// <returns>
+	/// true, if the service with the specified name should be hidden;
+	/// otherwise, false.
+	/// </returns>
+	static bool IsServiceNameHidden(LPCWSTR serviceName);
+	/// <summary>
 	/// Determines whether a local TCP port should be hidden.
 	/// </summary>
 	/// <param name="port">The TCP port to check.</param>

