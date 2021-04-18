@@ -8,6 +8,7 @@ r77 is a ring 3 Rootkit that hides following entities from all processes:
  - Processes
  - CPU usage
  - Registry keys & values
+ - Services
  - TCP & UDP connections
 
 It is compatible with Windows 7 and Windows 10 in both x64 and x86 editions.
@@ -20,9 +21,11 @@ All entities where the name starts with `"$77"` are hidden.
 
 ## Configuration System
 
-The dynamic configuration system allows to hide processes by **PID** and by **name**, file system items by **full path**, and TCP & UDP connections of specific ports. Any process can write to this registry key, either in HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER (of any user).
+The dynamic configuration system allows to hide processes by **PID** and by **name**, file system items by **full path**, TCP & UDP connections of specific ports, etc.
 
 ![](https://bytecode77.com/images/pages/r77-rootkit/config.png)
+
+The configuration is stored in `HKEY_LOCAL_MACHINE\SOFTWARE\$77config` and is writable by any process without elevated privileges. The DACL of this key is set to grant full access to any user.
 
 The `$77config` key is hidden when RegEdit is injected with the rootkit.
 
@@ -36,7 +39,7 @@ r77 is deployable using a single file `"Install.exe"`. It installs the r77 servi
 
 When a process creates a child process, the new process is injected before it can run any of its own instructions. The function `NtResumeThread` is always called when a new process is created. Therefore, it's a suitable target to hook. Because a 32-bit process can spawn a 64-bit child process and vice versa, the r77 service provides a named pipe to handle child process injection requests.
 
-In addition, there is a periodic check every 100ms for new processes that might have been missed by child process hooking. This is necessary because some processes are protected cannot be injected, such as services.exe.
+In addition, there is a periodic check every 100ms for new processes that might have been missed by child process hooking. This is necessary because some processes are protected and cannot be injected, such as services.exe.
 
 ## In-memory injection
 
@@ -77,7 +80,11 @@ Detours is used to hook several functions from `ntdll.dll`. These low-level sysc
  - NtQueryDirectoryFileEx
  - NtEnumerateKey
  - NtEnumerateValueKey
+ - EnumServiceGroupW
+ - EnumServicesStatusExW
  - NtDeviceIoControlFile
+
+The only exception is `advapi32.dll`. Two functions are hooked to hide services. This is because the actual service enumeration happens in services.exe, which cannot be injected.
 
 ## Test environment
 
@@ -87,11 +94,11 @@ The Test Console can be used to inject r77 to or detach r77 from individual proc
 
 ## Technical Documentation
 
-Please read the [technical documentation](https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf) to get a comprehensive and full overview of r77, how to deploy and integrate the rootkit and its internals.
+Please read the [technical documentation](https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf) to get a comprehensive and full overview of r77 and its internals, and how to deploy and integrate it.
 
 ## Downloads
 
-[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.1.0.zip](https://bytecode77.com/downloads/r77Rootkit%201.1.0.zip)
+[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.2.0.zip](https://bytecode77.com/downloads/r77Rootkit%201.2.0.zip)
 (**ZIP Password:** bytecode77)<br />
 [![](https://bytecode77.com/public/fileicons/pdf.png) Technical Documentation](https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf)
 
