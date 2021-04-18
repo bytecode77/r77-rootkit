@@ -167,13 +167,8 @@ mkdir "$(SolutionDir)..\$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"
 xcopy /Y "$(TargetDir)BytecodeApi.dll" "$(SolutionDir)..\$Build"
 xcopy /Y "$(TargetDir)BytecodeApi.UI.dll" "$(SolutionDir)..\$Build"
-
-xcopy /Y "$(SolutionDir)..\$Build\Detach32.exe" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)..\$Build\Detach64.exe" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)..\$Build\Inject32.exe" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)..\$Build\Inject64.exe" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)..\$Build\ProcessList32.exe" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)..\$Build\ProcessList64.exe" "$(TargetDir)"
+xcopy /Y "$(SolutionDir)..\$Build\Helper32.exe" "$(TargetDir)"
+xcopy /Y "$(SolutionDir)..\$Build\Helper64.exe" "$(TargetDir)"
 xcopy /Y "$(SolutionDir)..\$Build\r77-x86.dll" "$(TargetDir)"
 xcopy /Y "$(SolutionDir)..\$Build\r77-x64.dll" "$(TargetDir)"</PostBuildEvent>
   </PropertyGroup>

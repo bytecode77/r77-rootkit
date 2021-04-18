@@ -37,9 +37,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		}
 	}
 
-	// Delete all r77 configuration keys from the registry:
-	//  - HKEY_LOCAL_MACHINE\$77config
-	//  - HKEY_CURRENT_USER\$77config (for each user)
+	// Delete HKEY_LOCAL_MACHINE\SOFTWARE\$77config
 	UninstallR77Config();
 
 	return 0;

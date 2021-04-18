@@ -79,16 +79,16 @@ namespace TestConsole
 				), true);
 			}
 
-			if (new[] { "ProcessList32.exe", "ProcessList64.exe" }.Any(file => !File.Exists(Path.Combine(ApplicationBase.Path, file))))
+			if (new[] { "Helper32.exe", "Helper64.exe" }.Any(file => !File.Exists(Path.Combine(ApplicationBase.Path, file))))
 			{
 				Log(new LogMessage
 				(
 					LogMessageType.Error,
 					new LogTextItem("Files"),
-					new LogFileItem("ProcessList32.exe"),
+					new LogFileItem("Helper32.exe"),
 					new LogTextItem("and"),
-					new LogFileItem("ProcessList64.exe"),
-					new LogTextItem("are required to display the process list, but could not be found.")
+					new LogFileItem("Helper64.exe"),
+					new LogTextItem("not found.")
 				), true);
 			}
 

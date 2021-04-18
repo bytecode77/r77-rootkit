@@ -116,25 +116,25 @@ namespace TestConsole
 		}
 		/// <summary>
 		/// Gets a list of all processes.
-		/// <para>ProcessList32.exe and ProcessList64.exe need to be invoked to retrieve the process list, because some information can only be accessed by a process of matching bitness.</para>
+		/// <para>Helper32.exe and Helper64.exe need to be invoked to retrieve the process list, because some information can only be accessed by a process of matching bitness.</para>
 		/// </summary>
 		/// <returns>
 		/// A new <see cref="ProcessView" />[] with all running processes.
 		/// </returns>
 		public static ProcessView[] GetProcesses()
 		{
-			// Call ProcessList32.exe and ProcessList64.exe to retrieve the process list.
+			// Invoke Helper32.exe and Helper64.exe to retrieve the process list.
 			// Because the process list contains r77 specific information, the bitness of the enumerating process needs to match
 			// that of the enumerated process to retrieve this information.
 
-			string[] processListExecutables = Environment.Is64BitOperatingSystem ?
-				new[] { "ProcessList32.exe", "ProcessList64.exe" } :
-				new[] { "ProcessList32.exe" };
+			string[] helperExecutables = Environment.Is64BitOperatingSystem ?
+				new[] { "Helper32.exe", "Helper64.exe" } :
+				new[] { "Helper32.exe" };
 
-			return processListExecutables
+			return helperExecutables
 				.Select(fileName => Path.Combine(ApplicationBase.Path, fileName))
 				.Where(path => File.Exists(path))
-				.Select(path => CSharp.Try(() => ProcessEx.ReadProcessOutput(path, null, false, true))) // Execute and read console output
+				.Select(path => CSharp.Try(() => ProcessEx.ReadProcessOutput(path, "-list", false, true))) // Execute and read console output
 				.ToArray()
 				.Select(str => str?.SplitToLines())
 				.ExceptNull()
@@ -143,7 +143,7 @@ namespace TestConsole
 				.Select(line => line.Split('|').ToArray())
 				.Select(line =>
 				{
-					// Split console output by lines, then by '|' and parse content.
+					// Split console output to lines, then by '|' and parse content.
 					ProcessView process = new ProcessView
 					{
 						Id = line[0].ToInt32OrDefault(),
@@ -167,7 +167,7 @@ namespace TestConsole
 				})
 				.Where(process => CSharp.EqualsNone(process.Id, 0, 4)) // Exclude "System" and "System Idle Process"
 				.GroupBy(process => process.Id)
-				.Where(group => group.Count() == processListExecutables.Length)
+				.Where(group => group.Count() == helperExecutables.Length)
 				.Select(group => group.OrderByDescending(p => p.IsInjected || p.IsR77Service || p.IsHelper).First())
 				.OrderBy(process => process.Name, StringComparer.OrdinalIgnoreCase)
 				.ThenBy(process => process.Id)

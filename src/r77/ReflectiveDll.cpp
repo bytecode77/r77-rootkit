@@ -15,15 +15,15 @@ namespace nt
 	{
 		USHORT Length;
 		USHORT MaximumLength;
-		PWSTR Buffer;
+		LPWSTR Buffer;
 	} UNICODE_STRING, *PUNICODE_STRING;
 
 	typedef struct _LDR_DATA_TABLE_ENTRY
 	{
 		LIST_ENTRY InMemoryOrderModuleList;
 		LIST_ENTRY InInitializationOrderModuleList;
-		PVOID DllBase;
-		PVOID EntryPoint;
+		LPVOID DllBase;
+		LPVOID EntryPoint;
 		ULONG SizeOfImage;
 		UNICODE_STRING FullDllName;
 		UNICODE_STRING BaseDllName;
@@ -64,7 +64,7 @@ namespace nt
 		LPVOID KernelCallbackTable;
 		DWORD SystemReserved;
 		DWORD AtlThunkSListPtr32;
-		PVOID FreeList;
+		LPVOID FreeList;
 		DWORD TlsExpansionCounter;
 		LPVOID TlsBitmap;
 		DWORD TlsBitmapBits[2];
