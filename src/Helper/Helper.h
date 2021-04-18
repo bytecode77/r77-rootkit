@@ -14,6 +14,15 @@
 /// </returns>
 int ProcessList();
 /// <summary>
+/// Creates the configuration system under HKEY_LOCAL_MACHINE\SOFTWARE\$77config.
+/// Creating this key requires elevated privileges only once. After creation, the DACL is set to allow full access by any user.
+/// Normally, the r77 installer creates this key. When using the Test Console without installing r77, this step is performed by TestConsole.exe invoking "Helper32.exe -config".
+/// </summary>
+/// <returns>
+/// The return value to be returned by the main entry point.
+/// </returns>
+int CreateConfig();
+/// <summary>
 /// Injects r77 into a specific process, or all processes.
 /// </summary>
 /// <param name="processId">The process ID to be injected, or -1, to inject all processes.</param>

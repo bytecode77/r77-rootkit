@@ -13,6 +13,11 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		MessageBoxW(NULL, L"This is a commandline utility used by TestConsole.exe", sizeof(LPVOID) == 4 ? L"Helper32.exe" : L"Helper64.exe", MB_ICONASTERISK | MB_OK);
 		return 1;
 	}
+	// Helper32|64.exe -config
+	else if (argCount == 2 && !lstrcmpiW(args[1], L"-config"))
+	{
+		return CreateConfig();
+	}
 	// Helper32|64.exe -list
 	else if (argCount == 2 && !lstrcmpiW(args[1], L"-list"))
 	{
@@ -141,6 +146,19 @@ int ProcessList()
 	CloseHandle(snapshot);
 
 	return 0;
+}
+int CreateConfig()
+{
+	HKEY key;
+	if (InstallR77Config(&key))
+	{
+		RegCloseKey(key);
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
 }
 int Inject(DWORD processId, LPCWSTR dllPath)
 {

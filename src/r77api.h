@@ -8,6 +8,7 @@
 #include <Shlwapi.h>
 #include <Psapi.h>
 #include <aclapi.h>
+#include <sddl.h>
 #include <initguid.h>
 #include <MSTask.h>
 #include <stdio.h>
@@ -573,6 +574,15 @@ VOID DeleteR77Config(PR77_CONFIG config);
 /// otherwise, FALSE.
 /// </returns>
 BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB);
+/// <summary>
+/// Creates the r77 configuration registry key with full access to all users.
+/// </summary>
+/// <param name="key">The newly created HKEY.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL InstallR77Config(PHKEY key);
 /// <summary>
 /// Deletes the r77 configuration from the registry.
 /// </summary>

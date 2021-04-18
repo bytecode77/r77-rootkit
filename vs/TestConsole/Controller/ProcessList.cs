@@ -302,36 +302,96 @@ namespace TestConsole
 		/// </returns>
 		public static IEnumerable<LogMessage> Hide(ProcessView process)
 		{
-			using (RegistryKey key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Registry64).CreateSubKey(@"Software\" + Config.HidePrefix + @"config\pid"))
+			bool success = false;
+
+			using (RegistryKey key = OpenConfigKey())
 			{
-				key.SetValue("TestConsole_HiddenPID_" + process.Id, process.Id, RegistryValueKind.DWord);
+				if (key != null)
+				{
+					WriteProcessId(key);
+					success = true;
+				}
+				else
+				{
+					string helperPath = GetFilePath("Helper32.exe", out LogMessage helperPathLogMessage);
+					if (helperPath == null)
+					{
+						yield return helperPathLogMessage;
+						yield break;
+					}
+
+					if (CSharp.Try(() => ProcessEx.Execute(helperPath, "-config", true), 1) == 0)
+					{
+						yield return new LogMessage
+						(
+							LogMessageType.Information,
+							new LogTextItem("Registry key"),
+							new LogFileItem(@"HKEY_LOCAL_MACHINE\SOFTWARE\" + Config.HidePrefix + "config"),
+							new LogTextItem("created.")
+						);
+
+						using (RegistryKey key2 = OpenConfigKey())
+						{
+							if (key2 != null)
+							{
+								WriteProcessId(key2);
+								success = true;
+							}
+						}
+					}
+					else
+					{
+						yield return new LogMessage
+						(
+							LogMessageType.Error,
+							new LogTextItem("Registry key"),
+							new LogFileItem(@"HKEY_LOCAL_MACHINE\SOFTWARE\" + Config.HidePrefix + "config"),
+							new LogTextItem("not found. If r77 is not installed, this key requires to be created using elevated privileges. After creation, the DACL is set to allow full access by any user.")
+						);
+						yield break;
+					}
+				}
 			}
 
-			yield return new LogMessage
-			(
-				LogMessageType.Information,
-				new LogFileItem(process.Name),
-				new LogTextItem("(PID " + process.Id + ") is marked as hidden."),
-				new LogDetailsItem(@"(HKEY_CURRENT_USER\" + Config.HidePrefix + @"config\pid)")
-			);
-
-			if (process.Name.StartsWith(Config.HidePrefix))
+			if (success)
 			{
 				yield return new LogMessage
 				(
-					LogMessageType.Warning,
+					LogMessageType.Information,
 					new LogFileItem(process.Name),
-					new LogTextItem("(PID " + process.Id + ") is already hidden by prefix. Hiding the process by ID is unnecessary.")
+					new LogTextItem("(PID " + process.Id + ") is marked as hidden.")
 				);
+
+				if (process.Name.StartsWith(Config.HidePrefix))
+				{
+					yield return new LogMessage
+					(
+						LogMessageType.Warning,
+						new LogFileItem(process.Name),
+						new LogTextItem("(PID " + process.Id + ") is already hidden by prefix. Hiding the process by ID is unnecessary.")
+					);
+				}
+
+				if (GetInjectedCount() == 0)
+				{
+					yield return new LogMessage
+					(
+						LogMessageType.Warning,
+						new LogTextItem("r77 needs to be installed, or at least injected in a task manager for process hiding to have effect.")
+					);
+				}
 			}
 
-			if (GetInjectedCount() == 0)
+			RegistryKey OpenConfigKey()
 			{
-				yield return new LogMessage
-				(
-					LogMessageType.Warning,
-					new LogTextItem("r77 needs to be installed, or at least injected in the task manager to have effect.")
-				);
+				return RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey(@"SOFTWARE\" + Config.HidePrefix + @"config", true);
+			}
+			void WriteProcessId(RegistryKey configKey)
+			{
+				using (RegistryKey pidKey = configKey.CreateSubKey("pid"))
+				{
+					pidKey.SetValue("TestConsole_HiddenPID_" + process.Id, process.Id, RegistryValueKind.DWord);
+				}
 			}
 		}
 		/// <summary>
@@ -343,82 +403,31 @@ namespace TestConsole
 		/// </returns>
 		public static IEnumerable<LogMessage> Unhide(ProcessView process)
 		{
-			bool elevationRequired = false;
-
-			// Delete process ID's from HKEY_CURRENT_USER\SOFTWARE\$77config\pid
-			using (RegistryKey currentUserKey = GetRegistryKey(false, true))
+			using (RegistryKey key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey(@"SOFTWARE\" + Config.HidePrefix + @"config\pid", true))
 			{
-				if (currentUserKey != null)
+				if (key != null)
 				{
-					DeleteValues(currentUserKey);
-				}
-			}
+					string[] valueNames = key
+						.GetValueNames()
+						.Where(name => key.GetValueKind(name) == RegistryValueKind.DWord)
+						.Where(name => (int)key.GetValue(name) == process.Id)
+						.ToArray();
 
-			// Ignore HKEY_USERS (i.e. other users) in the scope of the Test Console.
-
-			// Delete process ID's from HKEY_LOCAL_MACHINE\SOFTWARE\$77config\pid
-			using (RegistryKey localMachineKey = GetRegistryKey(true, false))
-			{
-				// First, check if there are any values to delete.
-				if (localMachineKey != null && GetValuesToDelete(localMachineKey).Any())
-				{
-					if (ApplicationBase.Process.IsElevated)
+					if (valueNames.Any())
 					{
-						// There are values to delete and the process is elevated: Delete values.
-						using (RegistryKey localMachineKeyWritable = GetRegistryKey(true, true))
+						foreach (string valueName in valueNames)
 						{
-							DeleteValues(localMachineKeyWritable);
+							key.DeleteValue(valueName);
 						}
-					}
-					else
-					{
-						// There are values to delete, but the process is not elevated: Require elevation.
-						elevationRequired = true;
 
 						yield return new LogMessage
 						(
-							LogMessageType.Warning,
-							new LogTextItem("To mark"),
+							LogMessageType.Information,
 							new LogFileItem(process.Name),
-							new LogTextItem("(PID " + process.Id + ") as not hidden,"),
-							new LogLinkItem("run as administrator", () => MainWindowViewModel.Singleton.ElevateCommand.Execute())
+							new LogTextItem("(PID " + process.Id + ") is marked as not hidden.")
 						);
 					}
 				}
-			}
-
-			if (!elevationRequired)
-			{
-				yield return new LogMessage
-				(
-					LogMessageType.Information,
-					new LogFileItem(process.Name),
-					new LogTextItem("(PID " + process.Id + ") is marked as not hidden.")
-				);
-			}
-
-			RegistryKey GetRegistryKey(bool localMachine, bool writable)
-			{
-				// Get the registry key to the hidden process ID list in either HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
-				return RegistryKey
-					.OpenBaseKey(localMachine ? RegistryHive.LocalMachine : RegistryHive.CurrentUser, RegistryView.Registry64)
-					.OpenSubKey(@"Software\" + Config.HidePrefix + @"config\pid", writable);
-			}
-			void DeleteValues(RegistryKey key)
-			{
-				foreach (string value in GetValuesToDelete(key))
-				{
-					key.DeleteValue(value);
-				}
-			}
-			string[] GetValuesToDelete(RegistryKey key)
-			{
-				// Get all DWORD value names with the process ID as their value.
-				return key
-					.GetValueNames()
-					.Where(name => key.GetValueKind(name) == RegistryValueKind.DWord)
-					.Where(name => (int)key.GetValue(name) == process.Id)
-					.ToArray();
 			}
 		}
 

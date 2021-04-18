@@ -8514,12 +8514,36 @@
             The exit code of the process, after it has exited.
             </returns>
         </member>
+        <member name="M:BytecodeApi.IO.ProcessEx.Execute(System.String,System.String,System.Boolean)">
+            <summary>
+            Creates a <see cref="T:System.Diagnostics.Process" /> with commandline arguments, waits for the process to exit and returns its exit code.
+            </summary>
+            <param name="fileName">The name of an application file to run.</param>
+            <param name="arguments">Command-line arguments to pass when starting the process.</param>
+            <param name="runas"><see langword="true" /> to execute this file with the "runas" verb.</param>
+            <returns>
+            The exit code of the process, after it has exited.
+            </returns>
+        </member>
         <member name="M:BytecodeApi.IO.ProcessEx.Execute(System.String,System.String,System.Int32)">
             <summary>
             Creates a <see cref="T:System.Diagnostics.Process" /> with commandline arguments, waits for the process to exit and returns its exit code. If the process did not exit within the specified timeout period, <see langword="null" /> is returned.
             </summary>
             <param name="fileName">The name of an application file to run.</param>
             <param name="arguments">Command-line arguments to pass when starting the process.</param>
+            <param name="timeout">The amount of time, in milliseconds, to wait for the process to exit.</param>
+            <returns>
+            The exit code of the process, if it has exited within the specified timeout period;
+            and <see langword="null" />, if the process did not exit.
+            </returns>
+        </member>
+        <member name="M:BytecodeApi.IO.ProcessEx.Execute(System.String,System.String,System.Boolean,System.Int32)">
+            <summary>
+            Creates a <see cref="T:System.Diagnostics.Process" /> with commandline arguments, waits for the process to exit and returns its exit code. If the process did not exit within the specified timeout period, <see langword="null" /> is returned.
+            </summary>
+            <param name="fileName">The name of an application file to run.</param>
+            <param name="arguments">Command-line arguments to pass when starting the process.</param>
+            <param name="runas"><see langword="true" /> to execute this file with the "runas" verb.</param>
             <param name="timeout">The amount of time, in milliseconds, to wait for the process to exit.</param>
             <returns>
             The exit code of the process, if it has exited within the specified timeout period;
