@@ -23,4 +23,7 @@
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
+  </ItemGroup>
 </Project>

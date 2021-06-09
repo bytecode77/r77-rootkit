@@ -5,6 +5,7 @@
 
 #include <Windows.h>
 #include <winternl.h>
+#include <VersionHelpers.h>
 #include <Shlwapi.h>
 #include <Psapi.h>
 #include <aclapi.h>
