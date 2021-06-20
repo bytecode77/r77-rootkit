@@ -5,6 +5,7 @@
 
 #include <Windows.h>
 #include <winternl.h>
+#include <VersionHelpers.h>
 #include <Shlwapi.h>
 #include <Psapi.h>
 #include <aclapi.h>
@@ -379,6 +380,7 @@ BOOL RunScheduledTask(LPCWSTR name);
 /// otherwise, FALSE.
 /// </returns>
 BOOL DeleteScheduledTask(LPCWSTR name);
+
 /// <summary>
 /// Injects a DLL using reflective DLL injection.
 /// <para>The DLL must export a function called "ReflectiveDllMain".</para>
@@ -412,6 +414,11 @@ DWORD GetReflectiveDllMain(LPBYTE dll);
 /// The file offset converted from the specified RVA; or 0, if this function fails.
 /// </returns>
 DWORD RvaToOffset(LPBYTE dll, DWORD rva);
+/// <summary>
+/// Unhooks a DLL by replacing the .text section with the original DLL section.
+/// </summary>
+/// <param name="name">The name of the DLL to unhook.</param>
+VOID UnhookDll(LPCWSTR name);
 
 /// <summary>
 /// Creates a new INTEGER_LIST.

@@ -67,6 +67,9 @@
 mkdir "$(SolutionDir)..\$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"</Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>app.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -90,6 +93,9 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"</Command>
 mkdir "$(SolutionDir)..\$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"</Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>app.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Install\Install.cpp" />
@@ -106,6 +112,9 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"</Command>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

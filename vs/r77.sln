@@ -126,8 +126,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallStager", "InstallSta
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "InstallStager", "InstallStager", "{FB4DDDB6-6A4F-45E1-9B15-17477CCB3631}"
 	ProjectSection(SolutionItems) = preProject
+		..\src\InstallStager\Helper.cs = ..\src\InstallStager\Helper.cs
 		..\src\InstallStager\InstallStager.cs = ..\src\InstallStager\InstallStager.cs
 		..\src\InstallStager\RunPE.cs = ..\src\InstallStager\RunPE.cs
+		..\src\InstallStager\Unhook.cs = ..\src\InstallStager\Unhook.cs
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Helper32", "Helper32\Helper32.vcxproj", "{2D6FDD44-39B1-4FF8-8AE0-60A6B0979F5F}"
