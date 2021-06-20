@@ -84,7 +84,7 @@ Detours is used to hook several functions from `ntdll.dll`. These low-level sysc
 
 The only exception is `advapi32.dll` and `sechost.dll`. These functions are hooked to hide services. This is because the actual service enumeration happens in services.exe, which cannot be injected.
 
-## AV/EDR EVASION
+## AV/EDR evasion
 
 Several AV and EDR evasion techniques are in use:
 
