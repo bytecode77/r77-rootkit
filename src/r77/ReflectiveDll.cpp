@@ -1,13 +1,6 @@
 #include "ReflectiveDll.h"
 
-#define NTDLLDLL_HASH					0x3cfa685d
-#define KERNEL32DLL_HASH				0x6a4abc5b
-#define NTFLUSHINSTRUCTIONCACHE_HASH	0x534c0ab8
-#define LOADLIBRARYA_HASH				0xec0e4e8e
-#define GETPROCADDRESS_HASH				0x7c0dfcaa
-#define VIRTUALALLOC_HASH				0x91afca54
-
-#define COMPUTEHASH(value) ((DWORD)(value) >> 13 | (DWORD)(value) << (32 - 13))
+#define ROTR(value, bits) ((DWORD)(value) >> (bits) | (DWORD)(value) << (32 - (bits)))
 
 namespace nt
 {
@@ -130,6 +123,8 @@ namespace nt
 namespace api
 {
 	// Even standard functions cannot be used before DLL's are loaded and the IAT is patched.
+	// Because string comparisons require a data section, the string is compared by calculating a hash.
+
 	VOID memcpy(LPBYTE dest, LPBYTE src, DWORD size)
 	{
 		for (DWORD i = 0; i < size; i++)
@@ -138,14 +133,13 @@ namespace api
 		}
 	}
 
-	// Because string comparisons require a data section, the string is compared by calculating a hash.
 	DWORD strhash(LPCSTR str)
 	{
 		DWORD hash = 0;
 
 		while (*str)
 		{
-			hash = COMPUTEHASH(hash) + *str++;
+			hash = ROTR(hash, 13) + *str++;
 		}
 
 		return hash;
@@ -157,14 +151,22 @@ namespace api
 
 		for (USHORT i = 0; i < length; i++)
 		{
-			hash = COMPUTEHASH(hash) + (str[i] >= 'a' ? str[i] - 0x20 : str[i]);
+			hash = ROTR(hash, 13) + (str[i] >= 'a' ? str[i] - 0x20 : str[i]);
 		}
 
 		return hash;
 	}
 }
 
-__declspec(dllexport) BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
+/// <summary>
+/// Retrieves a function pointer from the PEB.
+/// </summary>
+/// <param name="moduleHash">The hash of the module name. The module must be loaded.</param>
+/// <param name="functionHash">The hash of the function name.</param>
+/// <returns>
+/// A pointer to the function, or NULL, if the function could not be found.
+/// </returns>
+LPVOID PebGetProcAddress(DWORD moduleHash, DWORD functionHash)
 {
 #ifdef _WIN64
 	nt::PPEB_LDR_DATA peb = (nt::PPEB_LDR_DATA)((nt::PPEB)__readgsqword(0x60))->Ldr;
@@ -172,50 +174,49 @@ __declspec(dllexport) BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
 	nt::PPEB_LDR_DATA peb = (nt::PPEB_LDR_DATA)((nt::PPEB)__readfsdword(0x30))->Ldr;
 #endif
 
-	// All functions that are used here must be found by searching the PEB.
-	// Functions, such as memcpy need to be handwritten, because no functions are imported, yet.
-	// Switch statements cannot be used, because a jump table would be created and the shellcode would not be position independent anymore.
-
-	nt::NTFLUSHINSTRUCTIONCACHE ntFlushInstructionCache = NULL;
-	nt::LOADLIBRARYA loadLibraryA = NULL;
-	nt::GETPROCADDRESS getProcAddress = NULL;
-	nt::VIRTUALALLOC virtualAlloc = NULL;
-
 	nt::PLDR_DATA_TABLE_ENTRY firstPebEntry = (nt::PLDR_DATA_TABLE_ENTRY)peb->InMemoryOrderModuleList.Flink;
 	nt::PLDR_DATA_TABLE_ENTRY pebEntry = firstPebEntry;
 	do
 	{
-		DWORD moduleHash = api::strhashi((LPCSTR)pebEntry->BaseDllName.Buffer, pebEntry->BaseDllName.Length);
-
-		// Search functions in ntdll.dll and kernel32.dll
-		if (moduleHash == NTDLLDLL_HASH || moduleHash == KERNEL32DLL_HASH)
+		// Find module by hash
+		if (pebEntry->BaseDllName.Buffer && api::strhashi((LPCSTR)pebEntry->BaseDllName.Buffer, pebEntry->BaseDllName.Length) == moduleHash)
 		{
-			LPBYTE pebModuleBase = (LPBYTE)pebEntry->DllBase;
-			PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(pebModuleBase + ((PIMAGE_DOS_HEADER)pebModuleBase)->e_lfanew);
-			PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(pebModuleBase + ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
-			LPDWORD nameDirectory = (LPDWORD)(pebModuleBase + exportDirectory->AddressOfNames);
-			LPWORD nameOrdinalDirectory = (LPWORD)(pebModuleBase + exportDirectory->AddressOfNameOrdinals);
+			LPBYTE dllBase = (LPBYTE)pebEntry->DllBase;
+			PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dllBase + ((PIMAGE_DOS_HEADER)dllBase)->e_lfanew);
+			PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(dllBase + ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+			LPDWORD nameDirectory = (LPDWORD)(dllBase + exportDirectory->AddressOfNames);
+			LPWORD nameOrdinalDirectory = (LPWORD)(dllBase + exportDirectory->AddressOfNameOrdinals);
 
+			// Find function by hash
 			for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++, nameDirectory++, nameOrdinalDirectory++)
 			{
-				DWORD functionHash = api::strhash((LPCSTR)(pebModuleBase + *nameDirectory));
-				LPBYTE functionAddress = pebModuleBase + exportDirectory->AddressOfFunctions + *nameOrdinalDirectory * sizeof(DWORD);
-
-				if (functionHash == NTFLUSHINSTRUCTIONCACHE_HASH) ntFlushInstructionCache = (nt::NTFLUSHINSTRUCTIONCACHE)(pebModuleBase + *(LPDWORD)functionAddress);
-				else if (functionHash == LOADLIBRARYA_HASH) loadLibraryA = (nt::LOADLIBRARYA)(pebModuleBase + *(LPDWORD)functionAddress);
-				else if (functionHash == GETPROCADDRESS_HASH) getProcAddress = (nt::GETPROCADDRESS)(pebModuleBase + *(LPDWORD)functionAddress);
-				else if (functionHash == VIRTUALALLOC_HASH) virtualAlloc = (nt::VIRTUALALLOC)(pebModuleBase + *(LPDWORD)functionAddress);
-
-				if (loadLibraryA && getProcAddress && virtualAlloc && ntFlushInstructionCache) break;
+				if (api::strhash((LPCSTR)(dllBase + *nameDirectory)) == functionHash)
+				{
+					return dllBase + *(LPDWORD)(dllBase + exportDirectory->AddressOfFunctions + *nameOrdinalDirectory * sizeof(DWORD));
+				}
 			}
-		}
 
-		if (loadLibraryA && getProcAddress && virtualAlloc && ntFlushInstructionCache) break;
+			return NULL;
+		}
 	}
 	while ((pebEntry = (nt::PLDR_DATA_TABLE_ENTRY)pebEntry->InMemoryOrderModuleList.Flink) != firstPebEntry);
 
+	return NULL;
+}
+
+__declspec(dllexport) BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
+{
+	// All functions that are used in the reflective loader must be found by searching the PEB.
+	// Functions, such as memcpy need to be handwritten, because no functions are imported, yet.
+	// Switch statements cannot be used, because a jump table would be created and the shellcode would not be position independent anymore.
+
+	nt::NTFLUSHINSTRUCTIONCACHE ntFlushInstructionCache = (nt::NTFLUSHINSTRUCTIONCACHE)PebGetProcAddress(0x3cfa685d, 0x534c0ab8);
+	nt::LOADLIBRARYA loadLibraryA = (nt::LOADLIBRARYA)PebGetProcAddress(0x6a4abc5b, 0xec0e4e8e);
+	nt::GETPROCADDRESS getProcAddress = (nt::GETPROCADDRESS)PebGetProcAddress(0x6a4abc5b, 0x7c0dfcaa);
+	nt::VIRTUALALLOC virtualAlloc = (nt::VIRTUALALLOC)PebGetProcAddress(0x6a4abc5b, 0x91afca54);
+
 	// Safety check: Continue only, if all functions were found.
-	if (loadLibraryA && getProcAddress && virtualAlloc && ntFlushInstructionCache)
+	if (ntFlushInstructionCache && loadLibraryA && getProcAddress && virtualAlloc)
 	{
 		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dllBase + ((PIMAGE_DOS_HEADER)dllBase)->e_lfanew);
 

