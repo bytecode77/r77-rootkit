@@ -40,31 +40,37 @@ namespace TestConsole
 		public DelegateCommand<string> HelpCommand => _HelpCommand ?? (_HelpCommand = new DelegateCommand<string>(HelpCommand_Execute));
 
 		private bool UpdateProcessesNow;
+		private bool _IsInitialized;
+		private ObservableCollection<ProcessView> _Processes;
+		private ProcessView _SelectedProcess;
+		private bool _IsAboutVisible;
 		public bool IsInitialized
 		{
-			get => Get(() => IsInitialized);
-			set => Set(() => IsInitialized, value);
+			get => _IsInitialized;
+			set => Set(ref _IsInitialized, value);
 		}
 		public ObservableCollection<ProcessView> Processes
 		{
-			get => Get(() => Processes, () => new ObservableCollection<ProcessView>());
-			set => Set(() => Processes, value);
+			get => _Processes;
+			set => Set(ref _Processes, value);
 		}
 		public ProcessView SelectedProcess
 		{
-			get => Get(() => SelectedProcess);
-			set => Set(() => SelectedProcess, value);
+			get => _SelectedProcess;
+			set => Set(ref _SelectedProcess, value);
 		}
 		public bool IsAboutVisible
 		{
-			get => Get(() => IsAboutVisible);
-			set => Set(() => IsAboutVisible, value);
+			get => _IsAboutVisible;
+			set => Set(ref _IsAboutVisible, value);
 		}
 
 		public MainWindowViewModel(MainWindow view)
 		{
 			Singleton = this;
 			View = view;
+
+			Processes = new ObservableCollection<ProcessView>();
 		}
 
 		public void OnLoaded()
@@ -197,7 +203,7 @@ namespace TestConsole
 				case "Documentation":
 					try
 					{
-						byte[] pdf = HttpClient.Default.CreateGetRequest("https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf").ReadBytes();
+						byte[] pdf = HttpClient.Default.Get("https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf").ReadBytes();
 						TempDirectory.ExecuteFile("Technical Documentation.pdf", pdf);
 					}
 					catch (Exception ex)

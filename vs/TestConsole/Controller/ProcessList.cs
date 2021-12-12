@@ -39,7 +39,7 @@ namespace TestConsole
 				yield break;
 			}
 
-			if (!Win32.IsProcessRunning(process.Id))
+			if (!ProcessEx.IsRunning(process.Id))
 			{
 				yield return new LogMessage
 				(
@@ -96,7 +96,7 @@ namespace TestConsole
 				yield break;
 			}
 
-			if (!Win32.IsProcessRunning(process.Id))
+			if (!ProcessEx.IsRunning(process.Id))
 			{
 				yield return new LogMessage
 				(
@@ -156,7 +156,6 @@ namespace TestConsole
 					yield break;
 				}
 			}
-
 
 			string dll32Path = GetFilePath("r77-x86.dll", out LogMessage dll32PathLogMessage);
 			if (dll32Path == null)

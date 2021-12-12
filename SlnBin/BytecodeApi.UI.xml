@@ -176,28 +176,6 @@
             Initializes a new instance of the <see cref="T:BytecodeApi.UI.Controls.ObservableUserControl" /> class.
             </summary>
         </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.GetValue``1(System.Linq.Expressions.Expression{System.Func{``0}})">
-            <summary>
-            Returns the current effective value of a <see cref="T:System.Windows.DependencyProperty" /> on this instance of a <see cref="T:System.Windows.Controls.UserControl" />.
-            The name of the dependency property must be related to the name of the property. Example: "Foo" and "FooProperty".
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => GetValue(() => Foo); <see langword="set" /> => SetValue(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the <see cref="T:System.Windows.DependencyProperty" />.</typeparam>
-            <param name="dependencyProperty">The strongly typed lambda expression of the dependency property.</param>
-            <returns>
-            The current effective value of a <see cref="T:System.Windows.DependencyProperty" /> on this instance of a <see cref="T:System.Windows.Controls.UserControl" />.
-            </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.SetValue``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)">
-            <summary>
-            Sets the local value of a dependency property, specified by its dependency property identifier.
-            The name of the dependency property must be related to the name of the property. Example: "Foo" and "FooProperty".
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => GetValue(() => Foo); <see langword="set" /> => SetValue(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the <see cref="T:System.Windows.DependencyProperty" />.</typeparam>
-            <param name="dependencyProperty">The strongly typed lambda expression of the dependency property.</param>
-            <param name="value">The new local value.</param>
-        </member>
         <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.Dispatch(System.Action)">
             <summary>
             Executes the specified <see cref="T:System.Action" /> synchronously on the thread the <see cref="T:System.Windows.Threading.Dispatcher" /> is associated with.
@@ -274,69 +252,23 @@
             The result of <paramref name="callback" />.
             </returns>
         </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})">
+        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.Set``1(``0@,``0,System.String)">
             <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
+            Method that can be used by the <see langword="set" /> accessor of a property. This method raises the <see cref="E:BytecodeApi.UI.Controls.ObservableUserControl.PropertyChanging" /> event and the <see cref="E:BytecodeApi.UI.Controls.ObservableUserControl.PropertyChanged" /> event.
             </summary>
             <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
+            <param name="field">A reference to the backing field of the property.</param>
+            <param name="value">The new value for the property.</param>
+            <param name="propertyName">A <see cref="T:System.String" /> specifying the name of the property. If <see langword="null" /> is provided, the <see cref="T:System.Runtime.CompilerServices.CallerMemberNameAttribute" /> is used to automatically get the property name.</param>
             <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
+            <see langword="true" />, if the value changed; <see langword="false" />, if the new value is equal to the old value.
             </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.Get``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)">
-            <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo, 1); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="defaultValue">A default value. This parameter can be used as a property initializer.</param>
-            <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
-            </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.Get``1(System.Linq.Expressions.Expression{System.Func{``0}},System.Func{``0})">
-            <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo, () => 1); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="defaultValue">A <see cref="T:System.Func`1" /> that retrieves a default value. This delegate can be used as a property initializer. <paramref name="defaultValue" /> is invoked, if the property is retrieved for the first time and is not set.</param>
-            <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
-            </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)">
-            <summary>
-            Method that can be used by the <see langword="set" /> accessor of a property. Backing fields are managed automatically. This method raises the <see cref="E:BytecodeApi.UI.Controls.ObservableUserControl.PropertyChanging" /> event and the <see cref="E:BytecodeApi.UI.Controls.ObservableUserControl.PropertyChanged" /> event.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="value">The value.</param>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.RaisePropertyChanging``1(System.Linq.Expressions.Expression{System.Func{``0}})">
-            <summary>
-            Raises the <see cref="E:BytecodeApi.UI.Controls.ObservableUserControl.PropertyChanging" /> event on any custom property. <see cref="M:BytecodeApi.UI.Controls.ObservableUserControl.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Controls.ObservableUserControl.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" /> do not necessarily need to be used in conjunction with this method. Likewise, this method is not required when using <see cref="M:BytecodeApi.UI.Controls.ObservableUserControl.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Controls.ObservableUserControl.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" />.
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
         </member>
         <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.RaisePropertyChanging(System.String)">
             <summary>
             Raises the <see cref="E:BytecodeApi.UI.Controls.ObservableUserControl.PropertyChanging" /> event on a property specified by a name.
             </summary>
             <param name="propertyName">A <see cref="T:System.String" /> specifying the name of the property. If <see langword="null" /> is provided, the <see cref="T:System.Runtime.CompilerServices.CallerMemberNameAttribute" /> is used to automatically get the property name.</param>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.RaisePropertyChanged``1(System.Linq.Expressions.Expression{System.Func{``0}})">
-            <summary>
-            Raises the <see cref="E:BytecodeApi.UI.Controls.ObservableUserControl.PropertyChanged" /> event on any custom property. <see cref="M:BytecodeApi.UI.Controls.ObservableUserControl.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Controls.ObservableUserControl.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" /> do not necessarily need to be used in conjunction with this method. Likewise, this method is not required when using <see cref="M:BytecodeApi.UI.Controls.ObservableUserControl.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Controls.ObservableUserControl.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" />.
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
         </member>
         <member name="M:BytecodeApi.UI.Controls.ObservableUserControl.RaisePropertyChanged(System.String)">
             <summary>
@@ -380,28 +312,6 @@
             <summary>
             Initializes a new instance of the <see cref="T:BytecodeApi.UI.Controls.ObservableWindow" /> class.
             </summary>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.GetValue``1(System.Linq.Expressions.Expression{System.Func{``0}})">
-            <summary>
-            Returns the current effective value of a <see cref="T:System.Windows.DependencyProperty" /> on this instance of a <see cref="T:System.Windows.Window" />.
-            The name of the dependency property must be related to the name of the property. Example: "Foo" and "FooProperty".
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => GetValue(() => Foo); <see langword="set" /> => SetValue(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the <see cref="T:System.Windows.DependencyProperty" />.</typeparam>
-            <param name="dependencyProperty">The strongly typed lambda expression of the dependency property.</param>
-            <returns>
-            The current effective value of a <see cref="T:System.Windows.DependencyProperty" /> on this instance of a <see cref="T:System.Windows.Window" />.
-            </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.SetValue``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)">
-            <summary>
-            Sets the local value of a dependency property, specified by its dependency property identifier.
-            The name of the dependency property must be related to the name of the property. Example: "Foo" and "FooProperty".
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => GetValue(() => Foo); <see langword="set" /> => SetValue(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the <see cref="T:System.Windows.DependencyProperty" />.</typeparam>
-            <param name="dependencyProperty">The strongly typed lambda expression of the dependency property.</param>
-            <param name="value">The new local value.</param>
         </member>
         <member name="M:BytecodeApi.UI.Controls.ObservableWindow.Dispatch(System.Action)">
             <summary>
@@ -479,69 +389,23 @@
             The result of <paramref name="callback" />.
             </returns>
         </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})">
+        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.Set``1(``0@,``0,System.String)">
             <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
+            Method that can be used by the <see langword="set" /> accessor of a property. This method raises the <see cref="E:BytecodeApi.UI.Controls.ObservableWindow.PropertyChanging" /> event and the <see cref="E:BytecodeApi.UI.Controls.ObservableWindow.PropertyChanged" /> event.
             </summary>
             <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
+            <param name="field">A reference to the backing field of the property.</param>
+            <param name="value">The new value for the property.</param>
+            <param name="propertyName">A <see cref="T:System.String" /> specifying the name of the property. If <see langword="null" /> is provided, the <see cref="T:System.Runtime.CompilerServices.CallerMemberNameAttribute" /> is used to automatically get the property name.</param>
             <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
+            <see langword="true" />, if the value changed; <see langword="false" />, if the new value is equal to the old value.
             </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.Get``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)">
-            <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo, 1); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="defaultValue">A default value. This parameter can be used as a property initializer.</param>
-            <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
-            </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.Get``1(System.Linq.Expressions.Expression{System.Func{``0}},System.Func{``0})">
-            <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo, () => 1); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="defaultValue">A <see cref="T:System.Func`1" /> that retrieves a default value. This delegate can be used as a property initializer. <paramref name="defaultValue" /> is invoked, if the property is retrieved for the first time and is not set.</param>
-            <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
-            </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)">
-            <summary>
-            Method that can be used by the <see langword="set" /> accessor of a property. Backing fields are managed automatically. This method raises the <see cref="E:BytecodeApi.UI.Controls.ObservableWindow.PropertyChanging" /> event and the <see cref="E:BytecodeApi.UI.Controls.ObservableWindow.PropertyChanged" /> event.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="value">The value.</param>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.RaisePropertyChanging``1(System.Linq.Expressions.Expression{System.Func{``0}})">
-            <summary>
-            Raises the <see cref="E:BytecodeApi.UI.Controls.ObservableWindow.PropertyChanging" /> event on any custom property. <see cref="M:BytecodeApi.UI.Controls.ObservableWindow.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Controls.ObservableWindow.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" /> do not necessarily need to be used in conjunction with this method. Likewise, this method is not required when using <see cref="M:BytecodeApi.UI.Controls.ObservableWindow.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Controls.ObservableWindow.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" />.
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
         </member>
         <member name="M:BytecodeApi.UI.Controls.ObservableWindow.RaisePropertyChanging(System.String)">
             <summary>
             Raises the <see cref="E:BytecodeApi.UI.Controls.ObservableWindow.PropertyChanging" /> event on a property specified by a name.
             </summary>
             <param name="propertyName">A <see cref="T:System.String" /> specifying the name of the property. If <see langword="null" /> is provided, the <see cref="T:System.Runtime.CompilerServices.CallerMemberNameAttribute" /> is used to automatically get the property name.</param>
-        </member>
-        <member name="M:BytecodeApi.UI.Controls.ObservableWindow.RaisePropertyChanged``1(System.Linq.Expressions.Expression{System.Func{``0}})">
-            <summary>
-            Raises the <see cref="E:BytecodeApi.UI.Controls.ObservableWindow.PropertyChanged" /> event on any custom property. <see cref="M:BytecodeApi.UI.Controls.ObservableWindow.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Controls.ObservableWindow.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" /> do not necessarily need to be used in conjunction with this method. Likewise, this method is not required when using <see cref="M:BytecodeApi.UI.Controls.ObservableWindow.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Controls.ObservableWindow.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" />.
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
         </member>
         <member name="M:BytecodeApi.UI.Controls.ObservableWindow.RaisePropertyChanged(System.String)">
             <summary>
@@ -616,7 +480,7 @@
         </member>
         <member name="T:BytecodeApi.UI.Converters.ByteSizeConverter">
             <summary>
-            Represents the converter that converts <see cref="T:System.UInt64" />? values (or values that are convertible to <see cref="T:System.UInt64" />) representing a byte size to an equivalent <see cref="T:System.String" /> representation. The <see cref="M:BytecodeApi.UI.Converters.ByteSizeConverter.Convert(System.Object)" /> method returns a <see cref="T:System.String" /> based on the specified parameters using the <see cref="M:BytecodeApi.Mathematics.ByteSize.Format" /> method.
+            Represents the converter that converts <see cref="T:System.Int64" />? values (or values that are convertible to <see cref="T:System.Int64" />) representing a byte size to an equivalent <see cref="T:System.String" /> representation. The <see cref="M:BytecodeApi.UI.Converters.ByteSizeConverter.Convert(System.Object)" /> method returns a <see cref="T:System.String" /> based on the specified parameters using the <see cref="M:BytecodeApi.Mathematics.ByteSize.Format" /> method.
             </summary>
         </member>
         <member name="P:BytecodeApi.UI.Converters.ByteSizeConverter.Unit">
@@ -721,9 +585,9 @@
         </member>
         <member name="M:BytecodeApi.UI.Converters.ByteSizeConverter.Convert(System.Object)">
             <summary>
-            Converts the <see cref="T:System.Object" /> that is convertible to an <see cref="T:System.UInt64" />? value based on the specified parameters.
+            Converts the <see cref="T:System.Object" /> that is convertible to an <see cref="T:System.Int64" />? value based on the specified parameters.
             </summary>
-            <param name="value">The <see cref="T:System.Object" /> that is convertible to an <see cref="T:System.UInt64" />? value to convert.</param>
+            <param name="value">The <see cref="T:System.Object" /> that is convertible to an <see cref="T:System.Int64" />? value to convert.</param>
             <returns>
             A <see cref="T:System.String" /> with the result of the conversion.
             </returns>
@@ -1252,6 +1116,11 @@
         <member name="F:BytecodeApi.UI.Converters.StringConverterMethod.EndsWithIgnoreCase">
             <summary>
             Returns a <see cref="T:System.Boolean" /> value indicating whether the end of the <see cref="T:System.String" /> value matches the <see cref="T:System.String" /> parameter, ignoring character casing.
+            </summary>
+        </member>
+        <member name="F:BytecodeApi.UI.Converters.StringConverterMethod.Reverse">
+            <summary>
+            Reverses the sequence of all characters in the <see cref="T:System.String" /> value.
             </summary>
         </member>
         <member name="F:BytecodeApi.UI.Converters.StringConverterMethod.Contains">
@@ -2467,69 +2336,23 @@
             Initializes a new instance of the <see cref="T:BytecodeApi.UI.Data.ObservableObject" /> class.
             </summary>
         </member>
-        <member name="M:BytecodeApi.UI.Data.ObservableObject.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})">
+        <member name="M:BytecodeApi.UI.Data.ObservableObject.Set``1(``0@,``0,System.String)">
             <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
+            Method that can be used by the <see langword="set" /> accessor of a property. This method raises the <see cref="E:BytecodeApi.UI.Data.ObservableObject.PropertyChanging" /> event and the <see cref="E:BytecodeApi.UI.Data.ObservableObject.PropertyChanged" /> event.
             </summary>
             <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
+            <param name="field">A reference to the backing field of the property.</param>
+            <param name="value">The new value for the property.</param>
+            <param name="propertyName">A <see cref="T:System.String" /> specifying the name of the property. If <see langword="null" /> is provided, the <see cref="T:System.Runtime.CompilerServices.CallerMemberNameAttribute" /> is used to automatically get the property name.</param>
             <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
+            <see langword="true" />, if the value changed; <see langword="false" />, if the new value is equal to the old value.
             </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Data.ObservableObject.Get``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)">
-            <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo, 1); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="defaultValue">A default value. This parameter can be used as a property initializer.</param>
-            <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
-            </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Data.ObservableObject.Get``1(System.Linq.Expressions.Expression{System.Func{``0}},System.Func{``0})">
-            <summary>
-            Method that can be used by the <see langword="get" /> accessor of a property. Backing fields are managed automatically.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo, () => 1); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="defaultValue">A <see cref="T:System.Func`1" /> that retrieves a default value. This delegate can be used as a property initializer. <paramref name="defaultValue" /> is invoked, if the property is retrieved for the first time and is not set.</param>
-            <returns>
-            The value of the property backing field. The default value is <see langword="default" />(<typeparamref name="T" />).
-            </returns>
-        </member>
-        <member name="M:BytecodeApi.UI.Data.ObservableObject.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)">
-            <summary>
-            Method that can be used by the <see langword="set" /> accessor of a property. Backing fields are managed automatically. This method raises the <see cref="E:BytecodeApi.UI.Data.ObservableObject.PropertyChanging" /> event and the <see cref="E:BytecodeApi.UI.Data.ObservableObject.PropertyChanged" /> event.
-            <para>Example: <see langword="public" /> <see cref="T:System.Int32" /> Foo { <see langword="get" /> => Get(() => Foo); <see langword="set" /> => Set(() => Foo, <see langword="value" />); }</para>
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
-            <param name="value">The value.</param>
-        </member>
-        <member name="M:BytecodeApi.UI.Data.ObservableObject.RaisePropertyChanging``1(System.Linq.Expressions.Expression{System.Func{``0}})">
-            <summary>
-            Raises the <see cref="E:BytecodeApi.UI.Data.ObservableObject.PropertyChanging" /> event on any custom property. <see cref="M:BytecodeApi.UI.Data.ObservableObject.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Data.ObservableObject.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" /> do not necessarily need to be used in conjunction with this method. Likewise, this method is not required when using <see cref="M:BytecodeApi.UI.Data.ObservableObject.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Data.ObservableObject.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" />.
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
         </member>
         <member name="M:BytecodeApi.UI.Data.ObservableObject.RaisePropertyChanging(System.String)">
             <summary>
             Raises the <see cref="E:BytecodeApi.UI.Data.ObservableObject.PropertyChanging" /> event on a property specified by a name.
             </summary>
             <param name="propertyName">A <see cref="T:System.String" /> specifying the name of the property. If <see langword="null" /> is provided, the <see cref="T:System.Runtime.CompilerServices.CallerMemberNameAttribute" /> is used to automatically get the property name.</param>
-        </member>
-        <member name="M:BytecodeApi.UI.Data.ObservableObject.RaisePropertyChanged``1(System.Linq.Expressions.Expression{System.Func{``0}})">
-            <summary>
-            Raises the <see cref="E:BytecodeApi.UI.Data.ObservableObject.PropertyChanged" /> event on any custom property. <see cref="M:BytecodeApi.UI.Data.ObservableObject.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Data.ObservableObject.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" /> do not necessarily need to be used in conjunction with this method. Likewise, this method is not required when using <see cref="M:BytecodeApi.UI.Data.ObservableObject.Get``1(System.Linq.Expressions.Expression{System.Func{``0}})" /> and <see cref="M:BytecodeApi.UI.Data.ObservableObject.Set``1(System.Linq.Expressions.Expression{System.Func{``0}},``0)" />.
-            </summary>
-            <typeparam name="T">The type of the property.</typeparam>
-            <param name="property">The strongly typed lambda expression of the property.</param>
         </member>
         <member name="M:BytecodeApi.UI.Data.ObservableObject.RaisePropertyChanged(System.String)">
             <summary>

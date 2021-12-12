@@ -19,21 +19,32 @@ namespace TestConsole
 		private static readonly Icon DefaultIcon = FileEx.GetIcon(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "svchost.exe"), false);
 		private static readonly Dictionary<string, Icon> IconCache = new Dictionary<string, Icon>();
 
+		private int _Id;
+		private string _Name;
+		private bool? _Is64Bit;
+		private ProcessIntegrityLevel? _IntegrityLevel;
+		private string _User;
+		private Icon _Icon;
+		private bool _CanInject;
+		private bool _IsInjected;
+		private bool _IsR77Service;
+		private bool _IsHelper;
+		private bool _IsHiddenById;
 		/// <summary>
 		/// The process ID.
 		/// </summary>
 		public int Id
 		{
-			get => Get(() => Id);
-			set => Set(() => Id, value);
+			get => _Id;
+			set => Set(ref _Id, value);
 		}
 		/// <summary>
 		/// The name of the process.
 		/// </summary>
 		public string Name
 		{
-			get => Get(() => Name);
-			set => Set(() => Name, value);
+			get => _Name;
+			set => Set(ref _Name, value);
 		}
 		/// <summary>
 		/// A <see cref="bool" /> value, indicating whether the process is 64-bit or 32-bit.
@@ -41,8 +52,8 @@ namespace TestConsole
 		/// </summary>
 		public bool? Is64Bit
 		{
-			get => Get(() => Is64Bit);
-			set => Set(() => Is64Bit, value);
+			get => _Is64Bit;
+			set => Set(ref _Is64Bit, value);
 		}
 		/// <summary>
 		/// The integrity level of the process.
@@ -50,8 +61,8 @@ namespace TestConsole
 		/// </summary>
 		public ProcessIntegrityLevel? IntegrityLevel
 		{
-			get => Get(() => IntegrityLevel);
-			set => Set(() => IntegrityLevel, value);
+			get => _IntegrityLevel;
+			set => Set(ref _IntegrityLevel, value);
 		}
 		/// <summary>
 		/// The username of the process.
@@ -59,56 +70,56 @@ namespace TestConsole
 		/// </summary>
 		public string User
 		{
-			get => Get(() => User);
-			set => Set(() => User, value);
+			get => _User;
+			set => Set(ref _User, value);
 		}
 		/// <summary>
 		/// The icon of the executable file.
 		/// </summary>
 		public Icon Icon
 		{
-			get => Get(() => Icon);
-			set => Set(() => Icon, value);
+			get => _Icon;
+			set => Set(ref _Icon, value);
 		}
 		/// <summary>
 		/// A <see cref="bool" /> value, indicating whether the process can be injected.
 		/// </summary>
 		public bool CanInject
 		{
-			get => Get(() => CanInject);
-			set => Set(() => CanInject, value);
+			get => _CanInject;
+			set => Set(ref _CanInject, value);
 		}
 		/// <summary>
 		/// A <see cref="bool" /> value, indicating whether the process is injected.
 		/// </summary>
 		public bool IsInjected
 		{
-			get => Get(() => IsInjected);
-			set => Set(() => IsInjected, value);
+			get => _IsInjected;
+			set => Set(ref _IsInjected, value);
 		}
 		/// <summary>
 		/// A <see cref="bool" /> value, indicating whether the process is the r77 service process.
 		/// </summary>
 		public bool IsR77Service
 		{
-			get => Get(() => IsR77Service);
-			set => Set(() => IsR77Service, value);
+			get => _IsR77Service;
+			set => Set(ref _IsR77Service, value);
 		}
 		/// <summary>
 		/// A <see cref="bool" /> value, indicating whether the process is an r77 helper process.
 		/// </summary>
 		public bool IsHelper
 		{
-			get => Get(() => IsHelper);
-			set => Set(() => IsHelper, value);
+			get => _IsHelper;
+			set => Set(ref _IsHelper, value);
 		}
 		/// <summary>
 		/// A <see cref="bool" /> value, indicating whether the process is hidden by ID.
 		/// </summary>
 		public bool IsHiddenById
 		{
-			get => Get(() => IsHiddenById);
-			set => Set(() => IsHiddenById, value);
+			get => _IsHiddenById;
+			set => Set(ref _IsHiddenById, value);
 		}
 
 		private ProcessView()
