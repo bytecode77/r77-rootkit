@@ -392,6 +392,14 @@ BOOL RunScheduledTask(LPCWSTR name);
 /// otherwise, FALSE.
 /// </returns>
 BOOL DeleteScheduledTask(LPCWSTR name);
+/// <summary>
+/// Creates a named pipe that is accessible by every process.
+/// </summary>
+/// <param name="name">The name of the named pipe to be created.</param>
+/// <returns>
+/// A handle to the newly created named pipe, or INVALID_HANDLE_VALUE, if creation failed.
+/// </returns>
+HANDLE CreatePublicNamedPipe(LPCWSTR name);
 
 /// <summary>
 /// Injects a DLL using reflective DLL injection.

