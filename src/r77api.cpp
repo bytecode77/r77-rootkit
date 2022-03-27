@@ -261,6 +261,28 @@ BOOL ReadFileContent(LPCWSTR path, LPBYTE *data, LPDWORD size)
 
 	return result;
 }
+BOOL ReadFileStringW(HANDLE file, PWCHAR str, DWORD length)
+{
+	BOOL result = FALSE;
+
+	for (DWORD count = 0; count < length; count++)
+	{
+		DWORD bytesRead;
+		if (!ReadFile(file, &str[count], sizeof(WCHAR), &bytesRead, NULL) || bytesRead != sizeof(WCHAR))
+		{
+			result = FALSE;
+			break;
+		}
+
+		if (str[count] == L'\0')
+		{
+			result = TRUE;
+			break;
+		}
+	}
+
+	return result;
+}
 BOOL WriteFileContent(LPCWSTR path, LPBYTE data, DWORD size)
 {
 	BOOL result = FALSE;
@@ -1261,6 +1283,40 @@ PNEW_PROCESS_LISTENER NewProcessListener(DWORD interval, PROCESSIDCALLBACK callb
 	return notifier;
 }
 
+DWORD WINAPI ControlPipeListenerThread(LPVOID parameter)
+{
+	while (true)
+	{
+		HANDLE pipe = CreatePublicNamedPipe(sizeof(LPVOID) == 4 ? CONTROL_PIPE_NAME : CONTROL_PIPE_REDIRECT64_NAME);
+		while (pipe != INVALID_HANDLE_VALUE)
+		{
+			if (ConnectNamedPipe(pipe, NULL))
+			{
+				DWORD controlCode;
+				DWORD bytesRead;
+				if (ReadFile(pipe, &controlCode, 4, &bytesRead, NULL) && bytesRead == sizeof(DWORD))
+				{
+					((CONTROLCALLBACK)parameter)(controlCode, pipe);
+				}
+			}
+			else
+			{
+				Sleep(1);
+			}
+
+			DisconnectNamedPipe(pipe);
+		}
+
+		Sleep(1);
+	}
+
+	return 0;
+}
+VOID ControlPipeListener(CONTROLCALLBACK callback)
+{
+	CreateThread(NULL, 0, ControlPipeListenerThread, callback, 0, NULL);
+}
+
 namespace nt
 {
 	NTSTATUS NTAPI NtQueryObject(HANDLE handle, nt::OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength)
@@ -1272,5 +1328,13 @@ namespace nt
 		// Use NtCreateThreadEx instead of CreateRemoteThread.
 		// CreateRemoteThread does not work across sessions in Windows 7.
 		return ((nt::NTCREATETHREADEX)GetFunction("ntdll.dll", "NtCreateThreadEx"))(thread, desiredAccess, objectAttributes, processHandle, startAddress, parameter, flags, stackZeroBits, sizeOfStackCommit, sizeOfStackReserve, bytesBuffer);
+	}
+	NTSTATUS NTAPI RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue)
+	{
+		return ((nt::RTLADJUSTPRIVILEGE)GetFunction("ntdll.dll", "RtlAdjustPrivilege"))(privilege, enablePrivilege, isThreadPrivilege, previousValue);
+	}
+	NTSTATUS NTAPI RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb)
+	{
+		return ((nt::RTLSETPROCESSISCRITICAL)GetFunction("ntdll.dll", "RtlSetProcessIsCritical"))(newIsCritical, oldIsCritical, needScb);
 	}
 }
