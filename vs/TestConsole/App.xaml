@@ -39,6 +39,21 @@
 			</Style.Triggers>
 		</Style>
 
+		<Style x:Key="UIBUtton" TargetType="{x:Type Button}">
+			<Setter Property="Padding" Value="8,3" />
+		</Style>
+		<Style x:Key="UITextBox" TargetType="{x:Type TextBox}">
+			<Setter Property="Padding" Value="3" />
+			<Style.Triggers>
+				<Trigger Property="IsEnabled" Value="False">
+					<Setter Property="Background" Value="#f0f0f0" />
+				</Trigger>
+			</Style.Triggers>
+		</Style>
+		<Style x:Key="UIGroupBox" TargetType="{x:Type GroupBox}">
+			<Setter Property="Padding" Value="10" />
+		</Style>
+
 		<Style x:Key="ImageNoDisabledEffect" TargetType="{x:Type Image}" />
 	</Application.Resources>
 </Application>
