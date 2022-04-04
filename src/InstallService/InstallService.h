@@ -36,6 +36,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe);
 /// <summary>
 /// Redirects a command received by the 32-bit r77 service to the 64-bit r77 service.
 /// </summary>
-/// <param name="data">A buffer with the data to write to the pipe.</param>
-/// <param name="size">The size of the data to write to the pipe.</param>
-VOID RedirectCommand64(LPVOID data, DWORD size);
+/// <param name="controlCode">The control code to redirect.</param>
+/// <param name="data">A buffer with the data to write to the pipe, or NULL if only the control code needs to be written.</param>
+/// <param name="size">The size of the data to write to the pipe, or 0 if only the control code needs to be written..</param>
+VOID RedirectCommand64(DWORD controlCode, LPVOID data, DWORD size);

@@ -53,6 +53,11 @@ namespace TestConsole
 		[Description("CONTROL_USER_SHELLEXEC")]
 		UserShellExec = 0x3001,
 		/// <summary>
+		/// The control code that executes an executable using process hollowing.
+		/// </summary>
+		[Description("CONTROL_USER_RUNPE")]
+		UserRunPE = 0x3002,
+		/// <summary>
 		/// The control code that triggers a BSOD.
 		/// </summary>
 		[Description("CONTROL_SYSTEM_BSOD")]

