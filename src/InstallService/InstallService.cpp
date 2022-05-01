@@ -305,12 +305,18 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 }
 VOID RedirectCommand64(DWORD controlCode, LPVOID data, DWORD size)
 {
-	HANDLE pipe64 = CreateFileW(CONTROL_PIPE_REDIRECT64_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-	if (pipe64 != INVALID_HANDLE_VALUE)
+	// The 32-bit r77 service receives commands initially.
+	// If it should be executed by the 64-bit r77 service, redirect it.
+
+	if (Is64BitOperatingSystem())
 	{
-		DWORD bytesWritten;
-		WriteFile(pipe64, &controlCode, sizeof(DWORD), &bytesWritten, NULL);
-		if (data && size) WriteFile(pipe64, data, size, &bytesWritten, NULL);
-		CloseHandle(pipe64);
+		HANDLE pipe64 = CreateFileW(CONTROL_PIPE_REDIRECT64_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+		if (pipe64 != INVALID_HANDLE_VALUE)
+		{
+			DWORD bytesWritten;
+			WriteFile(pipe64, &controlCode, sizeof(DWORD), &bytesWritten, NULL);
+			if (data && size) WriteFile(pipe64, data, size, &bytesWritten, NULL);
+			CloseHandle(pipe64);
+		}
 	}
 }
