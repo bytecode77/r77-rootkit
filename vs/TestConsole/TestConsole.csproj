@@ -69,8 +69,9 @@
     <Compile Include="..\..\src\GlobalAssemblyInfo.cs">
       <Link>Properties\GlobalAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Controller\ControlCode.cs" />
     <Compile Include="Controller\AppResources.cs" />
-    <Compile Include="Controller\Win32.cs" />
+    <Compile Include="Controller\ControlPipe.cs" />
     <Compile Include="Model\Logging\LogDetailsItem.cs" />
     <Compile Include="Model\Logging\LogLinkItem.cs" />
     <Compile Include="Model\Logging\LogMessageType.cs" />
@@ -159,6 +160,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Pdf16.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Processes16.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ControlPipe16.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

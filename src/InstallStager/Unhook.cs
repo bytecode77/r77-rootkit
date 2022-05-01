@@ -33,13 +33,13 @@ public static class Unhook
 							IntPtr dllMappedFile = MapViewOfFile(dllMapping, 4, 0, 0, IntPtr.Zero);
 							if (dllMappedFile != IntPtr.Zero)
 							{
-								int ntHeader = Marshal.ReadInt32((IntPtr)((long)moduleInfo.BaseOfDll + 0x3c));
-								short numberOfSections = Marshal.ReadInt16((IntPtr)((long)dll + ntHeader + 0x6));
-								short sizeOfOptionalHeader = Marshal.ReadInt16(dll, ntHeader + 0x14);
+								int ntHeaders = Marshal.ReadInt32((IntPtr)((long)moduleInfo.BaseOfDll + 0x3c));
+								short numberOfSections = Marshal.ReadInt16((IntPtr)((long)dll + ntHeaders + 0x6));
+								short sizeOfOptionalHeader = Marshal.ReadInt16(dll, ntHeaders + 0x14);
 
 								for (short i = 0; i < numberOfSections; i++)
 								{
-									IntPtr sectionHeader = (IntPtr)((long)dll + ntHeader + 0x18 + sizeOfOptionalHeader + i * 0x28);
+									IntPtr sectionHeader = (IntPtr)((long)dll + ntHeaders + 0x18 + sizeOfOptionalHeader + i * 0x28);
 
 									// Find the .text section of the hooked DLL and overwrite it with the original DLL section
 									if (Marshal.ReadByte(sectionHeader) == '.' &&

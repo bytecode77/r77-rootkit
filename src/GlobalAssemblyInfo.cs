@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 
-[assembly: AssemblyVersion("1.2.1")]
-[assembly: AssemblyFileVersion("1.2.1")]
+[assembly: AssemblyVersion("1.3.0")]
+[assembly: AssemblyFileVersion("1.3.0")]
 [assembly: AssemblyCopyright("© bytecode77, 2021.")]
 
 namespace Global
@@ -12,5 +12,6 @@ namespace Global
 		public const string HidePrefix = "$77";
 		public const ushort R77ServiceSignature = 0x7273;
 		public const ushort R77HelperSignature = 0x7268;
+		public const string ControlPipeName = HidePrefix + "control";
 	}
 }

