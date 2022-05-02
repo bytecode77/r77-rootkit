@@ -442,7 +442,7 @@ namespace TestConsole
 				case "Documentation":
 					try
 					{
-						byte[] pdf = HttpClient.Default.Get("https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf").ReadBytes();
+						byte[] pdf = HttpClient.Default.Get("https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf").ReadBytes();
 						TempDirectory.ExecuteFile("Technical Documentation.pdf", pdf);
 					}
 					catch (Exception ex)
