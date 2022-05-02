@@ -66,7 +66,7 @@ The command is inline and does not require a .ps1 script. Here, the .NET Framewo
 
 No executables or DLL's are ever stored on the disk. The stager is stored in the registry and loads the r77 service executable from its resources.
 
-The PowerShell and .NET dependencies are present in a fresh installation of Windows 7 and Windows 10. Please review the [documentation](https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf) for a complete description of the fileless initialization.
+The PowerShell and .NET dependencies are present in a fresh installation of Windows 7 and Windows 10. Please review the [documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf) for a complete description of the fileless initialization.
 
 ## Hooking
 
@@ -99,13 +99,13 @@ The Test Console can be used to inject r77 to or detach r77 from individual proc
 
 ## Technical Documentation
 
-Please read the [technical documentation](https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf) to get a comprehensive and full overview of r77 and its internals, and how to deploy and integrate it.
+Please read the [technical documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf) to get a comprehensive and full overview of r77 and its internals, and how to deploy and integrate it.
 
 ## Downloads
 
 [![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.3.0.zip](https://bytecode77.com/downloads/r77Rootkit%201.3.0.zip)
 (**ZIP Password:** bytecode77)<br />
-[![](https://bytecode77.com/public/fileicons/pdf.png) Technical Documentation](https://bytecode77.com/downloads/r77%20Rootkit%20Technical%20Documentation.pdf)
+[![](https://bytecode77.com/public/fileicons/pdf.png) Technical Documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf)
 
 ## Project Page
 
