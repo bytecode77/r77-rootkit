@@ -351,53 +351,92 @@ BOOL CreateScheduledTask(LPCWSTR name, LPCWSTR directory, LPCWSTR fileName, LPCW
 {
 	BOOL result = FALSE;
 
-	if (SUCCEEDED(CoInitialize(NULL)))
+	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
 	{
-		ITaskScheduler *taskScheduler = NULL;
-		if (SUCCEEDED(CoCreateInstance(CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskScheduler, (LPVOID*)&taskScheduler)))
+		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
 		{
-			ITask *task = NULL;
-			if (SUCCEEDED(taskScheduler->NewWorkItem(name, CLSID_CTask, IID_ITask, (IUnknown**)&task)))
+			ITaskService *service = NULL;
+			if (SUCCEEDED(CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (LPVOID*)&service)))
 			{
-				if (SUCCEEDED(task->SetWorkingDirectory(directory)) &&
-					SUCCEEDED(task->SetApplicationName(fileName)) &&
-					SUCCEEDED(task->SetParameters(arguments)) &&
-					SUCCEEDED(task->SetAccountInformation(L"", NULL)))
+				if (SUCCEEDED(service->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t())))
 				{
-					WORD triggerId;
-					ITaskTrigger *trigger = NULL;
-					if (SUCCEEDED(task->CreateTrigger(&triggerId, &trigger)))
+					ITaskFolder *folder = NULL;
+					if (SUCCEEDED(service->GetFolder(_bstr_t(L"\\"), &folder)))
 					{
-						TASK_TRIGGER triggerDetails;
-						ZeroMemory(&triggerDetails, sizeof(TASK_TRIGGER));
-						triggerDetails.cbTriggerSize = sizeof(TASK_TRIGGER);
-						triggerDetails.TriggerType = TASK_EVENT_TRIGGER_AT_SYSTEMSTART;
-						triggerDetails.wBeginDay = 1;
-						triggerDetails.wBeginMonth = 1;
-						triggerDetails.wBeginYear = 2000;
-
-						if (SUCCEEDED(trigger->SetTrigger(&triggerDetails)))
+						ITaskDefinition *task = NULL;
+						if (SUCCEEDED(service->NewTask(0, &task)))
 						{
-							IPersistFile *persistFile = NULL;
-							if (SUCCEEDED(task->QueryInterface(IID_IPersistFile, (void **)&persistFile)))
+							ITaskSettings *settings = NULL;
+							if (SUCCEEDED(task->get_Settings(&settings)))
 							{
-								if (SUCCEEDED(persistFile->Save(NULL, TRUE)))
+								if (SUCCEEDED(settings->put_StartWhenAvailable(VARIANT_TRUE)))
 								{
-									result = TRUE;
+									ITriggerCollection *triggerCollection = NULL;
+									if (SUCCEEDED(task->get_Triggers(&triggerCollection)))
+									{
+										ITrigger *trigger = NULL;
+										if (SUCCEEDED(triggerCollection->Create(TASK_TRIGGER_BOOT, &trigger)))
+										{
+											IBootTrigger *bootTrigger = NULL;
+											if (SUCCEEDED(trigger->QueryInterface(IID_IBootTrigger, (LPVOID*)&bootTrigger)))
+											{
+												IActionCollection *actionCollection = NULL;
+												if (SUCCEEDED(task->get_Actions(&actionCollection)))
+												{
+													IAction *action = NULL;
+													if (SUCCEEDED(actionCollection->Create(TASK_ACTION_EXEC, &action)))
+													{
+														IExecAction *execAction = NULL;
+														if (SUCCEEDED(action->QueryInterface(IID_IExecAction, (LPVOID*)&execAction)))
+														{
+															if (SUCCEEDED(execAction->put_WorkingDirectory(_bstr_t(directory))) &&
+																SUCCEEDED(execAction->put_Path(_bstr_t(fileName))) &&
+																SUCCEEDED(execAction->put_Arguments(_bstr_t(arguments))))
+															{
+																VARIANT password;
+																password.vt = VT_EMPTY;
+
+																IRegisteredTask *registeredTask = NULL;
+																if (SUCCEEDED(folder->RegisterTaskDefinition(_bstr_t(name), task, TASK_CREATE_OR_UPDATE, _variant_t(L"SYSTEM"), password, TASK_LOGON_SERVICE_ACCOUNT, _variant_t(L""), &registeredTask)))
+																{
+																	result = TRUE;
+
+																	registeredTask->Release();
+																}
+															}
+
+															execAction->Release();
+														}
+
+														action->Release();
+													}
+
+													actionCollection->Release();
+												}
+
+												bootTrigger->Release();
+											}
+
+											trigger->Release();
+										}
+
+										triggerCollection->Release();
+									}
 								}
 
-								persistFile->Release();
+								settings->Release();
 							}
+
+							task->Release();
 						}
 
-						trigger->Release();
+						folder->Release();
 					}
 				}
 
-				task->Release();
+				service->Release();
 			}
-
-			taskScheduler->Release();
 		}
 
 		CoUninitialize();
@@ -409,23 +448,42 @@ BOOL RunScheduledTask(LPCWSTR name)
 {
 	BOOL result = FALSE;
 
-	if (SUCCEEDED(CoInitialize(NULL)))
+	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
 	{
-		ITaskScheduler *taskScheduler = NULL;
-		if (SUCCEEDED(CoCreateInstance(CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskScheduler, (LPVOID*)&taskScheduler)))
+		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
 		{
-			ITask *task = NULL;
-			if (SUCCEEDED(taskScheduler->Activate(name, IID_ITask, (IUnknown**)&task)))
+			ITaskService *service = NULL;
+			if (SUCCEEDED(CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (LPVOID*)&service)))
 			{
-				if (SUCCEEDED(task->Run()))
+				if (SUCCEEDED(service->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t())))
 				{
-					result = TRUE;
+					ITaskFolder *folder = NULL;
+					if (SUCCEEDED(service->GetFolder(_bstr_t(L"\\"), &folder)))
+					{
+						IRegisteredTask *task = NULL;
+						if (SUCCEEDED(folder->GetTask(_bstr_t(name), &task)))
+						{
+							VARIANT params;
+							params.vt = VT_EMPTY;
+
+							IRunningTask *runningTask = NULL;
+							if (SUCCEEDED(task->Run(params, &runningTask)))
+							{
+								result = TRUE;
+
+								runningTask->Release();
+							}
+
+							task->Release();
+						}
+
+						folder->Release();
+					}
 				}
 
-				task->Release();
+				service->Release();
 			}
-
-			taskScheduler->Release();
 		}
 
 		CoUninitialize();
@@ -437,17 +495,30 @@ BOOL DeleteScheduledTask(LPCWSTR name)
 {
 	BOOL result = FALSE;
 
-	if (SUCCEEDED(CoInitialize(NULL)))
+	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
 	{
-		ITaskScheduler *taskScheduler = NULL;
-		if (SUCCEEDED(CoCreateInstance(CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskScheduler, (LPVOID*)&taskScheduler)))
+		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
 		{
-			if (SUCCEEDED(taskScheduler->Delete(name)))
+			ITaskService *service = NULL;
+			if (SUCCEEDED(CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (LPVOID*)&service)))
 			{
-				result = TRUE;
-			}
+				if (SUCCEEDED(service->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t())))
+				{
+					ITaskFolder *folder = NULL;
+					if (SUCCEEDED(service->GetFolder(_bstr_t(L"\\"), &folder)))
+					{
+						if (SUCCEEDED(folder->DeleteTask(_bstr_t(name), 0)))
+						{
+							result = TRUE;
+						}
 
-			taskScheduler->Release();
+						folder->Release();
+					}
+				}
+
+				service->Release();
+			}
 		}
 
 		CoUninitialize();

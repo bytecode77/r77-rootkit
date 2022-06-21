@@ -2,16 +2,18 @@
 #pragma warning(disable: 26812) // The enum type is unscoped. Prefer 'enum class' over 'enum'
 #pragma comment(lib, "ntdll.lib")
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "taskschd.lib")
 
 #include <Windows.h>
 #include <winternl.h>
+#include <comdef.h>
+#include <taskschd.h>
 #include <VersionHelpers.h>
 #include <Shlwapi.h>
 #include <Psapi.h>
 #include <aclapi.h>
 #include <sddl.h>
 #include <initguid.h>
-#include <MSTask.h>
 #include <stdio.h>
 #include <cwchar>
 #include <time.h>
