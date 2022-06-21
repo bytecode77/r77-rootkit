@@ -109,7 +109,7 @@ echo F|xcopy /I /Y "$(TargetPath)" "$(SolutionDir)InstallService64\Resources\r77
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>mkdir "$(SolutionDir)..\$Build"
