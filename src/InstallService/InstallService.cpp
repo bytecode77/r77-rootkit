@@ -61,7 +61,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE previousInstance, LPSTR comma
 	{
 		PR77_CONFIG config = LoadR77Config();
 
-		for (int i = 0; i < config->StartupFiles->Count; i++)
+		for (DWORD i = 0; i < config->StartupFiles->Count; i++)
 		{
 			ShellExecuteW(NULL, L"open", config->StartupFiles->Values[i], NULL, NULL, SW_SHOW);
 		}

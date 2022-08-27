@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30717.126
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsole", "TestConsole\TestConsole.csproj", "{E55F7214-8CC4-4E1D-AEDB-C908D23902A4}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -48,14 +48,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "r77", "r77", "{F9701B99-C95
 	ProjectSection(SolutionItems) = preProject
 		..\src\r77\Config.cpp = ..\src\r77\Config.cpp
 		..\src\r77\Config.h = ..\src\r77\Config.h
-		..\src\r77\Debug.cpp = ..\src\r77\Debug.cpp
-		..\src\r77\Debug.h = ..\src\r77\Debug.h
 		..\src\r77\detours.h = ..\src\r77\detours.h
 		..\src\r77\Hooks.cpp = ..\src\r77\Hooks.cpp
 		..\src\r77\Hooks.h = ..\src\r77\Hooks.h
 		..\src\r77\r77.h = ..\src\r77\r77.h
-		..\src\r77\ReflectiveDll.cpp = ..\src\r77\ReflectiveDll.cpp
-		..\src\r77\ReflectiveDll.h = ..\src\r77\ReflectiveDll.h
 		..\src\r77\Register.cpp = ..\src\r77\Register.cpp
 		..\src\r77\Register.h = ..\src\r77\Register.h
 		..\src\r77\Rootkit.cpp = ..\src\r77\Rootkit.cpp
