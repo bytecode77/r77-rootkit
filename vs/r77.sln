@@ -144,6 +144,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Helper", "Helper", "{DEB291
 		..\src\Helper\Helper.h = ..\src\Helper\Helper.h
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "InstallShellcode", "InstallShellcode", "{43D1C7C4-FE5D-4758-A86C-28DA780D46F0}"
+	ProjectSection(SolutionItems) = preProject
+		..\src\InstallShellcode\InstallShellcode.asm = ..\src\InstallShellcode\InstallShellcode.asm
+		..\src\InstallShellcode\nt.inc = ..\src\InstallShellcode\nt.inc
+		..\src\InstallShellcode\PebApi.asm = ..\src\InstallShellcode\PebApi.asm
+		..\src\InstallShellcode\PebApi.inc = ..\src\InstallShellcode\PebApi.inc
+		..\src\InstallShellcode\RunPE.asm = ..\src\InstallShellcode\RunPE.asm
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -216,6 +225,7 @@ Global
 		{F4C656D1-8E26-4B38-96B8-3BF21BA2637C} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
 		{FB4DDDB6-6A4F-45E1-9B15-17477CCB3631} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
 		{DEB2910E-1CBA-4E1B-AEC0-BAD6A325983F} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
+		{43D1C7C4-FE5D-4758-A86C-28DA780D46F0} = {F9ACA875-3756-47C7-ACA6-4AE8C07428CB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A070C206-A2CD-4C8A-878F-A43650D1A3B1}

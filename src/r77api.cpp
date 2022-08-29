@@ -1657,7 +1657,7 @@ namespace nt
 
 namespace libc
 {
-	void memcpy(LPBYTE dest, LPBYTE src, DWORD size)
+	VOID memcpy(LPBYTE dest, LPBYTE src, DWORD size)
 	{
 		for (DWORD i = 0; i < size; i++)
 		{

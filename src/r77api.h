@@ -787,7 +787,7 @@ namespace nt
 // Shellcode variants of libc functions; Used by the reflective loader, prior to any DLL's being loaded
 namespace libc
 {
-	void memcpy(LPBYTE dest, LPBYTE src, DWORD size);
+	VOID memcpy(LPBYTE dest, LPBYTE src, DWORD size);
 	DWORD strhash(LPCSTR str);
 	DWORD strhashi(LPCSTR str, USHORT length);
 }
