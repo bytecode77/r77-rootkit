@@ -11,8 +11,6 @@ r77 is a ring 3 Rootkit that hides following entities from all processes:
  - Services
  - TCP & UDP connections
 
-It is compatible with Windows 7 and Windows 10 in both x64 and x86 editions.
-
 ## Hiding by prefix
 
 All entities where the name starts with `"$77"` are hidden.
@@ -25,15 +23,37 @@ The dynamic configuration system allows to hide processes by **PID** and by **na
 
 ![](https://bytecode77.com/images/pages/r77-rootkit/config.png)
 
-The configuration is stored in `HKEY_LOCAL_MACHINE\SOFTWARE\$77config` and is writable by any process without elevated privileges. The DACL of this key is set to grant full access to any user.
+The configuration is located in `HKEY_LOCAL_MACHINE\SOFTWARE\$77config` and is writable by any process without elevated privileges. The DACL of this key is set to grant full access to any user.
 
 The `$77config` key is hidden when RegEdit is injected with the rootkit.
 
 ## Installer
 
-r77 is deployable using a single file `"Install.exe"`. It installs the r77 service that starts before the first user is logged on. This background process injects all currently running processes, as well as processes that spawn later. Two processes are needed to inject both 32-bit and 64-bit processes. Both processes are hidden by ID using the configuration system.
+r77 is deployable using a single file `"Install.exe"`. The installer persists r77 and injects all currently running processes.
 
 `Uninstall.exe` removes r77 from the system and gracefully detaches the rootkit from all processes.
+
+`Install.shellcode` is the shellcode equivalent of the installer. This way, the installer can be integrated without dropping `Install.exe`. It can simply be loaded into memory, casted to a function pointer, and executed:
+
+```
+int main()
+{
+	// 1. Load Install.shellcode from resources or from a BYTE[]
+	// Ideally, encrypt the file and decrypt it here to avoid scantime detection.
+	LPBYTE shellCode = ...
+
+	// 2. Make the shellcode RWX.
+	DWORD oldProtect;
+	VirtualProtect(shellCode, shellCodeSize, PAGE_EXECUTE_READWRITE, &oldProtect);
+
+	// 3. Cast the buffer to a function pointer and execute it.
+	((void(*)())shellCode)();
+
+	// This is the fileless equivalent to executing Install.exe.
+
+	return 0;
+}
+```
 
 ## Child process hooking
 
@@ -103,7 +123,7 @@ Please read the [technical documentation](https://docs.bytecode77.com/r77-rootki
 
 ## Downloads
 
-[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.3.0.zip](https://downloads.bytecode77.com/r77Rootkit%201.3.0.zip)
+[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.4.0.zip](https://downloads.bytecode77.com/r77Rootkit%201.4.0.zip)
 (**ZIP Password:** bytecode77)<br />
 [![](https://bytecode77.com/public/fileicons/pdf.png) Technical Documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf)
 
