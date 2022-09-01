@@ -540,6 +540,108 @@ namespace nt
 		ObjectDataInformation
 	} OBJECT_INFORMATION_CLASS, *POBJECT_INFORMATION_CLASS;
 
+	typedef struct _LDR_DATA_TABLE_ENTRY
+	{
+		LIST_ENTRY InMemoryOrderModuleList;
+		LIST_ENTRY InInitializationOrderModuleList;
+		LPVOID DllBase;
+		LPVOID EntryPoint;
+		ULONG SizeOfImage;
+		UNICODE_STRING FullDllName;
+		UNICODE_STRING BaseDllName;
+		ULONG Flags;
+		SHORT LoadCount;
+		SHORT TlsIndex;
+		LIST_ENTRY HashTableEntry;
+		ULONG TimeDateStamp;
+	} LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
+
+	typedef struct _PEB_LDR_DATA
+	{
+		DWORD Length;
+		DWORD Initialized;
+		LPVOID SsHandle;
+		LIST_ENTRY InLoadOrderModuleList;
+		LIST_ENTRY InMemoryOrderModuleList;
+		LIST_ENTRY InInitializationOrderModuleList;
+		LPVOID EntryInProgress;
+	} PEB_LDR_DATA, *PPEB_LDR_DATA;
+
+	typedef struct _PEB
+	{
+		BYTE InheritedAddressSpace;
+		BYTE ReadImageFileExecOptions;
+		BYTE BeingDebugged;
+		BYTE SpareBool;
+		LPVOID Mutant;
+		LPVOID ImageBaseAddress;
+		PPEB_LDR_DATA Ldr;
+		LPVOID ProcessParameters;
+		LPVOID SubSystemData;
+		LPVOID ProcessHeap;
+		PRTL_CRITICAL_SECTION FastPebLock;
+		LPVOID FastPebLockRoutine;
+		LPVOID FastPebUnlockRoutine;
+		DWORD EnvironmentUpdateCount;
+		LPVOID KernelCallbackTable;
+		DWORD SystemReserved;
+		DWORD AtlThunkSListPtr32;
+		LPVOID FreeList;
+		DWORD TlsExpansionCounter;
+		LPVOID TlsBitmap;
+		DWORD TlsBitmapBits[2];
+		LPVOID ReadOnlySharedMemoryBase;
+		LPVOID ReadOnlySharedMemoryHeap;
+		LPVOID ReadOnlyStaticServerData;
+		LPVOID AnsiCodePageData;
+		LPVOID OemCodePageData;
+		LPVOID UnicodeCaseTableData;
+		DWORD NumberOfProcessors;
+		DWORD NtGlobalFlag;
+		LARGE_INTEGER CriticalSectionTimeout;
+		DWORD HeapSegmentReserve;
+		DWORD HeapSegmentCommit;
+		DWORD HeapDeCommitTotalFreeThreshold;
+		DWORD HeapDeCommitFreeBlockThreshold;
+		DWORD NumberOfHeaps;
+		DWORD MaximumNumberOfHeaps;
+		LPVOID ProcessHeaps;
+		LPVOID GdiSharedHandleTable;
+		LPVOID ProcessStarterHelper;
+		DWORD GdiDCAttributeList;
+		LPVOID LoaderLock;
+		DWORD OSMajorVersion;
+		DWORD OSMinorVersion;
+		WORD OSBuildNumber;
+		WORD OSCSDVersion;
+		DWORD OSPlatformId;
+		DWORD ImageSubsystem;
+		DWORD ImageSubsystemMajorVersion;
+		DWORD ImageSubsystemMinorVersion;
+		DWORD ImageProcessAffinityMask;
+		DWORD GdiHandleBuffer[34];
+		LPVOID PostProcessInitRoutine;
+		LPVOID TlsExpansionBitmap;
+		DWORD TlsExpansionBitmapBits[32];
+		DWORD SessionId;
+		ULARGE_INTEGER AppCompatFlags;
+		ULARGE_INTEGER AppCompatFlagsUser;
+		LPVOID ShimData;
+		LPVOID AppCompatInfo;
+		UNICODE_STRING CSDVersion;
+		LPVOID ActivationContextData;
+		LPVOID ProcessAssemblyStorageMap;
+		LPVOID SystemDefaultActivationContextData;
+		LPVOID SystemAssemblyStorageMap;
+		DWORD MinimumStackCommit;
+	} PEB, *PPEB;
+
+	typedef struct _IMAGE_RELOC
+	{
+		WORD Offset : 12;
+		WORD Type : 4;
+	} IMAGE_RELOC, *PIMAGE_RELOC;
+
 	typedef NTSTATUS(NTAPI *NTQUERYSYSTEMINFORMATION)(SYSTEM_INFORMATION_CLASS systemInformationClass, LPVOID systemInformation, ULONG systemInformationLength, PULONG returnLength);
 	typedef NTSTATUS(NTAPI *NTRESUMETHREAD)(HANDLE thread, PULONG suspendCount);
 	typedef NTSTATUS(NTAPI *NTQUERYDIRECTORYFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, LPVOID fileInformation, ULONG length, FILE_INFORMATION_CLASS fileInformationClass, BOOLEAN returnSingleEntry, PUNICODE_STRING fileName, BOOLEAN restartScan);
@@ -553,4 +655,9 @@ namespace nt
 	typedef NTSTATUS(NTAPI *NTCREATETHREADEX)(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
 	typedef NTSTATUS(NTAPI *RTLADJUSTPRIVILEGE)(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue);
 	typedef NTSTATUS(NTAPI *RTLSETPROCESSISCRITICAL)(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb);
+	typedef DWORD(NTAPI *NTFLUSHINSTRUCTIONCACHE)(HANDLE process, LPVOID baseAddress, ULONG size);
+	typedef HMODULE(WINAPI *LOADLIBRARYA)(LPCSTR fileName);
+	typedef FARPROC(WINAPI *GETPROCADDRESS)(HMODULE module, LPCSTR function);
+	typedef LPVOID(WINAPI *VIRTUALALLOC)(LPVOID address, SIZE_T size, DWORD allocationType, DWORD protect);
+	typedef BOOL(WINAPI *DLLMAIN)(HINSTANCE module, DWORD reason, LPVOID reserved);
 }

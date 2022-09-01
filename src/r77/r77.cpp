@@ -1,5 +1,4 @@
 #include "r77.h"
-#include "ReflectiveDll.h"
 
 BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 {

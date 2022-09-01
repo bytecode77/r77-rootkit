@@ -81,7 +81,7 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)InstallStager\Resources"
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77service

