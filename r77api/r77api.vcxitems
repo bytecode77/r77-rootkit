@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{525fd9eb-628a-4d93-b320-3c1dfa0a216d}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)clist.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)r77config.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)r77process.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)r77runtime.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)r77win.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)clist.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ntdll.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)r77config.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)r77def.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)r77mindef.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)r77process.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)r77runtime.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)r77win.h" />
+  </ItemGroup>
+</Project>
