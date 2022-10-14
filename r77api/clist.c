@@ -145,7 +145,7 @@ VOID StringListAdd(PSTRING_LIST list, LPCWSTR value)
 		}
 
 		list->Values[list->Count] = NEW_ARRAY(WCHAR, lstrlenW(value) + 1);
-		lstrcpyW(list->Values[list->Count++], value);
+		StrCpyW(list->Values[list->Count++], value);
 	}
 }
 BOOL StringListContains(PSTRING_LIST list, LPCWSTR value)

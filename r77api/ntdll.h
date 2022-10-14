@@ -504,6 +504,10 @@ typedef struct _NT_NSI_PROCESS_ENTRY
 
 typedef struct _NT_NSI_PARAM
 {
+	// It was really daunting to figure out the contents of this struct...
+	// There are lots of examples online with "LPVOID Unknown1, Unknown2" and so on.
+	// However, this should be as close to the actual structure as it gets:
+
 	SIZE_T Reserved1;
 	SIZE_T Reserved2;
 	LPVOID ModuleId;
@@ -514,9 +518,9 @@ typedef struct _NT_NSI_PARAM
 	SIZE_T EntrySize;
 	LPVOID Reserved5;
 	SIZE_T Reserved6;
-	PNT_NSI_STATUS_ENTRY StatusEntries;
-	SIZE_T Reserved7;
-	PNT_NSI_PROCESS_ENTRY ProcessEntries;
+	LPVOID StatusEntries;
+	SIZE_T StatusEntrySize;
+	LPVOID ProcessEntries;
 	SIZE_T ProcessEntrySize;
 	SIZE_T Count;
 } NT_NSI_PARAM, *PNT_NSI_PARAM;

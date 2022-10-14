@@ -2,7 +2,7 @@
 #include "Rootkit.h"
 #include "ReflectiveDllMain.h"
 
-BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
+BOOL WINAPI DllMain(_In_ HINSTANCE module, _In_ DWORD reason, _In_ LPVOID reserved)
 {
 	if (reason == DLL_PROCESS_ATTACH)
 	{

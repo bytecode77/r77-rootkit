@@ -70,7 +70,7 @@
       <AdditionalDependencies>ntdll.lib;shlwapi.lib;taskschd.lib;..\SlnBin\x64\detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir "$(SolutionDir)..\$Build"
+      <Command>mkdir "$(SolutionDir)$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
 echo F|xcopy /I /Y "$(TargetPath)" "$(SolutionDir)Service64\Resources\r77.dll"</Command>
     </PostBuildEvent>
@@ -97,7 +97,7 @@ echo F|xcopy /I /Y "$(TargetPath)" "$(SolutionDir)Service64\Resources\r77.dll"</
       <AdditionalDependencies>ntdll.lib;shlwapi.lib;taskschd.lib;..\SlnBin\x64\detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir "$(SolutionDir)..\$Build"
+      <Command>mkdir "$(SolutionDir)$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
 echo F|xcopy /I /Y "$(TargetPath)" "$(SolutionDir)Service64\Resources\r77.dll"</Command>
     </PostBuildEvent>

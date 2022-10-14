@@ -89,6 +89,8 @@ NTSTATUS NTAPI RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCrit
 }
 BOOL IsWindows10OrGreater2()
 {
+	// This function must re-written in order to be compatible with /NODEFAULTLIB
+
 	OSVERSIONINFOEXW versionInfo;
 	libc_memset(&versionInfo, 0, sizeof(OSVERSIONINFOEXW));
 	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
