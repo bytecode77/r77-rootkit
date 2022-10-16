@@ -3,7 +3,6 @@ using BytecodeApi.IO;
 using BytecodeApi.UI;
 using BytecodeApi.UI.Controls;
 using BytecodeApi.UI.Dialogs;
-using BytecodeApi.UI.Extensions;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -19,12 +18,6 @@ namespace TestConsole
 	{
 		public MainWindowViewModel ViewModel { get; set; }
 
-		public int ProcessListScrollOffset
-		{
-			get => (int)lstProcesses.FindChild<ScrollViewer>(UITreeType.Visual, child => true).VerticalOffset;
-			set => lstProcesses.FindChild<ScrollViewer>(UITreeType.Visual, child => true).ScrollToVerticalOffset(value);
-		}
-
 		public MainWindow()
 		{
 			ViewModel = new MainWindowViewModel(this);
@@ -36,31 +29,15 @@ namespace TestConsole
 		}
 		private void MainWindow_LoadedOnce(object sender, RoutedEventArgs e)
 		{
-			ViewModel.OnLoaded();
+			ViewModel.WriteInitialLogEntries();
 		}
 
-		private void lnkInject_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			if (UIContext.Find<ProcessView>(sender) is ProcessView process) ViewModel.InjectCommand.Execute(process);
-		}
-		private void lnkDetach_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			if (UIContext.Find<ProcessView>(sender) is ProcessView process) ViewModel.DetachCommand.Execute(process);
-		}
-		private void lnkHide_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			if (UIContext.Find<ProcessView>(sender) is ProcessView process) ViewModel.HideCommand.Execute(process);
-		}
-		private void lnkUnhide_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			if (UIContext.Find<ProcessView>(sender) is ProcessView process) ViewModel.UnhideCommand.Execute(process);
-		}
 		private void lnkLogLink_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
 			UIContext.Find<LogLinkItem>(sender).Action();
 		}
 
-		public void WriteLog(LogMessage message, bool silent)
+		public void WriteLog(LogMessage message)
 		{
 			Paragraph paragraph = new Paragraph();
 			Thickness iconMargin = new Thickness(0, 0, 5, -3);
@@ -74,18 +51,18 @@ namespace TestConsole
 					break;
 				case LogMessageType.Information:
 					foreground = Brushes.Black;
-					paragraph.Inlines.Add(AppResources.Image("Information16", 16, 16, iconMargin, true));
-					if (!silent) Desktop.Beep();
+					paragraph.Inlines.Add(App.GetImage("Information16", 16, 16, iconMargin, true));
+					if (!message.Silent) Desktop.Beep();
 					break;
 				case LogMessageType.Warning:
 					foreground = new SolidColorBrush(Color.FromArgb(255, 220, 155, 0));
-					paragraph.Inlines.Add(AppResources.Image("Warning16", 16, 16, iconMargin, true));
-					if (!silent) Desktop.Beep(false);
+					paragraph.Inlines.Add(App.GetImage("Warning16", 16, 16, iconMargin, true));
+					if (!message.Silent) Desktop.Beep(false);
 					break;
 				case LogMessageType.Error:
 					foreground = new SolidColorBrush(Color.FromArgb(255, 165, 40, 20));
-					paragraph.Inlines.Add(AppResources.Image("Error16", 16, 16, iconMargin, true));
-					if (!silent) Desktop.Beep(false);
+					paragraph.Inlines.Add(App.GetImage("Error16", 16, 16, iconMargin, true));
+					if (!message.Silent) Desktop.Beep(false);
 					break;
 				default:
 					throw new InvalidEnumArgumentException();
@@ -130,7 +107,6 @@ namespace TestConsole
 			{
 				inline.Foreground = inline is Hyperlink ? new SolidColorBrush(Color.FromArgb(255, 0, 102, 204)) : foreground;
 			}
-
 
 			txtLog.Document.Blocks.Add(paragraph);
 			txtLog.ScrollToEnd();

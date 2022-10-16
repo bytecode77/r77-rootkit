@@ -67,9 +67,12 @@
     <Compile Include="..\Global\GlobalAssemblyInfo.cs">
       <Link>Properties\GlobalAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Controller\ConfigSystemEntry.cs" />
+    <Compile Include="Controller\ConfigSystemDirectory.cs" />
+    <Compile Include="Controller\ConfigSystem.cs" />
     <Compile Include="Controller\ControlCode.cs" />
-    <Compile Include="Controller\AppResources.cs" />
     <Compile Include="Controller\ControlPipe.cs" />
+    <Compile Include="Model\Logging\Log.cs" />
     <Compile Include="Model\Logging\LogDetailsItem.cs" />
     <Compile Include="Model\Logging\LogLinkItem.cs" />
     <Compile Include="Model\Logging\LogMessageType.cs" />
@@ -78,10 +81,30 @@
     <Compile Include="Model\Logging\LogFileItem.cs" />
     <Compile Include="Model\Logging\LogTextItem.cs" />
     <Compile Include="ViewModels\AboutPopupViewModel.cs" />
+    <Compile Include="ViewModels\ConfigSystemValueWindowViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
+    <Compile Include="ViewModels\MainWindow\ConfigSystemUserControlViewModel.cs" />
+    <Compile Include="ViewModels\MainWindow\ControlPipeUserControlViewModel.cs" />
+    <Compile Include="ViewModels\MainWindow\ProcessesUserControlViewModel.cs" />
+    <Compile Include="Views\ConfigSystemValueWindow.xaml.cs">
+      <DependentUpon>ConfigSystemValueWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MainWindow\ConfigSystemUserControl.xaml.cs">
+      <DependentUpon>ConfigSystemUserControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MainWindow\ControlPipeUserControl.xaml.cs">
+      <DependentUpon>ControlPipeUserControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MainWindow\ProcessesUserControl.xaml.cs">
+      <DependentUpon>ProcessesUserControl.xaml</DependentUpon>
+    </Compile>
     <Page Include="Views\AboutPopup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ConfigSystemValueWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -99,6 +122,18 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\MainWindow\ConfigSystemUserControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\MainWindow\ControlPipeUserControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\MainWindow\ProcessesUserControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Model\ProcessView.cs" />
@@ -164,6 +199,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\ControlPipe16.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ConfigSystem16.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ConfigSystemDelete16.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -39,12 +39,22 @@
 			</Style.Triggers>
 		</Style>
 
+		<Style TargetType="{x:Type GridViewColumnHeader}">
+			<Setter Property="Padding" Value="6,3" />
+			<Setter Property="HorizontalContentAlignment" Value="Left" />
+		</Style>
+
 		<Style x:Key="UIBUtton" TargetType="{x:Type Button}">
+			<Setter Property="MinWidth" Value="80" />
 			<Setter Property="Padding" Value="8,3" />
 		</Style>
 		<Style x:Key="UITextBox" TargetType="{x:Type TextBox}">
 			<Setter Property="Padding" Value="3" />
 			<Style.Triggers>
+				<Trigger Property="IsReadOnly" Value="True">
+					<Setter Property="IsReadOnlyCaretVisible" Value="True" />
+					<Setter Property="Background" Value="#f0f0f0" />
+				</Trigger>
 				<Trigger Property="IsEnabled" Value="False">
 					<Setter Property="Background" Value="#f0f0f0" />
 				</Trigger>
