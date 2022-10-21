@@ -1,0 +1,106 @@
+﻿<ui:ObservableWindow
+	x:Class="TestConsole.MainWindow"
+	x:Name="mainWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:TestConsole"
+	xmlns:global="clr-namespace:Global"
+	xmlns:api="https://schemas.bytecode77.com/2019/xaml/api"
+	xmlns:ui="https://schemas.bytecode77.com/2019/xaml/presentation"
+	DataContext="{Binding ViewModel, ElementName=mainWindow}"
+	Title="r77 Test Console" Width="870" Height="800" MinWidth="550" MinHeight="650" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" UseLayoutRounding="True" LoadedOnce="MainWindow_LoadedOnce">
+	<Grid>
+		<DockPanel>
+			<DockPanel.Effect>
+				<BlurEffect Radius="{Binding IsAboutVisible, Converter={ui:IfConverter {ui:Double 20.0}, {ui:Double 0.0}}}" KernelType="Gaussian" />
+			</DockPanel.Effect>
+			<Menu DockPanel.Dock="Top">
+				<MenuItem Header="_File">
+					<MenuItem Header="Run as _administrator" ui:MenuItemService.ImageSource="/TestConsole;component/Resources/Uac16.png" Command="{Binding ElevateCommand}" />
+				</MenuItem>
+				<MenuItem Header="_Run">
+					<MenuItem Header="$77-_Example.exe" ui:MenuItemService.ImageSource="/TestConsole;component/Resources/Example16.png" Command="{Binding RunCommand}" CommandParameter="Example" />
+					<Separator />
+					<MenuItem Header="Install.exe" ui:MenuItemService.ImageSource="/TestConsole;component/Resources/ExeUac16.png" Command="{Binding RunCommand}" CommandParameter="Install" />
+					<MenuItem Header="Uninstall.exe" ui:MenuItemService.ImageSource="/TestConsole;component/Resources/ExeUac16.png" Command="{Binding RunCommand}" CommandParameter="Uninstall" />
+				</MenuItem>
+				<MenuItem Header="_Processes">
+					<MenuItem Header="_Inject All" Command="{Binding InjectAllCommand}" />
+					<MenuItem Header="_Detach All" Command="{Binding DetachAllCommand}" />
+				</MenuItem>
+				<MenuItem Header="_Help">
+					<MenuItem Header="Technical _Documentation" ui:MenuItemService.ImageSource="/TestConsole;component/Resources/Pdf16.png" Command="{Binding HelpCommand}" CommandParameter="Documentation" />
+					<Separator />
+					<MenuItem Header="_About" ui:MenuItemService.ImageSource="/TestConsole;component/Resources/Information16.png" Command="{Binding HelpCommand}" CommandParameter="About" />
+				</MenuItem>
+			</Menu>
+			<StatusBar DockPanel.Dock="Bottom">
+				<StatusBarItem>
+					<TextBlock Text="Version ">
+						<Run Text="{Binding Source={x:Static api:ApplicationBase.Version}, Mode=OneWay, Converter={ui:VersionConverter 3}}" />
+					</TextBlock>
+				</StatusBarItem>
+				<Separator />
+				<StatusBarItem Visibility="{Binding Source={x:Static api:ApplicationBase+Process.IsElevated}, Converter={ui:BooleanConverter VisibilityInverse}}">
+					<DockPanel>
+						<Image Source="/TestConsole;component/Resources/Uac16.png" Stretch="None" Margin="0,0,5,0" IsEnabled="False" />
+						<TextBlock Text="Not elevated" />
+					</DockPanel>
+				</StatusBarItem>
+				<StatusBarItem Visibility="{Binding Source={x:Static api:ApplicationBase+Process.IsElevated}, Converter={ui:BooleanConverter Visibility}}">
+					<DockPanel>
+						<Image Source="/TestConsole;component/Resources/Uac16.png" Stretch="None" Margin="0,0,5,0" />
+						<TextBlock Text="Elevated" />
+					</DockPanel>
+				</StatusBarItem>
+			</StatusBar>
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="*" MinHeight="100" />
+					<RowDefinition Height="10" />
+					<RowDefinition Height="200" MinHeight="100" />
+				</Grid.RowDefinitions>
+				<GridSplitter Grid.Row="1" />
+				<TabControl BorderThickness="0,1,0,0" Padding="0">
+					<TabItem>
+						<TabItem.Header>
+							<DockPanel Margin="3,1">
+								<Image Source="/TestConsole;component/Resources/Processes16.png" Stretch="None" Margin="0,0,5,0" />
+								<TextBlock Text="Processes" />
+							</DockPanel>
+						</TabItem.Header>
+						<local:ProcessesUserControl />
+					</TabItem>
+					<TabItem>
+						<TabItem.Header>
+							<DockPanel Margin="3,1">
+								<Image Source="/TestConsole;component/Resources/ConfigSystem16.png" Stretch="None" Margin="0,0,5,0" />
+								<TextBlock Text="Config System" />
+							</DockPanel>
+						</TabItem.Header>
+						<local:ConfigSystemUserControl />
+					</TabItem>
+					<TabItem>
+						<TabItem.Header>
+							<DockPanel Margin="3,1">
+								<Image Source="/TestConsole;component/Resources/ControlPipe16.png" Stretch="None" Margin="0,0,5,0" />
+								<TextBlock Text="Control Pipe" />
+							</DockPanel>
+						</TabItem.Header>
+						<local:ControlPipeUserControl />
+					</TabItem>
+				</TabControl>
+				<RichTextBox Grid.Row="2" Name="txtLog" IsReadOnly="True" IsReadOnlyCaretVisible="True" FontFamily="Consolas" BorderThickness="0,1,0,0" BorderBrush="#30000000" Background="White" ScrollViewer.VerticalScrollBarVisibility="Visible">
+					<RichTextBox.Resources>
+						<Style TargetType="{x:Type Paragraph}">
+							<Setter Property="Margin" Value="0,0,0,2" />
+						</Style>
+					</RichTextBox.Resources>
+				</RichTextBox>
+			</Grid>
+		</DockPanel>
+		<Grid Visibility="{Binding IsAboutVisible, Converter={ui:BooleanConverter Visibility}}">
+			<local:AboutPopup />
+		</Grid>
+	</Grid>
+</ui:ObservableWindow>

@@ -1,0 +1,24 @@
+﻿<ui:ObservableWindow
+	x:Class="TestConsole.ConfigSystemValueWindow"
+	x:Name="configSystemValueWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:TestConsole"
+	xmlns:global="clr-namespace:Global"
+	xmlns:api="https://schemas.bytecode77.com/2019/xaml/api"
+	xmlns:ui="https://schemas.bytecode77.com/2019/xaml/presentation"
+	DataContext="{Binding ViewModel, ElementName=configSystemValueWindow}"
+	Title="{Binding IsCreate, Converter={ui:IfConverter 'Create Entry', 'Edit Entry'}}" Width="350" SizeToContent="Height" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False" UseLayoutRounding="True" Loaded="ConfigSystemValueWindow_Loaded">
+	<StackPanel Margin="20">
+		<TextBlock Text="Directory" Margin="0,0,0,5" />
+		<TextBox Style="{StaticResource UITextBox}" Text="{Binding DirectoryName}" Margin="0,0,0,10" IsReadOnly="True" />
+		<TextBlock Text="Name" Margin="0,0,0,5" />
+		<TextBox Style="{StaticResource UITextBox}" Text="{Binding Name}" Margin="0,0,0,10" IsReadOnly="{Binding IsCreate, Converter={ui:BooleanConverter Inverse}}" />
+		<TextBlock Text="Value" Margin="0,0,0,5" />
+		<TextBox Name="txtValue" Style="{StaticResource UITextBox}" Text="{Binding Value}" Margin="0,0,0,20" />
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+			<Button Style="{StaticResource UIBUtton}" Content="OK" IsDefault="True" Margin="0,0,10,0" Command="{Binding CreateCommand}" />
+			<Button Style="{StaticResource UIBUtton}" Content="Cancel" IsCancel="True" />
+		</StackPanel>
+	</StackPanel>
+</ui:ObservableWindow>

@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{6e4bb100-c3c9-4cf7-a637-08c2482c6b94}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Config.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Hooks.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)r77.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)ReflectiveDllMain.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Rootkit.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Config.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)detours.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Hooks.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ReflectiveDllMain.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Rootkit.h" />
+  </ItemGroup>
+</Project>
