@@ -28,7 +28,8 @@ VOID InitializeHooks()
 
 	// Usually, ntdll.dll should be the only DLL to hook.
 	// Unfortunately, the actual enumeration of services happens in services.exe - a protected process that cannot be injected.
-	// EnumServiceGroupW and EnumServicesStatusExW from advapi32.dll access services.exe through RPC. There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
+	// EnumServiceGroupW and EnumServicesStatusExW from advapi32.dll access services.exe through RPC.
+	// There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
 	// EnumServicesStatusA and EnumServicesStatusExA also implement the RPC, but do not seem to be used by any applications out there.
 }
 VOID UninitializeHooks()
