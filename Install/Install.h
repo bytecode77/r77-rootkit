@@ -10,8 +10,14 @@
 /// </returns>
 LPWSTR GetPowershellCommand(BOOL is64Bit);
 /// <summary>
-/// Obfuscates all occurrences of a given name within a LPWSTR.
+/// Obfuscates all occurrences of a given variable name within a powershell command.
 /// </summary>
-/// <param name="str">The LPWSTR to obfuscate.</param>
-/// <param name="name">A name that will be replaced with a new, randomized name.</param>
-VOID ObfuscateString(LPWSTR str, LPCWSTR name);
+/// <param name="command">The powershell command to obfuscate.</param>
+/// <param name="variableName">A name that will be replaced with a new, randomized name.</param>
+VOID ObfuscatePowershellVariable(LPWSTR command, LPCWSTR variableName);
+/// <summary>
+/// Obfuscates all string literals within a powershell command.
+/// String literals must be typed like `thestring` instead of using single quotes.
+/// </summary>
+/// <param name="command">The powershell command to obfuscate.</param>
+VOID ObfuscatePowershellStringLiterals(LPWSTR command);

