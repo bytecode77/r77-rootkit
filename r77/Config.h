@@ -1,9 +1,7 @@
+#include "r77mindef.h"
 #include "r77config.h"
 #ifndef _CONFIG_H
 #define _CONFIG_H
-
-static HANDLE ConfigThread;
-static PR77_CONFIG Configuration;
 
 /// <summary>
 /// Initializes the configuration system.

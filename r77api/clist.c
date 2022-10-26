@@ -1,5 +1,4 @@
 #include "clist.h"
-#include "r77runtime.h"
 #include <Shlwapi.h>
 
 PINTEGER_LIST CreateIntegerList()
@@ -34,7 +33,7 @@ VOID LoadIntegerListFromRegistryKey(PINTEGER_LIST list, HKEY key)
 VOID DeleteIntegerList(PINTEGER_LIST list)
 {
 	FREE(list->Values);
-	libc_memset(list, 0, sizeof(INTEGER_LIST));
+	i_memset(list, 0, sizeof(INTEGER_LIST));
 	FREE(list);
 }
 VOID IntegerListAdd(PINTEGER_LIST list, ULONG value)
@@ -43,7 +42,7 @@ VOID IntegerListAdd(PINTEGER_LIST list, ULONG value)
 	{
 		list->Capacity += 16;
 		PULONG newValues = NEW_ARRAY(ULONG, list->Capacity);
-		libc_memcpy(newValues, list->Values, list->Count * sizeof(ULONG));
+		i_memcpy(newValues, list->Values, list->Count * sizeof(ULONG));
 
 		PULONG oldValues = list->Values;
 		list->Values = newValues;
@@ -126,7 +125,7 @@ VOID DeleteStringList(PSTRING_LIST list)
 	}
 
 	FREE(list->Values);
-	libc_memset(list, 0, sizeof(STRING_LIST));
+	i_memset(list, 0, sizeof(STRING_LIST));
 	FREE(list);
 }
 VOID StringListAdd(PSTRING_LIST list, LPCWSTR value)
@@ -137,7 +136,7 @@ VOID StringListAdd(PSTRING_LIST list, LPCWSTR value)
 		{
 			list->Capacity += 16;
 			LPWSTR *newValues = NEW_ARRAY(LPWSTR, list->Capacity);
-			libc_memcpy(newValues, list->Values, list->Count * sizeof(LPWSTR));
+			i_memcpy(newValues, list->Values, list->Count * sizeof(LPWSTR));
 
 			LPWSTR *oldValues = list->Values;
 			list->Values = newValues;

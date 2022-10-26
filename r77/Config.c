@@ -1,6 +1,9 @@
 #include "Config.h"
 #include "r77win.h"
 
+static HANDLE ConfigThread;
+static PR77_CONFIG Configuration;
+
 VOID InitializeConfig()
 {
 	// The configuration is read periodically in a background thread.

