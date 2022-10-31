@@ -76,7 +76,8 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
 "$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" -shellcodeinstaller "$(SolutionDir)\"</Command>
     </PostBuildEvent>
     <Manifest>
-      <AdditionalManifestFiles>app.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -110,7 +111,8 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
 "$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" -shellcodeinstaller "$(SolutionDir)\"</Command>
     </PostBuildEvent>
     <Manifest>
-      <AdditionalManifestFiles>app.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -119,9 +121,6 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Manifest Include="app.manifest" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Install.c" />

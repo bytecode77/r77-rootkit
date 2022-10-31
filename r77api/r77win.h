@@ -54,6 +54,14 @@ VOID Int32ToStrW(LONG value, PWCHAR buffer);
 /// </returns>
 BOOL Is64BitOperatingSystem();
 /// <summary>
+/// Determines whether at Windows 10 or greater is installed. This function uses the NT API and does not rely on a manifest file.
+/// </summary>
+/// <returns>
+/// TRUE, if Windows 10 or above is installed;
+/// otherwise, FALSE.
+/// </returns>
+BOOL IsAtLeastWindows10();
+/// <summary>
 /// Determines whether a process is a 64-bit process.
 /// </summary>
 /// <param name="processId">The process ID to check.</param>
@@ -278,8 +286,8 @@ VOID UnhookDll(LPCWSTR name);
 
 NTSTATUS NTAPI R77_NtQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 NTSTATUS NTAPI R77_NtCreateThreadEx(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
+NTSTATUS NTAPI R77_RtlGetVersion(PRTL_OSVERSIONINFOW versionInformation);
 NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue);
 NTSTATUS NTAPI R77_RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb);
-BOOL R77_IsWindows10OrGreater();
 
 #endif

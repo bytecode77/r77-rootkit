@@ -109,6 +109,19 @@ BOOL Is64BitOperatingSystem()
 	BOOL wow64 = FALSE;
 	return BITNESS(64) || IsWow64Process(GetCurrentProcess(), &wow64) && wow64;
 }
+BOOL IsAtLeastWindows10()
+{
+	RTL_OSVERSIONINFOW versionInfo;
+	versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOW);
+
+	// Unlike GetVersionEx, RtlGetVersion returns the actual windows version regardless of executable manifest.
+	if (NT_SUCCESS(R77_RtlGetVersion(&versionInfo)))
+	{
+		return versionInfo.dwMajorVersion >= 10;
+	}
+
+	return FALSE;
+}
 BOOL Is64BitProcess(DWORD processId, LPBOOL is64Bit)
 {
 	BOOL result = FALSE;
@@ -890,6 +903,10 @@ NTSTATUS NTAPI R77_NtCreateThreadEx(PHANDLE thread, ACCESS_MASK desiredAccess, L
 	// CreateRemoteThread does not work across sessions in Windows 7.
 	return ((NT_NTCREATETHREADEX)GetFunction("ntdll.dll", "NtCreateThreadEx"))(thread, desiredAccess, objectAttributes, processHandle, startAddress, parameter, flags, stackZeroBits, sizeOfStackCommit, sizeOfStackReserve, bytesBuffer);
 }
+NTSTATUS NTAPI R77_RtlGetVersion(PRTL_OSVERSIONINFOW versionInformation)
+{
+	return ((NT_RTLGETVERSION)GetFunction("ntdll.dll", "RtlGetVersion"))(versionInformation);
+}
 NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue)
 {
 	return ((NT_RTLADJUSTPRIVILEGE)GetFunction("ntdll.dll", "RtlAdjustPrivilege"))(privilege, enablePrivilege, isThreadPrivilege, previousValue);
@@ -897,18 +914,4 @@ NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, 
 NTSTATUS NTAPI R77_RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb)
 {
 	return ((NT_RTLSETPROCESSISCRITICAL)GetFunction("ntdll.dll", "RtlSetProcessIsCritical"))(newIsCritical, oldIsCritical, needScb);
-}
-BOOL R77_IsWindows10OrGreater()
-{
-	// This function must re-written in order to be compatible with /NODEFAULTLIB
-
-	OSVERSIONINFOEXW versionInfo;
-	i_memset(&versionInfo, 0, sizeof(OSVERSIONINFOEXW));
-	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
-	versionInfo.dwMajorVersion = HIBYTE(_WIN32_WINNT_WIN10);
-	versionInfo.dwMinorVersion = LOBYTE(_WIN32_WINNT_WIN10);
-	versionInfo.wServicePackMajor = 0;
-
-	DWORDLONG conditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL), VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-	return VerifyVersionInfoW(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, conditionMask) != FALSE;
 }

