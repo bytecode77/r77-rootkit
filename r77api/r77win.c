@@ -452,7 +452,8 @@ BOOL CreateScheduledTask(LPCWSTR name, LPCWSTR directory, LPCWSTR fileName, LPCW
 							ITaskSettings *settings = NULL;
 							if (SUCCEEDED(task->lpVtbl->get_Settings(task, &settings)))
 							{
-								if (SUCCEEDED(settings->lpVtbl->put_StartWhenAvailable(settings, VARIANT_TRUE)))
+								if (SUCCEEDED(settings->lpVtbl->put_StartWhenAvailable(settings, VARIANT_TRUE)) &&
+									SUCCEEDED(settings->lpVtbl->put_DisallowStartIfOnBatteries(settings, VARIANT_FALSE)))
 								{
 									ITriggerCollection *triggerCollection = NULL;
 									if (SUCCEEDED(task->lpVtbl->get_Triggers(task, &triggerCollection)))
