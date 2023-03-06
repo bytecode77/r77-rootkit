@@ -2,18 +2,18 @@
 
 ## Ring 3 rootkit
 
-r77 is a ring 3 Rootkit that hides following entities from all processes:
+r77 is a ring 3 rootkit that hides everything:
 
- - Files, directories, junctions, named pipes, scheduled tasks
- - Processes
- - CPU usage
+ - Files, directories
+ - Processes & CPU usage
  - Registry keys & values
  - Services
  - TCP & UDP connections
+ - Junctions, named pipes, scheduled tasks
 
 ## Hiding by prefix
 
-All entities where the name starts with `"$77"` are hidden.
+Everything that starts with `"$77"` is hidden.
 
 ![](https://bytecode77.com/images/pages/r77-rootkit/hiding.png)
 
@@ -25,15 +25,15 @@ The dynamic configuration system allows to hide processes by **PID** and by **na
 
 The configuration is located in `HKEY_LOCAL_MACHINE\SOFTWARE\$77config` and is writable by any process without elevated privileges. The DACL of this key is set to grant full access to any user.
 
-The `$77config` key is hidden when RegEdit is injected with the rootkit.
+In addition, the `$77config` key is hidden by the rootkit.
 
 ## Installer
 
-r77 is deployable using a single file `"Install.exe"`. The installer persists r77 and injects all currently running processes.
+The deployment of r77 requires only one file: `Install.exe`. Execution persists r77 on the system and injects all running processes.
 
-`Uninstall.exe` removes r77 from the system and gracefully detaches the rootkit from all processes.
+`Uninstall.exe` removes r77 from the system completely, and gracefully.
 
-`Install.shellcode` is the shellcode equivalent of the installer. This way, the installer can be integrated without dropping `Install.exe`. It can simply be loaded into memory, casted to a function pointer, and executed:
+`Install.shellcode` is the shellcode equivalent of the installer. This way, the installation can be integrated without dropping `Install.exe`. The shellcode can simply be loaded into memory, casted to a function pointer, and executed:
 
 ```
 int main()
@@ -54,16 +54,6 @@ int main()
 	return 0;
 }
 ```
-
-## Child process hooking
-
-When a process creates a child process, the new process is injected before it can run any of its own instructions. The function `NtResumeThread` is always called when a new process is created. Therefore, it's a suitable target to hook. Because a 32-bit process can spawn a 64-bit child process and vice versa, the r77 service provides a named pipe to handle child process injection requests.
-
-In addition, there is a periodic check every 100ms for new processes that might have been missed by child process hooking. This is necessary because some processes are protected and cannot be injected, such as services.exe.
-
-## In-memory injection
-
-The rootkit DLL (`r77-x86.dll` and `r77-x64.dll`) can be injected into a process from memory and doesn't need to be stored on the disk. **Reflective DLL injection** is used to achieve this. The DLL provides an exported function that when called, loads all sections of the DLL, handles dependency loading and relocations, and finally calls `DllMain`.
 
 ## Fileless persistence
 
@@ -88,6 +78,16 @@ No executables or DLL's are ever stored on the disk. The stager is stored in the
 
 The PowerShell and .NET dependencies are present in a fresh installation of Windows 7 and Windows 10. Please review the [documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf) for a complete description of the fileless initialization.
 
+## Child process hooking
+
+When a process creates a child process, the new process is injected before it can run any of its own instructions. The function `NtResumeThread` is always called when a new process is created. Therefore, it's a suitable target to hook. Because a 32-bit process can spawn a 64-bit child process and vice versa, the r77 service provides a named pipe to handle child process injection requests.
+
+In addition, there is a periodic check every 100ms for new processes that might have been missed by child process hooking. This is necessary because some processes are protected and cannot be injected, such as services.exe.
+
+## In-memory injection
+
+The rootkit DLL (`r77-x86.dll` and `r77-x64.dll`) can be injected into a process from memory and doesn't need to be stored on the disk. **Reflective DLL injection** is used to achieve this. The DLL provides an exported function that when called, loads all sections of the DLL, handles dependency loading and relocations, and finally calls `DllMain`.
+
 ## Hooking
 
 Detours is used to hook several functions from `ntdll.dll`. These low-level syscall wrappers are called by **any** WinAPI or framework implementation.
@@ -102,18 +102,16 @@ Detours is used to hook several functions from `ntdll.dll`. These low-level sysc
  - EnumServicesStatusExW
  - NtDeviceIoControlFile
 
-The only exception is `advapi32.dll` and `sechost.dll`. These functions are hooked to hide services. This is because the actual service enumeration happens in services.exe, which cannot be injected.
-
 ## AV/EDR evasion
 
 Several AV and EDR evasion techniques are in use:
 
-- **AMSI bypass:** The PowerShell inline script disables AMSI by patching `amsi.dll!AmsiScanBuffer` to always return `AMSI_RESULT_CLEAN`.
+- **AMSI bypass:** The PowerShell inline script disables AMSI by patching `amsi.dll!AmsiScanBuffer` to always return `AMSI_RESULT_CLEAN`. Polymorphism is used to evade signature detection of the AMSI bypass.
 - **DLL unhooking:** Since EDR solutions monitor API calls by hooking `ntdll.dll`, these hooks need to be removed by loading a fresh copy of `ntdll.dll` from disk and restoring the original section. Otherwise, process hollowing would be detected.
 
 ## Test environment
 
-The Test Console can be used to inject r77 to or detach r77 from individual processes.
+The Test Console is a useful tool to inject r77 into individual processes and to test drive the configuration system.
 
 ![](https://bytecode77.com/images/pages/r77-rootkit/testconsole.png)
 
