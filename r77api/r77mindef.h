@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <winternl.h>
+#include <intrin.h>
 #ifndef _R77MINDEF_H
 #define _R77MINDEF_H
 
@@ -9,6 +10,11 @@
 #define NEW_ARRAY(type, length) (type*)HeapAlloc(GetProcessHeap(), 0, sizeof(type) * (length))
 #define FREE(buffer) HeapFree(GetProcessHeap(), 0, buffer);
 
+#define i_memcpy(dest, src, count) __movsb((LPBYTE)(dest), (LPCBYTE)(src), (SIZE_T)(count))
+#define i_wmemcpy(dest, src, count) __movsw((LPWORD)(dest), (const LPWORD)(src), (SIZE_T)(count))
+#define i_memset(dest, value, count) __stosb((LPBYTE)(dest), (BYTE)(value), (SIZE_T)(count))
+#define i_wmemset(dest, value, count) __stosw((LPWORD)(dest), (WORD)(value), (SIZE_T)(count))
+
 /// <summary>
 /// Returns TRUE, if the bitness of the current process is equal to bits.
 /// </summary>
@@ -17,10 +23,6 @@
 /// Returns either if32 or if64 depending on the bitness of the current process.
 /// </summary>
 #define COALESCE_BITNESS(if32, if64) (sizeof(LPVOID) == 4 ? (if32) : (if64))
-/// <summary>
-/// Rotates a value right by a defined number of bits.
-/// </summary>
-#define ROTR(value, bits) ((DWORD)(value) >> (bits) | (DWORD)(value) << (32 - (bits)))
 
 #ifdef CUSTOM_ENTRY
 int main();

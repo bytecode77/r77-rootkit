@@ -1,7 +1,6 @@
 #include "ProcessListener.h"
 #include "r77def.h"
 #include "r77win.h"
-#include "r77runtime.h"
 #include <Psapi.h>
 
 VOID NewProcessListener(DWORD interval, PROCESSIDCALLBACK callback)
@@ -44,7 +43,7 @@ static DWORD WINAPI NewProcessListenerThread(LPVOID parameter)
 				if (isNew) notifier->Callback(currendProcesses[i]);
 			}
 
-			libc_memcpy(previousProcesses, currendProcesses, sizeof(DWORD) * 10000);
+			i_memcpy(previousProcesses, currendProcesses, sizeof(DWORD) * 10000);
 			previousProcessCount = currendProcessCount;
 		}
 

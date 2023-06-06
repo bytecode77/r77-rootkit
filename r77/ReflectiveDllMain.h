@@ -12,5 +12,14 @@
 /// otherwise, FALSE.
 /// </returns>
 __declspec(dllexport) BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase);
+/// <summary>
+/// Retrieves a function pointer from the PEB.
+/// </summary>
+/// <param name="moduleHash">The hash of the module name. The module must be loaded.</param>
+/// <param name="functionHash">The hash of the function name.</param>
+/// <returns>
+/// A pointer to the function, or NULL, if the function could not be found.
+/// </returns>
+static LPVOID PebGetProcAddress(DWORD moduleHash, DWORD functionHash);
 
 #endif

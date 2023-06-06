@@ -114,7 +114,7 @@ int ProcessList()
 		{
 			GetProcessIntegrityLevel(process, &integrityLevel);
 
-			if (!GetProcessUserName(process, userName, &userNameLength))userName[0] = L'\0';
+			if (!GetProcessUserName(process, userName, &userNameLength)) userName[0] = L'\0';
 
 			CloseHandle(process);
 		}

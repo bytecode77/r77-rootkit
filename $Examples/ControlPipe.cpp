@@ -3,7 +3,7 @@
 // This example demonstrates how to make r77 perform a ShellExecute.
 // All other control codes work similarly.
 
-#define CONTROL_USER_SHELLEXEC 0x3001 // These constants can be found in r77api.h or in the technical documentation
+#define CONTROL_USER_SHELLEXEC 0x3001 // These constants can be found in r77def.h or in the technical documentation
 
 int main()
 {

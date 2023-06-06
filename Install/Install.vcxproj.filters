@@ -13,9 +13,6 @@
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="app.manifest" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="Install.c" />
   </ItemGroup>
   <ItemGroup>

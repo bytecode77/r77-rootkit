@@ -17,7 +17,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)clist.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)r77config.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)r77process.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)r77runtime.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)r77win.c" />
   </ItemGroup>
   <ItemGroup>
@@ -27,7 +26,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)r77def.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)r77mindef.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)r77process.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)r77runtime.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)r77win.h" />
   </ItemGroup>
 </Project>
