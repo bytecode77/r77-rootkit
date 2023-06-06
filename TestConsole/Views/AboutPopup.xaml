@@ -32,7 +32,7 @@
 				<StackPanel>
 					<Image Source="/TestConsole;component/Resources/AboutTitle.png" Stretch="UniformToFill" Width="320" HorizontalAlignment="Center" Margin="0,0,0,20" />
 					<Image Source="/TestConsole;component/Resources/AboutBanner.png" Stretch="None" HorizontalAlignment="Center" Margin="0,0,0,35" />
-					<TextBlock Text="© bytecode77, 2022." HorizontalAlignment="Center" Margin="0,0,0,35" />
+					<TextBlock Text="© bytecode77, 2023." HorizontalAlignment="Center" Margin="0,0,0,35" />
 					<Border BorderThickness="0,1,0,0" BorderBrush="#20ffffff" Margin="0,0,0,30" />
 					<DockPanel Margin="0,0,0,10">
 						<Image Source="/TestConsole;component/Resources/AboutWebsite16.png" Stretch="None" Margin="0,0,5,0" />

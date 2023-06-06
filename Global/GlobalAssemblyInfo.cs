@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
 
-[assembly: AssemblyVersion("1.4.2")]
-[assembly: AssemblyFileVersion("1.4.2")]
-[assembly: AssemblyCopyright("© bytecode77, 2022.")]
+[assembly: AssemblyVersion("1.4.3")]
+[assembly: AssemblyFileVersion("1.4.3")]
+[assembly: AssemblyCopyright("© bytecode77, 2023.")]
 
 namespace Global
 {
