@@ -27,9 +27,6 @@ typedef struct _NEW_PROCESS_LISTENER
 /// </summary>
 /// <param name="interval">The interval, in milliseconds, between each enumeration of running processes.</param>
 /// <param name="callback">The function that is called, when a process is found that was not present in the previous enumeration.</param>
-/// <returns>
-/// A pointer to the newly created NEW_PROCESS_LISTENER structure.
-/// </returns>
 VOID NewProcessListener(DWORD interval, PROCESSIDCALLBACK callback);
 static DWORD WINAPI NewProcessListenerThread(LPVOID parameter);
 

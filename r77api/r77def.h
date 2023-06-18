@@ -1,7 +1,7 @@
 #ifndef _R77DEF_H
 #define _R77DEF_H
 
-// These preprocessor definitions must match the constants in GlobalAssemblyInfo.cs
+// These preprocessor definitions must match the constants in r77Const.cs
 
 /// <summary>
 /// The prefix for name based hiding (e.g. processes, files, etc...).

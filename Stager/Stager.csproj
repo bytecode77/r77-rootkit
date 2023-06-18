@@ -38,6 +38,10 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <Win32Resource>A:\Code\GitHub\r77-rootkit\Stager\Stager.res</Win32Resource>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
@@ -63,6 +67,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Service64.exe" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Stager.res" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

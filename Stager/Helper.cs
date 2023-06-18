@@ -25,8 +25,7 @@ public static class Helper
 		{
 			using (Process process = Process.GetCurrentProcess())
 			{
-				bool wow64;
-				if (IsWow64Process(process.Handle, out wow64))
+				if (IsWow64Process(process.Handle, out bool wow64))
 				{
 					return wow64;
 				}

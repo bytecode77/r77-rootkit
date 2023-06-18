@@ -110,7 +110,10 @@ public static class RunPE
 					// If the current attempt failed, terminate the created process to not have suspended "leftover" processes.
 					Process.GetProcessById(processId).Kill();
 				}
-				catch { }
+				catch
+				{
+				}
+
 				continue;
 			}
 

@@ -67,6 +67,9 @@
     <Compile Include="..\Global\GlobalAssemblyInfo.cs">
       <Link>Properties\GlobalAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\Global\R77Const.cs">
+      <Link>Properties\R77Const.cs</Link>
+    </Compile>
     <Compile Include="Controller\ConfigSystemEntry.cs" />
     <Compile Include="Controller\ConfigSystemDirectory.cs" />
     <Compile Include="Controller\ConfigSystem.cs" />

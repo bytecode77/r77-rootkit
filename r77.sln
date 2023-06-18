@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32328.378
@@ -55,6 +55,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Global", "Global", "{054A9EE5-7740-4460-A561-D0AC8CF051EF}"
 	ProjectSection(SolutionItems) = preProject
 		Global\GlobalAssemblyInfo.cs = Global\GlobalAssemblyInfo.cs
+		Global\R77Const.cs = Global\R77Const.cs
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InstallShellcode", "InstallShellcode\InstallShellcode.vcxitems", "{DEAB25FD-2042-4BD6-BF4B-0802DCCC70F5}"
