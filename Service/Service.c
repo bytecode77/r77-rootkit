@@ -25,7 +25,7 @@ int main()
 	if (!GetResource(IDR_R77, "DLL", &Dll, &DllSize)) return 0;
 
 	// Terminate already running r77 service processes of the same bitness as the current process.
-	TerminateR77Service(GetCurrentProcessId());
+	TerminateR77Service(GetCurrentProcessId(), BITNESS(32), BITNESS(64));
 
 	// Create HKEY_LOCAL_MACHINE\SOFTWARE\$77config and set DACL to allow full access by any user.
 	HKEY configKey;
@@ -97,6 +97,7 @@ VOID ChildProcessCallback(DWORD processId)
 VOID NewProcessCallback(DWORD processId)
 {
 	// Hook new processes that might have been missed by child process hooking.
+
 	if (!IsInjectionPaused)
 	{
 		InjectDll(processId, Dll, DllSize, TRUE);
@@ -136,7 +137,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 			DeleteScheduledTask(COALESCE_BITNESS(R77_SERVICE_NAME32, R77_SERVICE_NAME64));
 			DetachAllInjectedProcesses();
 			UninstallR77Config();
-			TerminateR77Service(-1);
+			TerminateR77Service(-1, BITNESS(32), BITNESS(64));
 			break;
 		}
 		case CONTROL_R77_PAUSE_INJECTION:

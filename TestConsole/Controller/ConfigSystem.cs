@@ -1,7 +1,5 @@
-using BytecodeApi;
 using BytecodeApi.Comparers;
 using BytecodeApi.Extensions;
-using BytecodeApi.IO;
 using Global;
 using Microsoft.Win32;
 using System.Collections.Generic;
@@ -29,7 +27,7 @@ namespace TestConsole
 		/// <summary>
 		/// Creates the registry key HKLM\SOFTWARE\$77config, if it does not exist.
 		/// This key will already be present, when r77 is installed.
-		/// Otherwise, creation of the key requires Helper32.exe to be invoked with elevated privileges.
+		/// Otherwise, creation of the key requires elevated privileges (only once).
 		/// </summary>
 		/// <returns>
 		/// An enumerable of <see cref="LogMessage" /> entries to be displayed in the log view.
@@ -40,14 +38,7 @@ namespace TestConsole
 			{
 				if (key == null)
 				{
-					string helperPath = App.GetFilePath("Helper32.exe", out LogMessage helperPathLogMessage);
-					if (helperPath == null)
-					{
-						yield return helperPathLogMessage;
-						yield break;
-					}
-
-					if (CSharp.Try(() => ProcessEx.Execute(helperPath, "-config", true), 1) == 0)
+					if (HelperDll.CreateConfigSystem())
 					{
 						yield return new LogMessage
 						(
@@ -62,9 +53,10 @@ namespace TestConsole
 						yield return new LogMessage
 						(
 							LogMessageType.Error,
-							new LogTextItem("Registry key"),
+							new LogTextItem("Failed to create registry key"),
 							new LogFileItem($@"HKEY_LOCAL_MACHINE\SOFTWARE\{Config.HidePrefix}config"),
-							new LogTextItem("not found. If r77 is not installed, this key requires to be created using elevated privileges. After creation, the DACL is set to allow full access by any user.")
+							new LogTextItem("Try to"),
+							new LogLinkItem("run as administrator", () => MainWindowViewModel.Singleton.ElevateCommand.Execute())
 						);
 					}
 				}

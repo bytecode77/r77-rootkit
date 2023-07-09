@@ -20,7 +20,7 @@ int main()
 	DeleteScheduledTask(R77_SERVICE_NAME64);
 
 	// Terminate running 64-bit instances of the r77 service.
-	TerminateR77Service(-1);
+	TerminateR77Service(-1, FALSE, TRUE);
 
 	// Detach all injected 64-bit processes.
 	DetachAllInjectedProcesses();

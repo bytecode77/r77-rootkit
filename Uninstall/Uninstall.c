@@ -20,7 +20,7 @@ int main()
 	DeleteScheduledTask(R77_SERVICE_NAME32);
 
 	// Terminate running 32-bit instances of the r77 service.
-	TerminateR77Service(-1);
+	TerminateR77Service(-1, TRUE, FALSE);
 
 	// Detach all injected 32-bit processes.
 	DetachAllInjectedProcesses();

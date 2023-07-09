@@ -70,6 +70,7 @@
     <Compile Include="..\Global\R77Const.cs">
       <Link>Properties\R77Const.cs</Link>
     </Compile>
+    <Compile Include="Controller\HelperDll.cs" />
     <Compile Include="Controller\ConfigSystemEntry.cs" />
     <Compile Include="Controller\ConfigSystemDirectory.cs" />
     <Compile Include="Controller\ConfigSystem.cs" />
@@ -216,8 +217,8 @@ mkdir "$(SolutionDir)$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
 xcopy /Y "$(TargetDir)BytecodeApi.dll" "$(SolutionDir)$Build"
 xcopy /Y "$(TargetDir)BytecodeApi.UI.dll" "$(SolutionDir)$Build"
-xcopy /Y "$(SolutionDir)$Build\Helper32.exe" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)$Build\Helper64.exe" "$(TargetDir)"
+xcopy /Y "$(SolutionDir)$Build\Helper32.dll" "$(TargetDir)"
+xcopy /Y "$(SolutionDir)$Build\Helper64.dll" "$(TargetDir)"
 xcopy /Y "$(SolutionDir)$Build\r77-x86.dll" "$(TargetDir)"
 xcopy /Y "$(SolutionDir)$Build\r77-x64.dll" "$(TargetDir)"</PostBuildEvent>
   </PropertyGroup>
