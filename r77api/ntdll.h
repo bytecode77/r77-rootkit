@@ -650,6 +650,7 @@ typedef BOOL(WINAPI *NT_ENUMSERVICESSTATUSEXW)(SC_HANDLE serviceManager, SC_ENUM
 typedef NTSTATUS(NTAPI *NT_NTDEVICEIOCONTROLFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, ULONG ioControlCode, LPVOID inputBuffer, ULONG inputBufferLength, LPVOID outputBuffer, ULONG outputBufferLength);
 typedef NTSTATUS(NTAPI *NT_NTQUERYOBJECT)(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 typedef NTSTATUS(NTAPI *NT_NTCREATETHREADEX)(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
+typedef NTSTATUS(NTAPI *NT_NTUNMAPVIEWOFSECTION)(HANDLE processHandle, LPVOID baseAddress);
 typedef NTSTATUS(NTAPI *NT_RTLGETVERSION)(PRTL_OSVERSIONINFOW versionInformation);
 typedef NTSTATUS(NTAPI *NT_RTLADJUSTPRIVILEGE)(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue);
 typedef NTSTATUS(NTAPI *NT_RTLSETPROCESSISCRITICAL)(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb);
