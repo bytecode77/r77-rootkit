@@ -261,6 +261,14 @@ BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit);
 /// </returns>
 BOOL RunPE(LPCWSTR path, LPBYTE payload);
 /// <summary>
+/// Converts an IMAGE_SECTION_HEADER.Characteristics flag to a memory page protection flag.
+/// </summary>
+/// <param name="characteristics">The characteristics of a section.</param>
+/// <returns>
+/// A DWORD value to be used with VirtualProtectEx.
+/// </returns>
+DWORD SectionCharacteristicsToProtection(DWORD characteristics);
+/// <summary>
 /// Gets the file offset of an exported function from an executable file.
 /// </summary>
 /// <param name="image">A buffer with the executable file.</param>

