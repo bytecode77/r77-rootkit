@@ -658,6 +658,7 @@ typedef DWORD(NTAPI *NT_NTFLUSHINSTRUCTIONCACHE)(HANDLE process, LPVOID baseAddr
 typedef HMODULE(WINAPI *NT_LOADLIBRARYA)(LPCSTR fileName);
 typedef FARPROC(WINAPI *NT_GETPROCADDRESS)(HMODULE module, LPCSTR function);
 typedef LPVOID(WINAPI *NT_VIRTUALALLOC)(LPVOID address, SIZE_T size, DWORD allocationType, DWORD protect);
+typedef BOOL(WINAPI *NT_VIRTUALPROTECT)(LPVOID address, SIZE_T size, DWORD newProtect, PDWORD oldProtect);
 typedef BOOL(WINAPI *NT_DLLMAIN)(HINSTANCE module, DWORD reason, LPVOID reserved);
 
 #endif

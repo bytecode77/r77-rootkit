@@ -37,7 +37,7 @@ namespace TestConsole
 		{
 			// Use this as an example in your own implementation when connecting to the control pipe
 
-			using (NamedPipeClientStream pipe = new NamedPipeClientStream(".", Config.ControlPipeName, PipeDirection.InOut, PipeOptions.None, TokenImpersonationLevel.Impersonation))
+			using (NamedPipeClientStream pipe = new NamedPipeClientStream(".", R77Const.ControlPipeName, PipeDirection.InOut, PipeOptions.None, TokenImpersonationLevel.Impersonation))
 			{
 				if (CSharp.Try(() => pipe.Connect(1000)))
 				{

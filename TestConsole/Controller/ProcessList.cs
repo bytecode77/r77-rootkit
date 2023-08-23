@@ -145,7 +145,7 @@ namespace TestConsole
 			else
 			{
 				string reason;
-				if (process.Name.StartsWith(Config.HidePrefix)) reason = $"The filename starts with '{Config.HidePrefix}'.";
+				if (process.Name.StartsWith(R77Const.HidePrefix)) reason = $"The filename starts with '{R77Const.HidePrefix}'.";
 				else if (process.IsR77Service) reason = "The process is the r77 service process.";
 				else if (process.IsHelper) reason = "The process is a helper process.";
 				else if (process.IntegrityLevel < ProcessIntegrityLevel.Medium) reason = "Sandboxes are not supported";
@@ -330,7 +330,7 @@ namespace TestConsole
 						new LogTextItem($"(PID {process.Id}) is marked as hidden.")
 					);
 
-					if (process.Name.StartsWith(Config.HidePrefix))
+					if (process.Name.StartsWith(R77Const.HidePrefix))
 					{
 						yield return new LogMessage
 						(

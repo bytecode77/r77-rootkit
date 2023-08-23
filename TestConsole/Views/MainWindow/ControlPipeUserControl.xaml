@@ -17,7 +17,7 @@
 					<TextBlock TextWrapping="Wrap" Margin="0,0,0,5" Visibility="{Binding IsR77ServiceRunning, Converter={ui:BooleanConverter Visibility}}">
 						<Run Text="r77 service is running" Foreground="#00a305" FontWeight="Bold" />.
 						<LineBreak />
-						The named pipe <Run Text="{x:Static global:Config.ControlPipeName}" FontWeight="Bold" /> is open to receive commands.
+						The named pipe <Run Text="{x:Static global:R77Const.ControlPipeName}" FontWeight="Bold" /> is open to receive commands.
 					</TextBlock>
 					<TextBlock TextWrapping="Wrap" Margin="0,0,0,5" Visibility="{Binding IsR77ServiceRunning, Converter={ui:BooleanConverter VisibilityInverse}}">
 						<Run Text="r77 service is not running" Foreground="#cc0000" FontWeight="Bold" />.

@@ -56,7 +56,7 @@ namespace TestConsole
 			get => _RunPEPayloadPath;
 			set => Set(ref _RunPEPayloadPath, value);
 		}
-		public bool IsR77ServiceRunning => ProcessesUserControlViewModel.Singleton.Processes.Count(process => process.IsR77Service || process.Name == "dllhost.exe" && process.IsHiddenById) >= (Environment.Is64BitOperatingSystem ? 2 : 1);
+		public bool IsR77ServiceRunning => ProcessesUserControlViewModel.Singleton.Processes.Any(process => process.IsR77Service || process.Name == "dllhost.exe" && process.IsHiddenById);
 
 		public ControlPipeUserControlViewModel(ControlPipeUserControl view)
 		{

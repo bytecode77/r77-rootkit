@@ -60,7 +60,8 @@
     <PostBuildEvent>
       <Command>mkdir "$(SolutionDir)$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
-echo F|xcopy /I /Y "$(TargetPath)" "$(SolutionDir)Service64\Resources\r77.dll"</Command>
+echo F|xcopy /I /Y "$(TargetPath)" "$(SolutionDir)Stager\Resources\$(TargetName).dll"
+"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(SolutionDir)Stager\Resources\$(TargetName).dll" -compress -encrypt</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

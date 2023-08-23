@@ -8,14 +8,13 @@ public static class Unhook
 {
 	/// <summary>
 	/// Unhooks a DLL by replacing the .text section with the original DLL section.
+	/// <para>The bitness of the current process must match the bitness of the operating system.</para>
 	/// </summary>
 	/// <param name="name">The name of the DLL to unhook.</param>
 	public static unsafe void UnhookDll(string name)
 	{
 		try
 		{
-			string systemDirectory = Helper.Is64BitOperatingSystem() && IntPtr.Size == 4 ? @"C:\Windows\SysWOW64\" : @"C:\Windows\System32\";
-
 			// Get original DLL handle. This DLL is possibly hooked by AV/EDR solutions.
 			IntPtr dll = GetModuleHandle(name);
 			if (dll != IntPtr.Zero)
@@ -23,7 +22,7 @@ public static class Unhook
 				if (GetModuleInformation(GetCurrentProcess(), dll, out MODULEINFO moduleInfo, (uint)sizeof(MODULEINFO)))
 				{
 					// Retrieve a clean copy of the DLL file.
-					IntPtr dllFile = CreateFileA(systemDirectory + name, 0x80000000, 1, IntPtr.Zero, 3, 0, IntPtr.Zero);
+					IntPtr dllFile = CreateFileA(@"C:\Windows\System32\" + name, 0x80000000, 1, IntPtr.Zero, 3, 0, IntPtr.Zero);
 					if (dllFile != (IntPtr)(-1))
 					{
 						// Map the clean DLL into memory

@@ -9,20 +9,22 @@ int main()
 {
 	EnabledDebugPrivilege();
 
-	// Delete the stager executable from the 32-bit view of the registry.
+	// Delete the stager executable and the rootkit DLL's.
 	HKEY key;
-	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_ALL_ACCESS | KEY_WOW64_32KEY, &key) == ERROR_SUCCESS)
+	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_ALL_ACCESS, &key) == ERROR_SUCCESS)
 	{
 		RegDeleteValueW(key, HIDE_PREFIX L"stager");
+		RegDeleteValueW(key, HIDE_PREFIX L"dll32");
+		RegDeleteValueW(key, HIDE_PREFIX L"dll64");
 	}
 
-	// Delete the 32-bit scheduled task that starts the r77 service.
+	// Delete the scheduled task that starts the r77 service.
 	DeleteScheduledTask(R77_SERVICE_NAME32);
 
-	// Terminate running 32-bit instances of the r77 service.
-	TerminateR77Service(-1, TRUE, FALSE);
+	// Terminate running instance of the r77 service.
+	TerminateR77Service(-1);
 
-	// Detach all injected 32-bit processes.
+	// Detach all injected processes.
 	DetachAllInjectedProcesses();
 
 	if (Is64BitOperatingSystem())

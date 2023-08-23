@@ -70,7 +70,7 @@ namespace TestConsole
 			switch (parameter)
 			{
 				case "Example":
-					fileName = $"{Config.HidePrefix}-Example.exe";
+					fileName = $"{R77Const.HidePrefix}-Example.exe";
 					break;
 				case "Install":
 					fileName = "Install.exe";

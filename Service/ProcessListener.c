@@ -61,7 +61,7 @@ static DWORD WINAPI ChildProcessListenerThread(LPVOID parameter)
 {
 	while (TRUE)
 	{
-		HANDLE pipe = CreatePublicNamedPipe(COALESCE_BITNESS(CHILD_PROCESS_PIPE_NAME32, CHILD_PROCESS_PIPE_NAME64));
+		HANDLE pipe = CreatePublicNamedPipe(CHILD_PROCESS_PIPE_NAME);
 		while (pipe != INVALID_HANDLE_VALUE)
 		{
 			if (ConnectNamedPipe(pipe, NULL))

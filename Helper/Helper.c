@@ -109,7 +109,7 @@ BOOL CreateConfigSystem()
 }
 BOOL Inject(DWORD processId, LPBYTE dll, DWORD dllSize)
 {
-	return InjectDll(processId, dll, dllSize, FALSE);
+	return InjectDll(processId, dll, dllSize);
 }
 BOOL InjectAll(LPBYTE dll32, DWORD dll32Size, LPBYTE dll64, DWORD dll64Size)
 {
@@ -123,9 +123,8 @@ BOOL InjectAll(LPBYTE dll32, DWORD dll32Size, LPBYTE dll64, DWORD dll64Size)
 
 		for (DWORD i = 0; i < processCount; i++)
 		{
-			// Try both the 32-bit and the 64-bit DLL. Either the first or the second call will succeed.
-			InjectDll(processes[i], dll32, dll32Size, TRUE);
-			InjectDll(processes[i], dll64, dll64Size, TRUE);
+			InjectDll(processes[i], dll32, dll32Size);
+			InjectDll(processes[i], dll64, dll64Size);
 		}
 
 		result = TRUE;

@@ -39,8 +39,8 @@ namespace BuildTask
 				if (args.Contains("-compress")) file = Compress(file);
 				if (args.Contains("-encrypt")) file = Encrypt(file);
 				if (args.Contains("-toshellcode")) file = ExtractShellCode(file);
-				if (args.Contains("-r77service")) file = R77Signature(file, Config.R77ServiceSignature);
-				if (args.Contains("-r77helper")) file = R77Signature(file, Config.R77HelperSignature);
+				if (args.Contains("-r77service")) file = R77Signature(file, R77Const.R77ServiceSignature);
+				if (args.Contains("-r77helper")) file = R77Signature(file, R77Const.R77HelperSignature);
 
 				File.WriteAllBytes(args[0], file);
 				return 0;

