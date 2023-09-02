@@ -1,6 +1,6 @@
 # r77 Rootkit
 
-## Ring 3 rootkit
+## Fileless ring 3 rootkit
 
 r77 is a ring 3 rootkit that hides everything:
 
@@ -55,52 +55,13 @@ int main()
 }
 ```
 
-## Fileless persistence
+## Execution flow
 
 The rootkit resides in the system memory and does not write any files to the disk. This is achieved in multiple stages.
 
-**Stage 1:** The installer creates two scheduled tasks for the 32-bit and the 64-bit r77 service. The scheduled tasks start `powershell.exe` with following command line:
+This graph shows each stage from the execution of the installer all the way down to the rootkit DLL running in every process. The [documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf) has a chapter with extensive detail about the implementation of each stage.
 
-```
-[Reflection.Assembly]::Load([Microsoft.Win32.Registry]::LocalMachine.OpenSubkey('SOFTWARE').GetValue('$77stager')).EntryPoint.Invoke($Null,$Null)
-```
-
-The command is inline and does not require a .ps1 script. Here, the .NET Framework capabilities of PowerShell are utilized in order to load a C# executable from the registry and execute it in memory. For this, `Assembly.Load().EntryPoint.Invoke()` is used.
-
-![](https://bytecode77.com/images/pages/r77-rootkit/scheduled-task.png)
-![](https://bytecode77.com/images/pages/r77-rootkit/stager.png)
-
-**Stage 2:** The executed C# binary is the stager. It will create the r77 service processes using process hollowing. The r77 service is a native executable compiled in both 32-bit and 64-bit separately. The parent process is spoofed and set to winlogon.exe for additional obscurity. In addition, the two processes are hidden by ID and are not visible in the task manager.
-
-![](https://bytecode77.com/images/pages/r77-rootkit/service.png)
-
-No executables or DLL's are ever stored on the disk. The stager is stored in the registry and loads the r77 service executable from its resources.
-
-The PowerShell and .NET dependencies are present in a fresh installation of Windows 7 and Windows 10. Please review the [documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf) for a complete description of the fileless initialization.
-
-## Child process hooking
-
-When a process creates a child process, the new process is injected before it can run any of its own instructions. The function `NtResumeThread` is always called when a new process is created. Therefore, it's a suitable target to hook. Because a 32-bit process can spawn a 64-bit child process and vice versa, the r77 service provides a named pipe to handle child process injection requests.
-
-In addition, there is a periodic check every 100ms for new processes that might have been missed by child process hooking. This is necessary because some processes are protected and cannot be injected, such as services.exe.
-
-## In-memory injection
-
-The rootkit DLL (`r77-x86.dll` and `r77-x64.dll`) can be injected into a process from memory and doesn't need to be stored on the disk. **Reflective DLL injection** is used to achieve this. The DLL provides an exported function that when called, loads all sections of the DLL, handles dependency loading and relocations, and finally calls `DllMain`.
-
-## Hooking
-
-Detours is used to hook several functions from `ntdll.dll`. These low-level syscall wrappers are called by **any** WinAPI or framework implementation.
-
- - NtQuerySystemInformation
- - NtResumeThread
- - NtQueryDirectoryFile
- - NtQueryDirectoryFileEx
- - NtEnumerateKey
- - NtEnumerateValueKey
- - EnumServiceGroupW
- - EnumServicesStatusExW
- - NtDeviceIoControlFile
+![](https://bytecode77.com/images/pages/r77-rootkit/execution-flow-light.png)
 
 ## AV/EDR evasion
 
@@ -121,7 +82,7 @@ Please read the [technical documentation](https://docs.bytecode77.com/r77-rootki
 
 ## Downloads
 
-[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.4.3.zip](https://downloads.bytecode77.com/r77Rootkit%201.4.3.zip)
+[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.5.0.zip](https://downloads.bytecode77.com/r77Rootkit%201.5.0.zip)
 (**ZIP Password:** bytecode77)<br />
 [![](https://bytecode77.com/public/fileicons/pdf.png) Technical Documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf)
 
