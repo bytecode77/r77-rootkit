@@ -13,7 +13,7 @@ namespace Example
 	{
 		public string FileName => Path.GetFileName(Assembly.GetEntryAssembly().Location);
 		public int ProcessId => Process.GetCurrentProcess().Id;
-		public bool HasPrefix => FileName.StartsWith(Config.HidePrefix);
+		public bool HasPrefix => FileName.StartsWith(R77Const.HidePrefix);
 		public Visibility Message1Visibility => HasPrefix ? Visibility.Visible : Visibility.Collapsed;
 		public Visibility Message2Visibility => HasPrefix ? Visibility.Collapsed : Visibility.Visible;
 

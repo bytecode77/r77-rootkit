@@ -10,7 +10,7 @@ DWORD WINAPI ControlPipeListenerThread(LPVOID parameter)
 {
 	while (TRUE)
 	{
-		HANDLE pipe = CreatePublicNamedPipe(COALESCE_BITNESS(CONTROL_PIPE_NAME, CONTROL_PIPE_REDIRECT64_NAME));
+		HANDLE pipe = CreatePublicNamedPipe(CONTROL_PIPE_NAME);
 		while (pipe != INVALID_HANDLE_VALUE)
 		{
 			if (ConnectNamedPipe(pipe, NULL))

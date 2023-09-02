@@ -11,9 +11,10 @@ BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
 	NT_LOADLIBRARYA loadLibraryA = (NT_LOADLIBRARYA)PebGetProcAddress(0x6a4abc5b, 0xec0e4e8e);
 	NT_GETPROCADDRESS getProcAddress = (NT_GETPROCADDRESS)PebGetProcAddress(0x6a4abc5b, 0x7c0dfcaa);
 	NT_VIRTUALALLOC virtualAlloc = (NT_VIRTUALALLOC)PebGetProcAddress(0x6a4abc5b, 0x91afca54);
+	NT_VIRTUALPROTECT virtualProtect = (NT_VIRTUALPROTECT)PebGetProcAddress(0x6a4abc5b, 0x7946c61b);
 
 	// Safety check: Continue only, if all functions were found.
-	if (ntFlushInstructionCache && loadLibraryA && getProcAddress && virtualAlloc)
+	if (ntFlushInstructionCache && loadLibraryA && getProcAddress && virtualAlloc && virtualProtect)
 	{
 		PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)(dllBase + ((PIMAGE_DOS_HEADER)dllBase)->e_lfanew);
 
@@ -23,6 +24,10 @@ BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
 		{
 			// Copy optional header to new memory.
 			i_memcpy(allocatedMemory, dllBase, ntHeaders->OptionalHeader.SizeOfHeaders);
+
+			// Set memory protection on header.
+			DWORD oldProtect;
+			if (!virtualProtect(allocatedMemory, ntHeaders->OptionalHeader.SizeOfHeaders, PAGE_READONLY, &oldProtect)) return FALSE;
 
 			// Copy sections to new memory.
 			PIMAGE_SECTION_HEADER sections = (PIMAGE_SECTION_HEADER)((LPBYTE)&ntHeaders->OptionalHeader + ntHeaders->FileHeader.SizeOfOptionalHeader);
@@ -82,6 +87,20 @@ BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
 						else if (relocations[i].Type == IMAGE_REL_BASED_HIGH) *(LPWORD)(relocationAddress + relocations[i].Offset) += HIWORD(imageBase);
 						else if (relocations[i].Type == IMAGE_REL_BASED_LOW) *(LPWORD)(relocationAddress + relocations[i].Offset) += LOWORD(imageBase);
 					}
+				}
+			}
+
+			// Set memory protection on sections.
+			for (WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
+			{
+				if (!virtualProtect(
+					allocatedMemory + sections[i].VirtualAddress,
+					i == ntHeaders->FileHeader.NumberOfSections - 1 ? ntHeaders->OptionalHeader.SizeOfImage - sections[i].VirtualAddress : sections[i + 1].VirtualAddress - sections[i].VirtualAddress,
+					SectionCharacteristicsToProtection(sections[i].Characteristics),
+					&oldProtect
+				))
+				{
+					return FALSE;
 				}
 			}
 

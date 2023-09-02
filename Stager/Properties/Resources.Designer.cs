@@ -63,6 +63,26 @@ namespace Stager.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] Dll32 {
+            get {
+                object obj = ResourceManager.GetObject("Dll32", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] Dll64 {
+            get {
+                object obj = ResourceManager.GetObject("Dll64", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] Service32 {
             get {
                 object obj = ResourceManager.GetObject("Service32", resourceCulture);

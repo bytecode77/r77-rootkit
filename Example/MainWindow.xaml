@@ -30,7 +30,7 @@
 				</TextBlock>
 				<StackPanel Visibility="{Binding Message1Visibility}">
 					<TextBlock Text="This executable's filename starts with &quot;" Margin="0,0,0,10">
-						<Run Text="{x:Static global:Config.HidePrefix}" /><Run Text="&quot;" />
+						<Run Text="{x:Static global:R77Const.HidePrefix}" /><Run Text="&quot;" />
 					</TextBlock>
 					<TextBlock>
 						<Run Text="  • A task manager that is injected with r77 will not display this process." />
@@ -43,7 +43,7 @@
 				<DockPanel Visibility="{Binding Message2Visibility}">
 					<Image Source="/Example;component/Resources/Warning16.png" Margin="0,0,8,0" VerticalAlignment="Top" />
 					<TextBlock Text="Rename this executable's file to start with &quot;">
-						<Run Text="{x:Static global:Config.HidePrefix}" /><Run Text="&quot;." />
+						<Run Text="{x:Static global:R77Const.HidePrefix}" /><Run Text="&quot;." />
 						<LineBreak />
 						<Run Text="It will be hidden by r77." />
 					</TextBlock>

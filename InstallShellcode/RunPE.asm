@@ -58,7 +58,7 @@ proc RunPE Executable:DWORD
 	test	eax, eax
 	jz		.C_retry_terminate
 
-	; Write section headers
+	; Write headers
 	pebcall	PEB_Kernel32Dll, PEB_WriteProcessMemory, [ProcessInformation + PROCESS_INFORMATION.hProcess], [ImageBase], [Executable], [SizeOfHeaders], NULL
 	test	eax, eax
 	jz		.C_retry_terminate

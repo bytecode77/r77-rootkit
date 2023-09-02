@@ -38,6 +38,10 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <Win32Resource>A:\Code\GitHub\r77-rootkit\Stager\Stager.res</Win32Resource>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
@@ -48,6 +52,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Global\R77Const.cs">
+      <Link>Properties\R77Const.cs</Link>
+    </Compile>
     <Compile Include="Helper.cs" />
     <Compile Include="Stager.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -63,6 +70,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Service64.exe" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\r77-x64.dll" />
+    <None Include="Resources\r77-x86.dll" />
+    <Content Include="Stager.res" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -4,11 +4,10 @@
 /// <summary>
 /// Creates the powershell startup command.
 /// </summary>
-/// <param name="is64Bit">TRUE to return the commandline for 64-bit powershell, FALSE to return the commandline for 32-bit powershell.</param>
 /// <returns>
 /// A newly allocated LPCSTR with the powershell command.
 /// </returns>
-LPWSTR GetPowershellCommand(BOOL is64Bit);
+LPWSTR GetPowershellCommand();
 /// <summary>
 /// Obfuscates all occurrences of a given variable name within a powershell command.
 /// </summary>

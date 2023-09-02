@@ -106,9 +106,6 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)Stager\Resources"
 "$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(SolutionDir)Stager\Resources\$(TargetName).exe" -compress -encrypt</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <None Include="Resources\r77.dll" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

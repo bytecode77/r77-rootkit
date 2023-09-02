@@ -22,9 +22,5 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)ControlPipeListener.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Service.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ProcessListener.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="$(MSBuildThisFileDirectory)Resource.rc" />
   </ItemGroup>
 </Project>

