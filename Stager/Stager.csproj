@@ -40,7 +40,7 @@
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
-    <Win32Resource>A:\Code\GitHub\r77-rootkit\Stager\Stager.res</Win32Resource>
+    <Win32Resource>Stager\Stager.res</Win32Resource>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
