@@ -1,8 +1,10 @@
 #include "r77mindef.h"
+#include <pdh.h>
 #ifndef _NTDLL_H
 #define _NTDLL_H
 
 #define STATUS_NO_MORE_FILES			((NTSTATUS)0x80000006L)
+#define PDH_MORE_DATA					((PDH_STATUS)0x800007d2L)
 
 #define SL_RESTART_SCAN					0x01
 #define SL_RETURN_SINGLE_ENTRY			0x02
@@ -648,6 +650,8 @@ typedef NTSTATUS(NTAPI *NT_NTENUMERATEVALUEKEY)(HANDLE key, ULONG index, NT_KEY_
 typedef BOOL(WINAPI *NT_ENUMSERVICEGROUPW)(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPVOID reserved);
 typedef BOOL(WINAPI *NT_ENUMSERVICESSTATUSEXW)(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName);
 typedef NTSTATUS(NTAPI *NT_NTDEVICEIOCONTROLFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, ULONG ioControlCode, LPVOID inputBuffer, ULONG inputBufferLength, LPVOID outputBuffer, ULONG outputBufferLength);
+typedef PDH_STATUS(WINAPI *NT_PDHGETRAWCOUNTERARRAYW)(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PPDH_RAW_COUNTER_ITEM_W itemBuffer);
+typedef PDH_STATUS(WINAPI *NT_PDHGETFORMATTEDCOUNTERARRAYW)(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PPDH_FMT_COUNTERVALUE_ITEM_W itemBuffer);
 typedef NTSTATUS(NTAPI *NT_NTQUERYOBJECT)(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 typedef NTSTATUS(NTAPI *NT_NTCREATETHREADEX)(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
 typedef NTSTATUS(NTAPI *NT_NTUNMAPVIEWOFSECTION)(HANDLE processHandle, LPVOID baseAddress);

