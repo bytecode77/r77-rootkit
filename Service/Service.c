@@ -19,15 +19,18 @@ int main()
 	EnabledDebugPrivilege();
 
 	// Get both r77 DLL's.
-	Dll32Size = 1024 * 1024;
-	Dll64Size = 1024 * 1024;
+	HKEY key;
+	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS ||
+		RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, NULL, &Dll32Size) != ERROR_SUCCESS ||
+		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, NULL, &Dll64Size) != ERROR_SUCCESS) return 0;
+
 	Dll32 = NEW_ARRAY(BYTE, Dll32Size);
 	Dll64 = NEW_ARRAY(BYTE, Dll64Size);
 
-	HKEY key;
-	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_ALL_ACCESS, &key) != ERROR_SUCCESS ||
-		RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, Dll32, &Dll32Size) != ERROR_SUCCESS ||
+	if (RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, Dll32, &Dll32Size) != ERROR_SUCCESS ||
 		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, Dll64, &Dll64Size) != ERROR_SUCCESS) return 0;
+
+	RegCloseKey(key);
 
 	// Terminate the already running r77 service process.
 	TerminateR77Service(GetCurrentProcessId());
