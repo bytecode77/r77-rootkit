@@ -652,6 +652,7 @@ typedef BOOL(WINAPI *NT_ENUMSERVICESSTATUSEXW)(SC_HANDLE serviceManager, SC_ENUM
 typedef NTSTATUS(NTAPI *NT_NTDEVICEIOCONTROLFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, ULONG ioControlCode, LPVOID inputBuffer, ULONG inputBufferLength, LPVOID outputBuffer, ULONG outputBufferLength);
 typedef PDH_STATUS(WINAPI *NT_PDHGETRAWCOUNTERARRAYW)(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PPDH_RAW_COUNTER_ITEM_W itemBuffer);
 typedef PDH_STATUS(WINAPI *NT_PDHGETFORMATTEDCOUNTERARRAYW)(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PPDH_FMT_COUNTERVALUE_ITEM_W itemBuffer);
+typedef HRESULT(WINAPI *NT_AMSISCANBUFFER)(LPVOID amsiContext, LPVOID buffer, ULONG length, LPCWSTR contentName, LPVOID amsiSession, LPDWORD result);
 typedef NTSTATUS(NTAPI *NT_NTQUERYOBJECT)(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 typedef NTSTATUS(NTAPI *NT_NTCREATETHREADEX)(PHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
 typedef NTSTATUS(NTAPI *NT_NTUNMAPVIEWOFSECTION)(HANDLE processHandle, LPVOID baseAddress);

