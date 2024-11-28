@@ -15,13 +15,13 @@ r77 is a ring 3 rootkit that hides everything:
 
 Everything that starts with `"$77"` is hidden.
 
-![](https://bytecode77.com/images/pages/r77-rootkit/hiding.png)
+![](https://bytecode77.com/images/pages/r77-rootkit/hiding.webp)
 
 ## Configuration System
 
 The dynamic configuration system allows to hide processes by **PID** and by **name**, file system items by **full path**, TCP & UDP connections of specific ports, etc.
 
-![](https://bytecode77.com/images/pages/r77-rootkit/config.png)
+![](https://bytecode77.com/images/pages/r77-rootkit/config.webp)
 
 The configuration is located in `HKEY_LOCAL_MACHINE\SOFTWARE\$77config` and is writable by any process without elevated privileges. The DACL of this key is set to grant full access to any user.
 
@@ -61,7 +61,7 @@ The rootkit resides in the system memory and does not write any files to the dis
 
 This graph shows each stage from the execution of the installer all the way down to the rootkit DLL running in every process. The [documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf) has a chapter with extensive detail about the implementation of each stage.
 
-![](https://bytecode77.com/images/pages/r77-rootkit/execution-flow-light.png)
+![](https://bytecode77.com/images/pages/r77-rootkit/execution-flow-light.webp)
 
 ## AV/EDR evasion
 
@@ -74,7 +74,7 @@ Several AV and EDR evasion techniques are in use:
 
 The Test Console is a useful tool to inject r77 into individual processes and to test drive the configuration system.
 
-![](https://bytecode77.com/images/pages/r77-rootkit/testconsole.png)
+![](https://bytecode77.com/images/pages/r77-rootkit/testconsole.webp)
 
 ## Technical Documentation
 
