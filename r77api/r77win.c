@@ -182,7 +182,30 @@ BOOL GetProcessIntegrityLevel(HANDLE process, LPDWORD integrityLevel)
 
 	return result;
 }
-BOOL GetProcessFileName(DWORD processId, BOOL fullPath, LPWSTR fileName, DWORD fileNameLength)
+BOOL GetProcessFileName(DWORD processId, LPWSTR fileName, DWORD fileNameLength)
+{
+	BOOL result = FALSE;
+
+	HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+	if (process)
+	{
+		WCHAR path[MAX_PATH + 1];
+		if (GetProcessImageFileNameW(process, path, MAX_PATH))
+		{
+			PWCHAR resultFileName = PathFindFileNameW(path);
+			if ((DWORD)lstrlenW(resultFileName) <= fileNameLength)
+			{
+				StrCpyW(fileName, resultFileName);
+				result = TRUE;
+			}
+		}
+
+		CloseHandle(process);
+	}
+
+	return result;
+}
+BOOL GetProcessPath(DWORD processId, LPWSTR fileName, DWORD fileNameLength)
 {
 	BOOL result = FALSE;
 
@@ -192,10 +215,9 @@ BOOL GetProcessFileName(DWORD processId, BOOL fullPath, LPWSTR fileName, DWORD f
 		WCHAR path[MAX_PATH + 1];
 		if (GetModuleFileNameExW(process, NULL, path, MAX_PATH))
 		{
-			PWCHAR resultFileName = fullPath ? path : PathFindFileNameW(path);
-			if ((DWORD)lstrlenW(resultFileName) <= fileNameLength)
+			if ((DWORD)lstrlenW(path) <= fileNameLength)
 			{
-				StrCpyW(fileName, resultFileName);
+				StrCpyW(fileName, path);
 				result = TRUE;
 			}
 		}
