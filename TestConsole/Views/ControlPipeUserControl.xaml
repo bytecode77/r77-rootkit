@@ -1,0 +1,175 @@
+﻿<ui:ObservableUserControl
+	x:Class="TestConsole.ControlPipeUserControl"
+	x:Name="controlPipeUserControl"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:TestConsole"
+	xmlns:global="clr-namespace:Global"
+	xmlns:api="https://schemas.bytecode77.com/2019/xaml/api"
+	xmlns:ui="https://schemas.bytecode77.com/2019/xaml/presentation"
+	DataContext="{Binding ViewModel, ElementName=controlPipeUserControl}"
+	LoadedOnce="ControlPipeUserControl_LoadedOnce">
+	<ScrollViewer VerticalScrollBarVisibility="Auto">
+		<StackPanel Margin="10">
+			<TextBlock Text="When r77 is installed, the r77 service provides a named pipe that handles commands from any process regardless of privilege level. Below is a collection of examples that demonstrate connecting to the control pipe. Typically, commands are sent to the control pipe programmatically." TextWrapping="Wrap" Margin="0,0,0,5" />
+			<GroupBox Style="{StaticResource UIGroupBox}" Header="Status" Margin="0,0,0,10">
+				<StackPanel>
+					<TextBlock TextWrapping="Wrap" Margin="0,0,0,5" Visibility="{Binding IsR77ServiceRunning, Converter={ui:BooleanConverter Visibility}}">
+						<Run Text="r77 service is running" Foreground="#00a305" FontWeight="Bold" />.
+						<LineBreak />
+						The named pipe <Run Text="{x:Static global:R77Const.ControlPipeName}" FontWeight="Bold" /> is open to receive commands.
+					</TextBlock>
+					<TextBlock TextWrapping="Wrap" Margin="0,0,0,5" Visibility="{Binding IsR77ServiceRunning, Converter={ui:BooleanConverter VisibilityInverse}}">
+						<Run Text="r77 service is not running" Foreground="#cc0000" FontWeight="Bold" />.
+						<LineBreak />
+						Please Install r77 to connect to the control pipe.
+					</TextBlock>
+				</StackPanel>
+			</GroupBox>
+			<StackPanel IsEnabled="{Binding IsR77ServiceRunning}">
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.R77TerminateService}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command terminates the r77 service. The rootkit will reactivate when the computer is restarted." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Button Style="{StaticResource UIBUtton}" Content="Terminate r77 Service" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.R77TerminateService}" />
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.R77Uninstall}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command uninstalls r77." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Button Style="{StaticResource UIBUtton}" Content="Uninstall r77" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.R77Uninstall}" />
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.R77PauseInjection}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command pauses the injection of new processes." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Button Style="{StaticResource UIBUtton}" Content="Pause r77" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.R77PauseInjection}" />
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.R77ResumeInjection}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command resumes the injection of new processes." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Button Style="{StaticResource UIBUtton}" Content="Resume r77" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.R77ResumeInjection}" />
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.ProcessesInject}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command injects r77 into a process." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<StackPanel Orientation="Horizontal">
+							<Button Style="{StaticResource UIBUtton}" Content="Inject" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.ProcessesInject}" />
+							<TextBlock Text="r77 into process ID" Margin="5,0" VerticalAlignment="Center" />
+							<TextBox Style="{StaticResource UITextBox}" Text="{Binding InjectProcessId}" Width="80" />
+						</StackPanel>
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.ProcessesInjectAll}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command injects r77 into all processes." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Button Style="{StaticResource UIBUtton}" Content="Inject All" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.ProcessesInjectAll}" />
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.ProcessesDetach}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command detaches r77 from a process." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<StackPanel Orientation="Horizontal">
+							<Button Style="{StaticResource UIBUtton}" Content="Detach" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.ProcessesDetach}" />
+							<TextBlock Text="r77 from process ID" Margin="5,0" VerticalAlignment="Center" />
+							<TextBox Style="{StaticResource UITextBox}" Text="{Binding DetachProcessId}" Width="80" />
+						</StackPanel>
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.ProcessesDetachAll}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command detaches r77 from all processes." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Button Style="{StaticResource UIBUtton}" Content="Detach All" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.ProcessesDetachAll}" />
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.UserShellExec}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command performs a ShellExecute. The new process will spawn under the SYSTEM user (and will therefore not interact with the desktop). This command can be used to escalate privileges from a user mode process." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Grid Margin="0,0,0,10">
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="5" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="Auto" />
+								<ColumnDefinition Width="10" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<TextBlock Text="Path" VerticalAlignment="Center" />
+							<TextBlock Grid.Row="2" Text="Command Line" VerticalAlignment="Center" />
+							<TextBox Grid.Column="2" Style="{StaticResource UITextBox}" Text="{Binding ShellExecPath}" />
+							<TextBox Grid.Row="2" Grid.Column="2" Style="{StaticResource UITextBox}" Text="{Binding ShellExecCommandLine}" />
+						</Grid>
+						<Button Style="{StaticResource UIBUtton}" Content="ShellExecute" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.UserShellExec}" />
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}" Margin="0,0,0,10">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.UserRunPE}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command executes an EXE file in memory using RunPE. The new process will spawn under the SYSTEM user (and will therefore not interact with the desktop). This command can be used to escalate privileges from a user mode process." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Grid Margin="0,0,0,10">
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="5" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="Auto" />
+								<ColumnDefinition Width="10" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<TextBlock Text="Target Path" VerticalAlignment="Center" />
+							<TextBlock Grid.Row="2" Text="Payload Executable" VerticalAlignment="Center" />
+							<TextBox Grid.Column="2" Style="{StaticResource UITextBox}" Text="{Binding RunPETargetPath}" />
+							<DockPanel Grid.Row="2" Grid.Column="2">
+								<Button DockPanel.Dock="Right" Style="{StaticResource UIBUtton}" Content="Browse..." Margin="10,0,0,0" Command="{Binding RunPEPayloadPathBrowseCommand}" />
+								<TextBox Style="{StaticResource UITextBox}" Text="{Binding RunPEPayloadPath}" />
+							</DockPanel>
+						</Grid>
+						<Button Style="{StaticResource UIBUtton}" Content="RunPE" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.UserRunPE}" />
+					</StackPanel>
+				</GroupBox>
+				<GroupBox Style="{StaticResource UIGroupBox}">
+					<GroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static local:ControlCode.SystemBsod}, Converter={ui:EnumConverter Description}}" />
+					</GroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command will cause a blue screen. Only use in a testing environment!" TextWrapping="Wrap" Margin="0,0,0,5" />
+						<Button Style="{StaticResource UIBUtton}" Content="BSOD" HorizontalAlignment="Left" Command="{Binding ExecuteCommand}" CommandParameter="{x:Static local:ControlCode.SystemBsod}" />
+					</StackPanel>
+				</GroupBox>
+			</StackPanel>
+		</StackPanel>
+	</ScrollViewer>
+</ui:ObservableUserControl>

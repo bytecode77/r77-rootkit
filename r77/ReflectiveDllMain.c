@@ -97,8 +97,7 @@ BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)
 					allocatedMemory + sections[i].VirtualAddress,
 					i == ntHeaders->FileHeader.NumberOfSections - 1 ? ntHeaders->OptionalHeader.SizeOfImage - sections[i].VirtualAddress : sections[i + 1].VirtualAddress - sections[i].VirtualAddress,
 					SectionCharacteristicsToProtection(sections[i].Characteristics),
-					&oldProtect
-				))
+					&oldProtect))
 				{
 					return FALSE;
 				}

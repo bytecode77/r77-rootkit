@@ -1,0 +1,99 @@
+﻿<ui:ObservableUserControl
+	x:Class="TestConsole.ProcessesUserControl"
+	x:Name="processesUserControl"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:TestConsole"
+	xmlns:global="clr-namespace:Global"
+	xmlns:api="https://schemas.bytecode77.com/2019/xaml/api"
+	xmlns:ui="https://schemas.bytecode77.com/2019/xaml/presentation"
+	DataContext="{Binding ViewModel, ElementName=processesUserControl}"
+	LoadedOnce="ProcessesUserControl_LoadedOnce">
+	<ListView Name="lstProcesses" BorderThickness="0" ItemsSource="{Binding Processes}" SelectedItem="{Binding SelectedProcess}" TextSearch.TextPath="Name">
+		<ListView.Resources>
+			<Style TargetType="{x:Type TextBlock}">
+				<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+			</Style>
+		</ListView.Resources>
+		<ListView.View>
+			<GridView>
+				<GridViewColumn Header="Process" Width="200">
+					<GridViewColumn.CellTemplate>
+						<DataTemplate>
+							<DockPanel>
+								<Image Source="{Binding Icon, Converter={ui:ImageSourceConverter}}" Width="16" Height="16" Margin="0,0,5,0" />
+								<TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+							</DockPanel>
+						</DataTemplate>
+					</GridViewColumn.CellTemplate>
+				</GridViewColumn>
+				<GridViewColumn Header="PID" Width="60" DisplayMemberBinding="{Binding Id}" />
+				<GridViewColumn Header="Platform" Width="60">
+					<GridViewColumn.CellTemplate>
+						<DataTemplate>
+							<Grid>
+								<TextBlock Text="32" TextTrimming="CharacterEllipsis" Visibility="{Binding Is64Bit, Converter={ui:EqualityConverter Equal, Visibility}, ConverterParameter={ui:Boolean False}}" />
+								<TextBlock Text="64" TextTrimming="CharacterEllipsis" Visibility="{Binding Is64Bit, Converter={ui:EqualityConverter Equal, Visibility}, ConverterParameter={ui:Boolean True}}" />
+							</Grid>
+						</DataTemplate>
+					</GridViewColumn.CellTemplate>
+				</GridViewColumn>
+				<GridViewColumn Header="Integrity" Width="80" DisplayMemberBinding="{Binding IntegrityLevel}" />
+				<GridViewColumn Header="User" Width="120" DisplayMemberBinding="{Binding User}" />
+				<GridViewColumn Header="Flags" Width="60">
+					<GridViewColumn.CellTemplate>
+						<DataTemplate>
+							<StackPanel Orientation="Horizontal">
+								<Image Source="/TestConsole;component/Resources/R77Service16.png" Margin="0,0,5,0" Visibility="{Binding IsR77Service, Converter={ui:BooleanConverter Visibility}}" ToolTip="r77 Service Process" />
+								<Image Source="/TestConsole;component/Resources/R77Helper16.png" Margin="0,0,5,0" Visibility="{Binding IsHelper, Converter={ui:BooleanConverter Visibility}}" ToolTip="r77 Helper Process" />
+								<Image Source="/TestConsole;component/Resources/Hidden16.png" Margin="0,0,5,0" Visibility="{Binding IsHiddenById, Converter={ui:BooleanConverter Visibility}}" ToolTip="Process is hidden by ID" />
+							</StackPanel>
+						</DataTemplate>
+					</GridViewColumn.CellTemplate>
+				</GridViewColumn>
+				<GridViewColumn Header="Inject" Width="80">
+					<GridViewColumn.CellTemplate>
+						<DataTemplate>
+							<Grid Visibility="{Binding CanInject, Converter={ui:BooleanConverter Visibility}}">
+								<DockPanel Visibility="{Binding IsInjected, Converter={ui:BooleanConverter VisibilityInverse}}">
+									<Image Source="/TestConsole;component/Resources/DllInject16.png" Width="16" Height="16" Margin="0,0,5,0" />
+									<TextBlock TextTrimming="CharacterEllipsis"><Hyperlink Command="{Binding DataContext.InjectCommand, ElementName=processesUserControl}" CommandParameter="{Binding}">Inject</Hyperlink></TextBlock>
+								</DockPanel>
+								<DockPanel Visibility="{Binding IsInjected, Converter={ui:BooleanConverter Visibility}}">
+									<Image Source="/TestConsole;component/Resources/DllInjected16.png" Width="16" Height="16" Margin="0,0,5,0" />
+									<TextBlock Text="Injected" TextTrimming="CharacterEllipsis" Foreground="#00a305" />
+								</DockPanel>
+							</Grid>
+						</DataTemplate>
+					</GridViewColumn.CellTemplate>
+				</GridViewColumn>
+				<GridViewColumn Header="Detach" Width="80">
+					<GridViewColumn.CellTemplate>
+						<DataTemplate>
+							<DockPanel Visibility="{Binding IsInjected, Converter={ui:BooleanConverter Visibility}}">
+								<Image Source="/TestConsole;component/Resources/DllDetach16.png" Width="16" Height="16" Margin="0,0,5,0" />
+								<TextBlock TextTrimming="CharacterEllipsis"><Hyperlink Command="{Binding DataContext.DetachCommand, ElementName=processesUserControl}" CommandParameter="{Binding}">Detach</Hyperlink></TextBlock>
+							</DockPanel>
+						</DataTemplate>
+					</GridViewColumn.CellTemplate>
+				</GridViewColumn>
+				<GridViewColumn Header="Hide by PID" Width="80">
+					<GridViewColumn.CellTemplate>
+						<DataTemplate>
+							<Grid>
+								<DockPanel Visibility="{Binding IsHiddenById, Converter={ui:BooleanConverter VisibilityInverse}}">
+									<Image Source="/TestConsole;component/Resources/Unhidden16.png" Width="16" Height="16" Margin="0,0,5,0" />
+									<TextBlock TextTrimming="CharacterEllipsis" ToolTip="Click to hide process by ID"><Hyperlink Command="{Binding DataContext.HideCommand, ElementName=processesUserControl}" CommandParameter="{Binding}">Hide</Hyperlink></TextBlock>
+								</DockPanel>
+								<DockPanel Visibility="{Binding IsHiddenById, Converter={ui:BooleanConverter Visibility}}">
+									<Image Source="/TestConsole;component/Resources/Hidden16.png" Width="16" Height="16" Margin="0,0,5,0" />
+									<TextBlock TextTrimming="CharacterEllipsis" ToolTip="Click to mark process as not hidden"><Hyperlink Command="{Binding DataContext.UnhideCommand, ElementName=processesUserControl}" CommandParameter="{Binding}">Unhide</Hyperlink></TextBlock>
+								</DockPanel>
+							</Grid>
+						</DataTemplate>
+					</GridViewColumn.CellTemplate>
+				</GridViewColumn>
+			</GridView>
+		</ListView.View>
+	</ListView>
+</ui:ObservableUserControl>

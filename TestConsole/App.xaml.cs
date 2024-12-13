@@ -56,8 +56,7 @@ namespace TestConsole
 			}
 			else
 			{
-				message = new LogMessage
-				(
+				message = new LogMessage(
 					LogMessageType.Error,
 					new LogTextItem("File"),
 					new LogFileItem(Path.GetFileName(path)),
@@ -83,8 +82,7 @@ namespace TestConsole
 			if (MainWindowViewModel.Singleton?.IsInitialized == true)
 			{
 				// If the main window is initialized, display the exception in the log view.
-				Log.Write(new LogMessage
-				(
+				Log.Write(new LogMessage(
 					LogMessageType.Error,
 					new LogTextItem(stackTrace)
 				));
