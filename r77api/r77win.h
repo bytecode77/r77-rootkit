@@ -91,17 +91,27 @@ LPVOID GetFunction(LPCSTR dll, LPCSTR function);
 /// </returns>
 BOOL GetProcessIntegrityLevel(HANDLE process, LPDWORD integrityLevel);
 /// <summary>
-/// Gets the filename or the full path of a process.
+/// Gets the filename of a process.
 /// </summary>
-/// <param name="processId">The process ID to retrieve the filename or full path from.</param>
-/// <param name="fullPath">TRUE to return the full path, FALSE to return only the filename.</param>
-/// <param name="fileName">A buffer to write the filename or full path to.</param>
+/// <param name="processId">The process ID to retrieve the filename from.</param>
+/// <param name="fileName">A buffer to write the filename to.</param>
 /// <param name="fileNameLength">The length of the fileName buffer.</param>
 /// <returns>
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
-BOOL GetProcessFileName(DWORD processId, BOOL fullPath, LPWSTR fileName, DWORD fileNameLength);
+BOOL GetProcessFileName(DWORD processId, LPWSTR fileName, DWORD fileNameLength);
+/// <summary>
+/// Gets the full path of a process.
+/// </summary>
+/// <param name="processId">The process ID to retrieve the full path from.</param>
+/// <param name="fileName">A buffer to write full path to.</param>
+/// <param name="fileNameLength">The length of the fileName buffer.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL GetProcessPath(DWORD processId, LPWSTR fileName, DWORD fileNameLength);
 /// <summary>
 /// Gets the username of a process.
 /// </summary>

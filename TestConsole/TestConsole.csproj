@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -71,12 +71,12 @@
     <Compile Include="..\Global\R77Const.cs">
       <Link>Properties\R77Const.cs</Link>
     </Compile>
-    <Compile Include="Controller\HelperDll.cs" />
-    <Compile Include="Controller\ConfigSystemEntry.cs" />
-    <Compile Include="Controller\ConfigSystemDirectory.cs" />
-    <Compile Include="Controller\ConfigSystem.cs" />
-    <Compile Include="Controller\ControlCode.cs" />
-    <Compile Include="Controller\ControlPipe.cs" />
+    <Compile Include="Helper\HelperDll.cs" />
+    <Compile Include="Model\ConfigSystem\ConfigSystemEntry.cs" />
+    <Compile Include="Model\ConfigSystem\ConfigSystemDirectory.cs" />
+    <Compile Include="Helper\ConfigSystem.cs" />
+    <Compile Include="Helper\ControlCode.cs" />
+    <Compile Include="Helper\ControlPipe.cs" />
     <Compile Include="Model\Logging\Log.cs" />
     <Compile Include="Model\Logging\LogDetailsItem.cs" />
     <Compile Include="Model\Logging\LogLinkItem.cs" />
@@ -85,33 +85,33 @@
     <Compile Include="Model\Logging\LogItem.cs" />
     <Compile Include="Model\Logging\LogFileItem.cs" />
     <Compile Include="Model\Logging\LogTextItem.cs" />
-    <Compile Include="ViewModels\AboutPopupViewModel.cs" />
-    <Compile Include="ViewModels\ConfigSystemValueWindowViewModel.cs" />
-    <Compile Include="ViewModels\MainWindowViewModel.cs" />
-    <Compile Include="ViewModels\MainWindow\ConfigSystemUserControlViewModel.cs" />
-    <Compile Include="ViewModels\MainWindow\ControlPipeUserControlViewModel.cs" />
-    <Compile Include="ViewModels\MainWindow\ProcessesUserControlViewModel.cs" />
-    <Compile Include="Views\ConfigSystemValueWindow.xaml.cs">
+    <Compile Include="Views\AboutPopupViewModel.cs" />
+    <Compile Include="Windows\ConfigSystemValueWindowViewModel.cs" />
+    <Compile Include="Windows\MainWindowViewModel.cs" />
+    <Compile Include="Views\ConfigSystemUserControlViewModel.cs" />
+    <Compile Include="Views\ControlPipeUserControlViewModel.cs" />
+    <Compile Include="Views\ProcessesUserControlViewModel.cs" />
+    <Compile Include="Windows\ConfigSystemValueWindow.xaml.cs">
       <DependentUpon>ConfigSystemValueWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\MainWindow\ConfigSystemUserControl.xaml.cs">
+    <Compile Include="Views\ConfigSystemUserControl.xaml.cs">
       <DependentUpon>ConfigSystemUserControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\MainWindow\ControlPipeUserControl.xaml.cs">
+    <Compile Include="Views\ControlPipeUserControl.xaml.cs">
       <DependentUpon>ControlPipeUserControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\MainWindow\ProcessesUserControl.xaml.cs">
+    <Compile Include="Views\ProcessesUserControl.xaml.cs">
       <DependentUpon>ProcessesUserControl.xaml</DependentUpon>
     </Compile>
     <Page Include="Views\AboutPopup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\ConfigSystemValueWindow.xaml">
+    <Page Include="Windows\ConfigSystemValueWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\MainWindow.xaml">
+    <Page Include="Windows\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -119,23 +119,23 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Controller\ProcessList.cs" />
+    <Compile Include="Helper\ProcessList.cs" />
     <Compile Include="Views\AboutPopup.xaml.cs">
       <DependentUpon>AboutPopup.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\MainWindow.xaml.cs">
+    <Compile Include="Windows\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Views\MainWindow\ConfigSystemUserControl.xaml">
+    <Page Include="Views\ConfigSystemUserControl.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\MainWindow\ControlPipeUserControl.xaml">
+    <Page Include="Views\ControlPipeUserControl.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\MainWindow\ProcessesUserControl.xaml">
+    <Page Include="Views\ProcessesUserControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

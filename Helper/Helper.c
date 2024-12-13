@@ -40,7 +40,7 @@ BOOL GetProcessList(PPROCESS_LIST_ENTRY entries, LPDWORD count)
 				PPROCESS_LIST_ENTRY entry = &entries[(*count)++];
 				entry->ProcessId = processEntry.th32ProcessID;
 				StrCpyW(entry->Name, processEntry.szExeFile);
-				GetProcessFileName(processEntry.th32ProcessID, TRUE, entry->FullName, MAX_PATH);
+				GetProcessPath(processEntry.th32ProcessID, entry->FullName, MAX_PATH);
 
 				BOOL is64Bit;
 				if (Is64BitProcess(processEntry.th32ProcessID, &is64Bit))

@@ -97,6 +97,7 @@ VOID DeleteR77Config(PR77_CONFIG config)
 	DeleteIntegerList(config->HiddenTcpLocalPorts);
 	DeleteIntegerList(config->HiddenTcpRemotePorts);
 	DeleteIntegerList(config->HiddenUdpPorts);
+
 	i_memset(config, 0, sizeof(R77_CONFIG));
 	FREE(config);
 }
