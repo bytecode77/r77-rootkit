@@ -1,5 +1,6 @@
 #include "ReflectiveDllMain.h"
 #include "ntdll.h"
+#include "r77win.h"
 #include "peb.h"
 
 BOOL WINAPI ReflectiveDllMain(LPBYTE dllBase)

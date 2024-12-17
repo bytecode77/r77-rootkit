@@ -34,8 +34,6 @@ static LPWSTR CreatePath(LPWSTR result, LPCWSTR directoryName, LPCWSTR fileName)
 static LPWSTR FileInformationGetName(LPVOID fileInformation, FILE_INFORMATION_CLASS fileInformationClass, LPWSTR name);
 static ULONG FileInformationGetNextEntryOffset(LPVOID fileInformation, FILE_INFORMATION_CLASS fileInformationClass);
 static VOID FileInformationSetNextEntryOffset(LPVOID fileInformation, FILE_INFORMATION_CLASS fileInformationClass, ULONG value);
-static PWCHAR KeyInformationGetName(LPVOID keyInformation, NT_KEY_INFORMATION_CLASS keyInformationClass);
-static PWCHAR KeyValueInformationGetName(LPVOID keyValueInformation, NT_KEY_VALUE_INFORMATION_CLASS keyValueInformationClass);
 static VOID FilterEnumServiceStatus(LPENUM_SERVICE_STATUSW services, LPDWORD servicesReturned);
 static VOID FilterEnumServiceStatusProcess(LPENUM_SERVICE_STATUS_PROCESSW services, LPDWORD servicesReturned);
 static BOOL GetIsHiddenFromPdhString(LPCWSTR str);
