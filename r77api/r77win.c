@@ -1,5 +1,4 @@
 #include "r77win.h"
-#include "ntdll.h"
 #include <Psapi.h>
 #include <Shlwapi.h>
 #include <aclapi.h>
@@ -1077,4 +1076,8 @@ NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, 
 NTSTATUS NTAPI R77_RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb)
 {
 	return ((NT_RTLSETPROCESSISCRITICAL)GetFunction("ntdll.dll", "RtlSetProcessIsCritical"))(newIsCritical, oldIsCritical, needScb);
+}
+PDH_STATUS WINAPI R77_PdhGetCounterInfoW(PDH_HCOUNTER counter, BOOLEAN retrieveExplainText, LPDWORD bufferSize, PNT_PDH_COUNTER_INFO_W buffer)
+{
+	return ((NT_PDHGETCOUNTERINFOW)GetFunction("pdh.dll", "PdhGetCounterInfoW"))(counter, retrieveExplainText, bufferSize, buffer);
 }

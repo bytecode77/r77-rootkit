@@ -1,5 +1,4 @@
 #include "r77mindef.h"
-#include <pdh.h>
 #ifndef _NTDLL_H
 #define _NTDLL_H
 
@@ -14,6 +13,9 @@
 
 #define DEVICE_NSI						L"\\Device\\Nsi"
 #define IOCTL_NSI_GETALLPARAM			0x12001b
+
+typedef LONG PDH_STATUS;
+typedef HANDLE PDH_HCOUNTER;
 
 typedef enum _NT_SYSTEM_INFORMATION_CLASS
 {
@@ -641,6 +643,87 @@ typedef struct _NT_IMAGE_RELOC
 	WORD Type : 4;
 } NT_IMAGE_RELOC, *PNT_IMAGE_RELOC;
 
+typedef struct _NT_PDH_DATA_ITEM_PATH_ELEMENTS_W
+{
+	LPWSTR MachineName;
+	GUID ObjectGuid;
+	DWORD ItemId;
+	LPWSTR InstanceName;
+} NT_PDH_DATA_ITEM_PATH_ELEMENTS_W, *PNT_PDH_DATA_ITEM_PATH_ELEMENTS_W;
+
+typedef struct _NT_PDH_COUNTER_PATH_ELEMENTS_W
+{
+	LPWSTR MachineName;
+	LPWSTR ObjectName;
+	LPWSTR InstanceName;
+	LPWSTR ParentInstance;
+	DWORD InstanceIndex;
+	LPWSTR CounterName;
+} NT_PDH_COUNTER_PATH_ELEMENTS_W, *PNT_PDH_COUNTER_PATH_ELEMENTS_W;
+
+typedef struct _NT_PDH_COUNTER_INFO_W
+{
+	DWORD Length;
+	DWORD Type;
+	DWORD Version;
+	DWORD Status;
+	LONG Scale;
+	LONG DefaultScale;
+	DWORD_PTR UserData;
+	DWORD_PTR QueryUserData;
+	LPWSTR FullPath;
+	union
+	{
+		NT_PDH_DATA_ITEM_PATH_ELEMENTS_W DataItemPath;
+		NT_PDH_COUNTER_PATH_ELEMENTS_W CounterPath;
+		struct
+		{
+			LPWSTR MachineName;
+			LPWSTR ObjectName;
+			LPWSTR InstanceName;
+			LPWSTR ParentInstance;
+			DWORD InstanceIndex;
+			LPWSTR CounterName;
+		};
+	};
+	LPWSTR ExplainText;
+	DWORD DataBuffer[1];
+} NT_PDH_COUNTER_INFO_W, *PNT_PDH_COUNTER_INFO_W;
+
+typedef struct _NT_PDH_RAW_COUNTER
+{
+	volatile DWORD Status;
+	FILETIME TimeStamp;
+	LONGLONG FirstValue;
+	LONGLONG SecondValue;
+	DWORD MultiCount;
+} NT_PDH_RAW_COUNTER, *PNT_PDH_RAW_COUNTER;
+
+typedef struct _NT_PDH_RAW_COUNTER_ITEM_W
+{
+	LPWSTR Name;
+	NT_PDH_RAW_COUNTER RawValue;
+} NT_PDH_RAW_COUNTER_ITEM_W, *PNT_PDH_RAW_COUNTER_ITEM_W;
+
+typedef struct _NT_PDH_FMT_COUNTERVALUE
+{
+	DWORD Status;
+	union
+	{
+		LONG LongValue;
+		double DoubleValue;
+		LONGLONG LargeValue;
+		LPCSTR AnsiStringValue;
+		LPCWSTR WideStringValue;
+	};
+} NT_PDH_FMT_COUNTERVALUE, *PNT_PDH_FMT_COUNTERVALUE;
+
+typedef struct _NT_PDH_FMT_COUNTERVALUE_ITEM_W
+{
+	LPWSTR Name;
+	NT_PDH_FMT_COUNTERVALUE FmtValue;
+} NT_PDH_FMT_COUNTERVALUE_ITEM_W, *PNT_PDH_FMT_COUNTERVALUE_ITEM_W;
+
 typedef NTSTATUS(NTAPI *NT_NTQUERYSYSTEMINFORMATION)(SYSTEM_INFORMATION_CLASS systemInformationClass, LPVOID systemInformation, ULONG systemInformationLength, PULONG returnLength);
 typedef NTSTATUS(NTAPI *NT_NTRESUMETHREAD)(HANDLE thread, PULONG suspendCount);
 typedef NTSTATUS(NTAPI *NT_NTQUERYDIRECTORYFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, LPVOID fileInformation, ULONG length, FILE_INFORMATION_CLASS fileInformationClass, BOOLEAN returnSingleEntry, PUNICODE_STRING fileName, BOOLEAN restartScan);
@@ -650,8 +733,9 @@ typedef NTSTATUS(NTAPI *NT_NTENUMERATEVALUEKEY)(HANDLE key, ULONG index, NT_KEY_
 typedef BOOL(WINAPI *NT_ENUMSERVICEGROUPW)(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPVOID reserved);
 typedef BOOL(WINAPI *NT_ENUMSERVICESSTATUSEXW)(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName);
 typedef NTSTATUS(NTAPI *NT_NTDEVICEIOCONTROLFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, ULONG ioControlCode, LPVOID inputBuffer, ULONG inputBufferLength, LPVOID outputBuffer, ULONG outputBufferLength);
-typedef PDH_STATUS(WINAPI *NT_PDHGETRAWCOUNTERARRAYW)(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PPDH_RAW_COUNTER_ITEM_W itemBuffer);
-typedef PDH_STATUS(WINAPI *NT_PDHGETFORMATTEDCOUNTERARRAYW)(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PPDH_FMT_COUNTERVALUE_ITEM_W itemBuffer);
+typedef PDH_STATUS(WINAPI *NT_PDHGETCOUNTERINFOW)(PDH_HCOUNTER counter, BOOLEAN retrieveExplainText, LPDWORD bufferSize, PNT_PDH_COUNTER_INFO_W buffer);
+typedef PDH_STATUS(WINAPI *NT_PDHGETRAWCOUNTERARRAYW)(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_RAW_COUNTER_ITEM_W itemBuffer);
+typedef PDH_STATUS(WINAPI *NT_PDHGETFORMATTEDCOUNTERARRAYW)(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_FMT_COUNTERVALUE_ITEM_W itemBuffer);
 typedef HRESULT(WINAPI *NT_AMSISCANBUFFER)(LPVOID amsiContext, LPVOID buffer, ULONG length, LPCWSTR contentName, LPVOID amsiSession, LPDWORD result);
 typedef NTSTATUS(NTAPI *NT_NTQUERYOBJECT)(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 typedef NTSTATUS(NTAPI *NT_NTCREATETHREADEX)(LPHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);
