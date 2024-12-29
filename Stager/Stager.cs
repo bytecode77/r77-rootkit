@@ -73,7 +73,7 @@ public static class Program
 
 		for (int i = 0; i < decrypted.Length; i++)
 		{
-			decrypted[i] = (byte)(data[i + 4] ^ (byte)key);
+			decrypted[i] = (byte)(data[i + 4] ^ key);
 			key = key << 1 | key >> (32 - 1);
 		}
 

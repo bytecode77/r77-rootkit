@@ -3,7 +3,7 @@
   <PropertyGroup Label="Globals">
     <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <HasSharedItems>true</HasSharedItems>
-    <ItemsProjectGuid>{46e171d4-1811-48be-8867-a63c28761d28}</ItemsProjectGuid>
+    <ItemsProjectGuid>{631adcf8-7809-4c45-b29a-30ecf33592d6}</ItemsProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="ExtensionSettings">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
@@ -17,14 +17,14 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)ControlPipeListener.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Service.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)ProcessListener.c" />
+    <MASM Include="$(MSBuildThisFileDirectory)Syscalls.asm" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)ControlPipeListener.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Service.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)ProcessListener.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Syscalls.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Unhook.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Unhook.c" />
   </ItemGroup>
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

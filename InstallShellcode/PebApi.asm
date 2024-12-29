@@ -1,16 +1,11 @@
-proc PebGetProcAddress ModuleHash:DWORD, FunctionHash:DWORD
+proc PebGetModuleHandle ModuleHash:DWORD
 	local	FirstEntry:DWORD
 	local	CurrentEntry:DWORD
-	local	ModuleBase:DWORD
-	local	ExportDirectory:DWORD
-	local	NameDirectory:DWORD
-	local	NameOrdinalDirectory:DWORD
-	local	FunctionCounter:DWORD
 
 	; Get InMemoryOrderModuleList from PEB
 	mov		eax, 3
 	shl		eax, 4
-	mov		eax, [fs:eax] ; fs:0x30
+	mov		eax, [fs:eax] ; obfuscated fs:0x30
 	mov		eax, [eax + PEB.Ldr]
 	mov		eax, [eax + PEB_LDR_DATA.InMemoryOrderModuleList.Flink]
 	mov		[FirstEntry], eax
@@ -30,12 +25,12 @@ proc PebGetProcAddress ModuleHash:DWORD, FunctionHash:DWORD
 	cld
 .L_module_hash:
 	lodsb
-	ror		edx, 13
-	add		edx, eax
 	cmp		al, 'a'
 	jl		@f
-	sub		edx, 0x20 ; Convert lower case letters to upper case
-@@:	dec		ecx
+	and		eax, 0xdf ; Convert lower case letters to upper case
+@@:	ror		edx, 13
+	add		edx, eax
+	dec		ecx
 	test	ecx, ecx
 	jnz		.L_module_hash
 
@@ -43,9 +38,35 @@ proc PebGetProcAddress ModuleHash:DWORD, FunctionHash:DWORD
 	cmp		edx, [ModuleHash]
 	jne		.C_module
 
-	; Get module base
+	; Return module base
 	mov		eax, [CurrentEntry]
 	mov		eax, [eax + LDR_DATA_TABLE_ENTRY.DllBase]
+	ret
+
+.C_module:
+	; Move to next module, exit loop if CurrentEntry == FirstEntry
+	mov		eax, [CurrentEntry]
+	mov		eax, [eax + LIST_ENTRY.Flink]
+	mov		[CurrentEntry], eax
+	cmp		eax, [FirstEntry]
+	jne		.L_module
+
+	; Module not found
+	xor		eax, eax
+	ret
+endp
+
+proc PebGetProcAddress ModuleHash:DWORD, FunctionHash:DWORD
+	local	ModuleBase:DWORD
+	local	ExportDirectory:DWORD
+	local	NameDirectory:DWORD
+	local	NameOrdinalDirectory:DWORD
+	local	FunctionCounter:DWORD
+
+	; Get module
+	stdcall	PebGetModuleHandle, [ModuleHash]
+	test	eax, eax
+	jz		.E_functions
 	mov		[ModuleBase], eax
 
 	; Get export directory
@@ -114,18 +135,6 @@ proc PebGetProcAddress ModuleHash:DWORD, FunctionHash:DWORD
 .E_functions:
 
 	; Function not found in module's export table
-	xor		eax, eax
-	ret
-
-.C_module:
-	; Move to next module, exit loop if CurrentEntry == FirstEntry
-	mov		eax, [CurrentEntry]
-	mov		eax, [eax + LIST_ENTRY.Flink]
-	mov		[CurrentEntry], eax
-	cmp		eax, [FirstEntry]
-	jne		.L_module
-
-	; Module not found
 	xor		eax, eax
 	ret
 endp
