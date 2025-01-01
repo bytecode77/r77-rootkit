@@ -61,17 +61,19 @@ namespace BuildTask
 		}
 		private static byte[] Encrypt(byte[] data)
 		{
-			// Only a trivial encryption algorithm is used.
-			// This improves the stability of the fileless startup, because less .NET classes are imported that may not be present on the target computer.
+			// A trivial encryption algorithm is sufficient and requires no .NET classes to be imported.
 
 			byte[] encrypted = new byte[data.Length + 4];
-			RandomNumberGenerator.Create().GetBytes(encrypted, 0, 4);
+			using (RandomNumberGenerator random = RandomNumberGenerator.Create())
+			{
+				random.GetBytes(encrypted, 0, 4);
+			}
 
 			int key = BitConverter.ToInt32(encrypted, 0);
 
 			for (int i = 0; i < data.Length; i++)
 			{
-				encrypted[i + 4] = (byte)(data[i] ^ (byte)key);
+				encrypted[i + 4] = (byte)(data[i] ^ key);
 				key = key << 1 | key >> (32 - 1);
 			}
 

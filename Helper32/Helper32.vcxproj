@@ -58,6 +58,7 @@
       <AdditionalDependencies>ntdll.lib;shlwapi.lib;taskschd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>mkdir "$(SolutionDir)$Build"
