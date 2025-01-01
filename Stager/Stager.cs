@@ -24,6 +24,7 @@ public static class Program
 		Unhook.UnhookDll("ntdll.dll");
 		if (Environment.OSVersion.Version.Major >= 10 || IntPtr.Size == 8) // Unhooking kernel32.dll does not work on Windows 7 x86.
 		{
+			Unhook.UnhookDll("kernelbase.dll");
 			Unhook.UnhookDll("kernel32.dll");
 		}
 
