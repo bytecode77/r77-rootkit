@@ -73,34 +73,39 @@ LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str)
 		return NULL;
 	}
 }
-VOID Int32ToStrW(LONG value, PWCHAR buffer)
+PWCHAR Int32ToStrW(LONG value, PWCHAR buffer)
 {
+	PWCHAR returnValue = buffer;
+
 	if (value == 0)
 	{
 		buffer[0] = L'0';
 		buffer[1] = L'\0';
-		return;
 	}
-
-	if (value < 0)
+	else
 	{
-		*buffer++ = L'-';
-		value = -value;
+		if (value < 0)
+		{
+			*buffer++ = L'-';
+			value = -value;
+		}
+
+		INT length = 0;
+		for (LONG i = value; i; i /= 10)
+		{
+			length++;
+		}
+
+		for (INT i = 0; i < length; i++)
+		{
+			buffer[length - i - 1] = L'0' + value % 10;
+			value /= 10;
+		}
+
+		buffer[length] = L'\0';
 	}
 
-	INT length = 0;
-	for (LONG i = value; i; i /= 10)
-	{
-		length++;
-	}
-
-	for (INT i = 0; i < length; i++)
-	{
-		buffer[length - i - 1] = L'0' + value % 10;
-		value /= 10;
-	}
-
-	buffer[length] = L'\0';
+	return returnValue;
 }
 
 BOOL Is64BitOperatingSystem()
@@ -744,7 +749,6 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 		if (!isPayload64Bit && BITNESS(64) && !IsAtLeastWindows10())
 		{
 			// Wow64 RunPE requires at least Windows 10.
-			//TODO: Custom implementation for Wow64GetThreadContext and Wow64SetThreadContext required to work on Windows 7.
 			return FALSE;
 		}
 	}

