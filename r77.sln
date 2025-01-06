@@ -90,6 +90,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Service64", "Service64\Serv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Unhook", "Unhook\Unhook.vcxitems", "{631ADCF8-7809-4C45-B29A-30ECF33592D6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReflectiveDllMain", "ReflectiveDllMain\ReflectiveDllMain.vcxitems", "{BEABB20F-6030-4275-A8CF-56245417F4B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -171,6 +173,7 @@ Global
 		{7271AFD1-10F6-4589-95B7-3ABF98E7B2CA} = {BD27B8C6-9341-44E1-B375-FFE2ACAAD7F5}
 		{E3104B33-DB3D-4C83-B393-1E05E1FF2B10} = {BD27B8C6-9341-44E1-B375-FFE2ACAAD7F5}
 		{631ADCF8-7809-4C45-B29A-30ECF33592D6} = {1A7FBF3D-F6D4-41A5-93FE-118A940F9086}
+		{BEABB20F-6030-4275-A8CF-56245417F4B1} = {1A7FBF3D-F6D4-41A5-93FE-118A940F9086}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A070C206-A2CD-4C8A-878F-A43650D1A3B1}
@@ -179,9 +182,11 @@ Global
 		r77api\r77api.vcxitems*{00d7268a-92a9-4cd4-addf-175e9bf16ae0}*SharedItemsImports = 4
 		r77api\r77api.vcxitems*{06af1d64-f2fc-4767-8794-7313c7bb0a40}*SharedItemsImports = 4
 		r77\r77.vcxitems*{06af1d64-f2fc-4767-8794-7313c7bb0a40}*SharedItemsImports = 4
+		ReflectiveDllMain\ReflectiveDllMain.vcxitems*{06af1d64-f2fc-4767-8794-7313c7bb0a40}*SharedItemsImports = 4
 		Unhook\Unhook.vcxitems*{06af1d64-f2fc-4767-8794-7313c7bb0a40}*SharedItemsImports = 4
 		r77api\r77api.vcxitems*{1ba54a13-b390-47b3-9628-b58a2bba193b}*SharedItemsImports = 4
 		r77\r77.vcxitems*{1ba54a13-b390-47b3-9628-b58a2bba193b}*SharedItemsImports = 4
+		ReflectiveDllMain\ReflectiveDllMain.vcxitems*{1ba54a13-b390-47b3-9628-b58a2bba193b}*SharedItemsImports = 4
 		Unhook\Unhook.vcxitems*{1ba54a13-b390-47b3-9628-b58a2bba193b}*SharedItemsImports = 4
 		Helper\Helper.vcxitems*{2d6fdd44-39b1-4ff8-8ae0-60a6b0979f5f}*SharedItemsImports = 4
 		r77api\r77api.vcxitems*{2d6fdd44-39b1-4ff8-8ae0-60a6b0979f5f}*SharedItemsImports = 4
@@ -195,6 +200,7 @@ Global
 		Helper\Helper.vcxitems*{78bb6d02-6e02-4933-89dc-4ad8ee0b303f}*SharedItemsImports = 4
 		r77api\r77api.vcxitems*{78bb6d02-6e02-4933-89dc-4ad8ee0b303f}*SharedItemsImports = 4
 		r77api\r77api.vcxitems*{bce48dae-232e-4b3d-b5b5-d0b29bb7e9de}*SharedItemsImports = 4
+		ReflectiveDllMain\ReflectiveDllMain.vcxitems*{beabb20f-6030-4275-a8cf-56245417f4b1}*SharedItemsImports = 9
 		InstallShellcode\InstallShellcode.vcxitems*{deab25fd-2042-4bd6-bf4b-0802dccc70f5}*SharedItemsImports = 9
 		r77api\r77api.vcxitems*{e3104b33-db3d-4c83-b393-1e05e1ff2b10}*SharedItemsImports = 4
 		Service\Service.vcxitems*{e3104b33-db3d-4c83-b393-1e05e1ff2b10}*SharedItemsImports = 4
