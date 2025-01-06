@@ -11,7 +11,10 @@ typedef VOID(*CONTROLCALLBACK)(DWORD controlCode, HANDLE pipe);
 /// Creates a new listener for the control pipe that receives commands from any process.
 /// </summary>
 /// <param name="callback">The function that is called, when a command is received by another process.</param>
-VOID ControlPipeListener(CONTROLCALLBACK callback);
-static DWORD WINAPI ControlPipeListenerThread(LPVOID parameter);
+/// <returns>
+/// A handle to the newly created control pipe listener thread.
+/// </returns>
+HANDLE ControlPipeListener(CONTROLCALLBACK callback);
+static DWORD WINAPI ControlPipeListenerThreadFunction(LPVOID parameter);
 
 #endif

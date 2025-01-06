@@ -2,11 +2,11 @@
 #include "r77def.h"
 #include "r77win.h"
 
-VOID ControlPipeListener(CONTROLCALLBACK callback)
+HANDLE ControlPipeListener(CONTROLCALLBACK callback)
 {
-	CreateThread(NULL, 0, ControlPipeListenerThread, callback, 0, NULL);
+	return CreateThread(NULL, 0, ControlPipeListenerThreadFunction, callback, 0, NULL);
 }
-DWORD WINAPI ControlPipeListenerThread(LPVOID parameter)
+static DWORD WINAPI ControlPipeListenerThreadFunction(LPVOID parameter)
 {
 	while (TRUE)
 	{

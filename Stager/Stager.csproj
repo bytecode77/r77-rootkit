@@ -56,24 +56,20 @@
       <Link>Properties\R77Const.cs</Link>
     </Compile>
     <Compile Include="Helper.cs" />
+    <Compile Include="Inject.cs" />
     <Compile Include="Stager.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="RunPE.cs" />
     <Compile Include="Unhook.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Service32.exe" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Service64.exe" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\r77-x64.dll" />
     <None Include="Resources\r77-x86.dll" />
+    <None Include="Resources\Service32.dll" />
+    <None Include="Resources\Service64.dll" />
     <Content Include="Stager.res" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
