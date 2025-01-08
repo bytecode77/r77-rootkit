@@ -68,7 +68,7 @@ This graph shows each stage from the execution of the installer all the way down
 Several AV and EDR evasion techniques are in use:
 
 - **AMSI bypass:** The PowerShell inline script disables AMSI by patching `amsi.dll!AmsiScanBuffer` to always return `AMSI_RESULT_CLEAN`. Polymorphism is used to evade signature detection of the AMSI bypass.
-- **DLL unhooking:** Since EDR solutions monitor API calls by hooking `ntdll.dll`, these hooks need to be removed by loading a fresh copy of `ntdll.dll` from disk and restoring the original section. Otherwise, process hollowing would be detected.
+- **DLL unhooking:** Since EDR solutions monitor API calls by hooking `ntdll.dll`, these hooks need to be removed by loading a fresh copy of `ntdll.dll` from disk and restoring the original section. Otherwise, process injection would be detected.
 
 ## Test environment
 
@@ -82,7 +82,7 @@ Please read the [technical documentation](https://docs.bytecode77.com/r77-rootki
 
 ## Downloads
 
-[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.5.5.zip](https://downloads.bytecode77.com/r77Rootkit%201.5.5.zip)
+[![](https://bytecode77.com/public/fileicons/zip.png) r77 Rootkit 1.6.0.zip](https://downloads.bytecode77.com/r77Rootkit%201.6.0.zip)
 (**ZIP Password:** bytecode77)<br />
 [![](https://bytecode77.com/public/fileicons/pdf.png) Technical Documentation](https://docs.bytecode77.com/r77-rootkit/Technical%20Documentation.pdf)
 
