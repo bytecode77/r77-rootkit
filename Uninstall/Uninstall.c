@@ -11,7 +11,7 @@ int main()
 
 	// Delete the stager executable and the rootkit DLL's.
 	HKEY key;
-	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_ALL_ACCESS, &key) == ERROR_SUCCESS)
+	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &key) == ERROR_SUCCESS)
 	{
 		RegDeleteValueW(key, HIDE_PREFIX L"stager");
 		RegDeleteValueW(key, HIDE_PREFIX L"dll32");
@@ -20,17 +20,11 @@ int main()
 
 	// Delete the scheduled task that starts the r77 service.
 	DeleteScheduledTask(R77_SERVICE_NAME32);
-
-	// Terminate running instance of the r77 service.
-	TerminateR77Service(-1);
-
-	// Detach all injected processes.
-	DetachAllInjectedProcesses();
+	DeleteScheduledTask(R77_SERVICE_NAME64);
 
 	if (Is64BitOperatingSystem())
 	{
-		// On 64-bit Windows, the above steps need to be repeated from a 64-bit process.
-		// Uninstall64.exe is extracted into the temp directory, executed and deleted afterwards.
+		// On 64-bit Windows, Uninstall64.exe is extracted into the temp directory, executed and deleted afterwards.
 
 		LPBYTE uninstall64;
 		DWORD uninstall64Size;
@@ -42,6 +36,14 @@ int main()
 				ExecuteFile(uninstall64Path, TRUE);
 			}
 		}
+	}
+	else
+	{
+		// Detach r77 service from its host process.
+		DetachR77Service();
+
+		// Detach all injected processes.
+		DetachAllInjectedProcesses();
 	}
 
 	// Delete HKEY_LOCAL_MACHINE\SOFTWARE\$77config

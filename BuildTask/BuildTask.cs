@@ -15,7 +15,6 @@ namespace BuildTask
 	/// <para>-compress: Compress file</para>
 	/// <para>-encrypt: Encrypt file</para>
 	/// <para>-toshellcode: Extracts an executable file's .text section</para>
-	/// <para>-r77service: Write R77_SERVICE_SIGNATURE to r77 header</para>
 	/// <para>-r77helper: Write R77_HELPER_SIGNATURE to r77 header</para>
 	/// <para>-shellcodeinstaller: Converts Install.exe to Install.shellcode</para>
 	/// </summary>
@@ -39,7 +38,6 @@ namespace BuildTask
 				if (args.Contains("-compress")) file = Compress(file);
 				if (args.Contains("-encrypt")) file = Encrypt(file);
 				if (args.Contains("-toshellcode")) file = ExtractShellCode(file);
-				if (args.Contains("-r77service")) file = R77Signature(file, R77Const.R77ServiceSignature);
 				if (args.Contains("-r77helper")) file = R77Signature(file, R77Const.R77HelperSignature);
 
 				File.WriteAllBytes(args[0], file);

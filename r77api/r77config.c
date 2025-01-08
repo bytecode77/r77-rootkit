@@ -124,20 +124,23 @@ BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB)
 			CompareIntegerList(configA->HiddenUdpPorts, configB->HiddenUdpPorts);
 	}
 }
-BOOL InstallR77Config(PHKEY key)
+BOOL InstallR77Config()
 {
-	if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\" HIDE_PREFIX L"config", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_64KEY, NULL, key, NULL) == ERROR_SUCCESS)
+	HKEY key;
+	if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\" HIDE_PREFIX L"config", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_64KEY, NULL, &key, NULL) == ERROR_SUCCESS)
 	{
 		// Return TRUE, even if setting the DACL fails.
 		// If DACL creation failed, only elevated processes will be able to write to the configuration system.
+
 		PSECURITY_DESCRIPTOR securityDescriptor = NULL;
 		ULONG securityDescriptorSize = 0;
 		if (ConvertStringSecurityDescriptorToSecurityDescriptorW(L"D:(A;OICI;GA;;;AU)(A;OICI;GA;;;BA)", SDDL_REVISION_1, &securityDescriptor, &securityDescriptorSize))
 		{
-			RegSetKeySecurity(*key, DACL_SECURITY_INFORMATION, securityDescriptor);
+			RegSetKeySecurity(key, DACL_SECURITY_INFORMATION, securityDescriptor);
 			LocalFree(securityDescriptor);
 		}
 
+		RegCloseKey(key);
 		return TRUE;
 	}
 

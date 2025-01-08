@@ -67,12 +67,11 @@ BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB);
 /// <summary>
 /// Creates the r77 configuration registry key with full access to all users.
 /// </summary>
-/// <param name="key">The newly created HKEY.</param>
 /// <returns>
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
-BOOL InstallR77Config(PHKEY key);
+BOOL InstallR77Config();
 /// <summary>
 /// Deletes the r77 configuration from the registry.
 /// </summary>

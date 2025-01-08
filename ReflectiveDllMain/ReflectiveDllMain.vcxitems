@@ -3,7 +3,7 @@
   <PropertyGroup Label="Globals">
     <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <HasSharedItems>true</HasSharedItems>
-    <ItemsProjectGuid>{6e4bb100-c3c9-4cf7-a637-08c2482c6b94}</ItemsProjectGuid>
+    <ItemsProjectGuid>{beabb20f-6030-4275-a8cf-56245417f4b1}</ItemsProjectGuid>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -14,15 +14,9 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Config.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Hooks.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)r77.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Rootkit.c" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ReflectiveDllMain.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Config.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)detours.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Hooks.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Rootkit.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)ReflectiveDllMain.c" />
   </ItemGroup>
 </Project>

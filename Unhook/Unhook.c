@@ -13,10 +13,9 @@ VOID Unhook()
 	{
 		if (InitializeSyscalls()) // Retrieve gadgets and syscall numbers.
 		{
-			if (UnhookDll(L"ntdll.dll", 0x3cfa685d))
-			{
-				UnhookDll(L"kernel32.dll", 0x6a4abc5b);
-			}
+			UnhookDll(L"ntdll.dll", 0x3cfa685d);
+			UnhookDll(L"kernelbase.dll", 0x2defbae3);
+			UnhookDll(L"kernel32.dll", 0x6a4abc5b);
 		}
 	}
 }

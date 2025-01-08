@@ -96,16 +96,7 @@ BOOL GetProcessList(PPROCESS_LIST_ENTRY entries, LPDWORD count)
 }
 BOOL CreateConfigSystem()
 {
-	HKEY key;
-	if (InstallR77Config(&key))
-	{
-		RegCloseKey(key);
-		return TRUE;
-	}
-	else
-	{
-		return FALSE;
-	}
+	return InstallR77Config();
 }
 BOOL Inject(DWORD processId, LPBYTE dll, DWORD dllSize)
 {

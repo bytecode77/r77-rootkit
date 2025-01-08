@@ -45,7 +45,7 @@ LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str);
 /// <param name="value">The value to convert.</param>
 /// <param name="buffer">A buffer of unicode characters to write the result to.</param>
 /// <returns>
-/// The <see cref="buffer" /> parameter.
+/// The buffer parameter.
 /// </returns>
 PWCHAR Int32ToStrW(LONG value, PWCHAR buffer);
 
