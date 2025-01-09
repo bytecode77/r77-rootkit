@@ -183,11 +183,9 @@ Global
 		r77api\r77api.vcxitems*{06af1d64-f2fc-4767-8794-7313c7bb0a40}*SharedItemsImports = 4
 		r77\r77.vcxitems*{06af1d64-f2fc-4767-8794-7313c7bb0a40}*SharedItemsImports = 4
 		ReflectiveDllMain\ReflectiveDllMain.vcxitems*{06af1d64-f2fc-4767-8794-7313c7bb0a40}*SharedItemsImports = 4
-		Unhook\Unhook.vcxitems*{06af1d64-f2fc-4767-8794-7313c7bb0a40}*SharedItemsImports = 4
 		r77api\r77api.vcxitems*{1ba54a13-b390-47b3-9628-b58a2bba193b}*SharedItemsImports = 4
 		r77\r77.vcxitems*{1ba54a13-b390-47b3-9628-b58a2bba193b}*SharedItemsImports = 4
 		ReflectiveDllMain\ReflectiveDllMain.vcxitems*{1ba54a13-b390-47b3-9628-b58a2bba193b}*SharedItemsImports = 4
-		Unhook\Unhook.vcxitems*{1ba54a13-b390-47b3-9628-b58a2bba193b}*SharedItemsImports = 4
 		Helper\Helper.vcxitems*{2d6fdd44-39b1-4ff8-8ae0-60a6b0979f5f}*SharedItemsImports = 4
 		r77api\r77api.vcxitems*{2d6fdd44-39b1-4ff8-8ae0-60a6b0979f5f}*SharedItemsImports = 4
 		Service\Service.vcxitems*{46e171d4-1811-48be-8867-a63c28761d28}*SharedItemsImports = 9
