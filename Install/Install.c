@@ -281,7 +281,7 @@ VOID ObfuscatePowershellStringLiterals(LPWSTR command)
 	FREE(newCommand);
 	FREE(random);
 }
-VOID WriteShellCodeBytes(LPWSTR command, LPBYTE shellCode, DWORD size)
+VOID WriteShellCodeBytes(LPWSTR command, LPCBYTE shellCode, DWORD size)
 {
 	// Write shellcode bytes:
 	//  - Each byte is obfuscated using a simple addition or subtraction.

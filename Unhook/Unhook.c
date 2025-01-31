@@ -2,6 +2,7 @@
 #include "Syscalls.h"
 #include "ntdll.h"
 #include "peb.h"
+#include "r77win.h"
 #include <Shlwapi.h>
 
 // For now, unhooking works on 64-bit Windows only.
