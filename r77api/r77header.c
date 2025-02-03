@@ -10,7 +10,7 @@ WORD GetR77Header(LPVOID *detachAddress)
 		WORD signature = *(LPWORD) & module[sizeof(IMAGE_DOS_HEADER)];
 		if (signature == R77_SIGNATURE || signature == R77_SERVICE_SIGNATURE || signature == R77_HELPER_SIGNATURE)
 		{
-			if (detachAddress) *detachAddress = *(PDWORD64) & module[sizeof(IMAGE_DOS_HEADER) + 2];
+			if (detachAddress) *detachAddress = (LPVOID) * (PDWORD64) & module[sizeof(IMAGE_DOS_HEADER) + 2];
 			return signature;
 		}
 	}

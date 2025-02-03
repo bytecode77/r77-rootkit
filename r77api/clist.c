@@ -6,7 +6,7 @@ PINTEGER_LIST CreateIntegerList()
 	PINTEGER_LIST list = NEW(INTEGER_LIST);
 	list->Count = 0;
 	list->Capacity = 16;
-	list->Values = NEW_ARRAY(ULONG, list->Capacity);
+	list->Values = NEW_ARRAY(INT, list->Capacity);
 	return list;
 }
 VOID LoadIntegerListFromRegistryKey(PINTEGER_LIST list, HKEY key)
@@ -36,22 +36,22 @@ VOID DeleteIntegerList(PINTEGER_LIST list)
 	i_memset(list, 0, sizeof(INTEGER_LIST));
 	FREE(list);
 }
-VOID IntegerListAdd(PINTEGER_LIST list, ULONG value)
+VOID IntegerListAdd(PINTEGER_LIST list, INT value)
 {
 	if (list->Count == list->Capacity)
 	{
 		list->Capacity += 16;
-		PULONG newValues = NEW_ARRAY(ULONG, list->Capacity);
-		i_memcpy(newValues, list->Values, list->Count * sizeof(ULONG));
+		LPINT newValues = NEW_ARRAY(INT, list->Capacity);
+		i_memcpy(newValues, list->Values, list->Count * sizeof(INT));
 
-		PULONG oldValues = list->Values;
+		LPINT oldValues = list->Values;
 		list->Values = newValues;
 		FREE(oldValues);
 	}
 
 	list->Values[list->Count++] = value;
 }
-BOOL IntegerListContains(PINTEGER_LIST list, ULONG value)
+BOOL IntegerListContains(PINTEGER_LIST list, INT value)
 {
 	for (DWORD i = 0; i < list->Count; i++)
 	{

@@ -21,7 +21,7 @@ BOOL InjectDll(DWORD processId, LPBYTE dll, DWORD dllSize)
 			if (GetProcessFileName(processId, processName, MAX_PATH))
 			{
 				LPCWSTR exclusions[] = PROCESS_EXCLUSIONS;
-				for (int i = 0; i < sizeof(exclusions) / sizeof(LPCWSTR); i++)
+				for (ULONG i = 0; i < sizeof(exclusions) / sizeof(LPCWSTR); i++)
 				{
 					if (!StrCmpIW(processName, exclusions[i]))
 					{

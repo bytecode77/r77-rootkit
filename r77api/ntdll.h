@@ -421,7 +421,14 @@ typedef enum _NT_KEY_INFORMATION_CLASS
 	KeyBasicInformation,
 	KeyNodeInformation,
 	KeyFullInformation,
-	KeyNameInformation
+	KeyNameInformation,
+	KeyCachedInformation,
+	KeyFlagsInformation,
+	KeyVirtualizationInformation,
+	KeyHandleTagsInformation,
+	KeyTrustInformation,
+	KeyLayerInformation,
+	MaxKeyInfoClass
 } NT_KEY_INFORMATION_CLASS;
 
 typedef enum _NT_KEY_VALUE_INFORMATION_CLASS
@@ -438,6 +445,33 @@ typedef struct _NT_KEY_BASIC_INFORMATION
 	ULONG NameLength;
 	WCHAR Name[1];
 } NT_KEY_BASIC_INFORMATION, *PNT_KEY_BASIC_INFORMATION;
+
+typedef struct _NT_KEY_FULL_INFORMATION
+{
+	LARGE_INTEGER LastWriteTime;
+	ULONG TitleIndex;
+	ULONG ClassOffset;
+	ULONG ClassLength;
+	ULONG SubKeys;
+	ULONG MaxNameLength;
+	ULONG MaxClassLength;
+	ULONG Values;
+	ULONG MaxValueNameLength;
+	ULONG MaxValueDataLength;
+	WCHAR Class[1];
+} NT_KEY_FULL_INFORMATION, *PNT_KEY_FULL_INFORMATION;
+
+typedef struct _NT_KEY_CACHED_INFORMATION
+{
+	LARGE_INTEGER LastWriteTime;
+	ULONG TitleIndex;
+	ULONG SubKeys;
+	ULONG MaxNameLength;
+	ULONG Values;
+	ULONG MaxValueNameLength;
+	ULONG MaxValueDataLength;
+	ULONG NameLength;
+} NT_KEY_CACHED_INFORMATION, *PNT_KEY_CACHED_INFORMATION;
 
 typedef struct _NT_KEY_NAME_INFORMATION
 {
@@ -748,6 +782,7 @@ typedef NTSTATUS(NTAPI *NT_NTQUERYSYSTEMINFORMATION)(SYSTEM_INFORMATION_CLASS sy
 typedef NTSTATUS(NTAPI *NT_NTRESUMETHREAD)(HANDLE thread, PULONG suspendCount);
 typedef NTSTATUS(NTAPI *NT_NTQUERYDIRECTORYFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, LPVOID fileInformation, ULONG length, FILE_INFORMATION_CLASS fileInformationClass, BOOLEAN returnSingleEntry, PUNICODE_STRING fileName, BOOLEAN restartScan);
 typedef NTSTATUS(NTAPI *NT_NTQUERYDIRECTORYFILEEX)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, LPVOID fileInformation, ULONG length, FILE_INFORMATION_CLASS fileInformationClass, ULONG queryFlags, PUNICODE_STRING fileName);
+typedef NTSTATUS(NTAPI *NT_NTQUERYKEY)(HANDLE key, NT_KEY_INFORMATION_CLASS keyInformationClass, LPVOID keyInformation, ULONG length, PULONG resultLength);
 typedef NTSTATUS(NTAPI *NT_NTENUMERATEKEY)(HANDLE key, ULONG index, NT_KEY_INFORMATION_CLASS keyInformationClass, LPVOID keyInformation, ULONG keyInformationLength, PULONG resultLength);
 typedef NTSTATUS(NTAPI *NT_NTENUMERATEVALUEKEY)(HANDLE key, ULONG index, NT_KEY_VALUE_INFORMATION_CLASS keyValueInformationClass, LPVOID keyValueInformation, ULONG keyValueInformationLength, PULONG resultLength);
 typedef BOOL(WINAPI *NT_ENUMSERVICEGROUPW)(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPVOID reserved);

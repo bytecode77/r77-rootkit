@@ -3,12 +3,12 @@
 #define _CLIST_H
 
 /// <summary>
-/// Defines a collection of ULONG values.
+/// Defines a collection of INT values.
 /// </summary>
 typedef struct _INTEGER_LIST
 {
 	/// <summary>
-	/// The number of ULONG values in this list.
+	/// The number of INT values in this list.
 	/// </summary>
 	DWORD Count;
 	/// <summary>
@@ -16,9 +16,9 @@ typedef struct _INTEGER_LIST
 	/// </summary>
 	DWORD Capacity;
 	/// <summary>
-	/// A buffer that stores the ULONG values in this list.
+	/// A buffer that stores the INT values in this list.
 	/// </summary>
-	PULONG Values;
+	LPINT Values;
 } INTEGER_LIST, *PINTEGER_LIST;
 
 /// <summary>
@@ -64,21 +64,21 @@ VOID LoadIntegerListFromRegistryKey(PINTEGER_LIST list, HKEY key);
 /// <param name="list">The INTEGER_LIST structure to delete.</param>
 VOID DeleteIntegerList(PINTEGER_LIST list);
 /// <summary>
-/// Adds a ULONG value to the specified INTEGER_LIST.
+/// Adds an INT value to the specified INTEGER_LIST.
 /// </summary>
-/// <param name="list">The INTEGER_LIST structure to add the ULONG value to.</param>
-/// <param name="value">The ULONG value to add to the list.</param>
-VOID IntegerListAdd(PINTEGER_LIST list, ULONG value);
+/// <param name="list">The INTEGER_LIST structure to add the INT value to.</param>
+/// <param name="value">The INT value to add to the list.</param>
+VOID IntegerListAdd(PINTEGER_LIST list, INT value);
 /// <summary>
-/// Determines whether the ULONG value is in the specified INTEGER_LIST.
+/// Determines whether the INT value is in the specified INTEGER_LIST.
 /// </summary>
 /// <param name="list">The INTEGER_LIST structure to search.</param>
-/// <param name="value">The ULONG value to check.</param>
+/// <param name="value">The INT value to check.</param>
 /// <returns>
-/// TRUE, if the specified ULONG value is in the specified INTEGER_LIST;
+/// TRUE, if the specified INT value is in the specified INTEGER_LIST;
 /// otherwise, FALSE.
 /// </returns>
-BOOL IntegerListContains(PINTEGER_LIST list, ULONG value);
+BOOL IntegerListContains(PINTEGER_LIST list, INT value);
 /// <summary>
 /// Compares two INTEGER_LIST structures for equality.
 /// </summary>

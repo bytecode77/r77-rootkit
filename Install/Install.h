@@ -26,7 +26,7 @@ VOID ObfuscatePowershellStringLiterals(LPWSTR command);
 /// <param name="command">The powershell command to append the shellcode to.</param>
 /// <param name="shellCode">The shellcode bytes to append.</param>
 /// <param name="size">The number of bytes to append.</param>
-VOID WriteShellCodeBytes(LPWSTR command, LPBYTE shellCode, DWORD size);
+VOID WriteShellCodeBytes(LPWSTR command, LPCBYTE shellCode, DWORD size);
 /// <summary>
 /// Appends comma separated shellcode bytes to the command that represend a no-op, such as "mov eax, eax".
 /// </summary>
