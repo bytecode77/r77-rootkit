@@ -110,7 +110,7 @@ PWCHAR Int32ToStrW(LONG value, PWCHAR buffer)
 
 BOOL Is64BitOperatingSystem()
 {
-	BOOL wow64 = FALSE;
+	BOOL wow64;
 	return BITNESS(64) || IsWow64Process(GetCurrentProcess(), &wow64) && wow64;
 }
 BOOL IsAtLeastWindows10()

