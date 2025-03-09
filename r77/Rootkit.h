@@ -3,6 +3,23 @@
 #define _ROOTKIT_H
 
 /// <summary>
+/// The 32-bit r77 DLL.
+/// </summary>
+LPBYTE RootkitDll32;
+/// <summary>
+/// The size of the 32-bit r77 DLL.
+/// </summary>
+DWORD RootkitDll32Size;
+/// <summary>
+/// The 64-bit r77 DLL.
+/// </summary>
+LPBYTE RootkitDll64;
+/// <summary>
+/// The size of the 64-bit r77 DLL.
+/// </summary>
+DWORD RootkitDll64Size;
+
+/// <summary>
 /// Initializes r77, writes the r77 header and installs hooks.
 /// <para>This function returns FALSE, if r77 is already injected, or if this process is either the r77 service or a helper process, or the process starts with $77.</para>
 /// </summary>

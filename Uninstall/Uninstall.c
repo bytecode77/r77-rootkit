@@ -18,9 +18,8 @@ int main()
 		RegDeleteValueW(key, HIDE_PREFIX L"dll64");
 	}
 
-	// Delete the scheduled task that starts the r77 service.
-	DeleteScheduledTask(R77_SERVICE_NAME32);
-	DeleteScheduledTask(R77_SERVICE_NAME64);
+	// Delete the Windows Service that starts the r77 service.
+	DeleteWindowsService(R77_SERVICE_NAME);
 
 	if (Is64BitOperatingSystem())
 	{

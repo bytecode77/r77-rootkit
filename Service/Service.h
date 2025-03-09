@@ -4,19 +4,20 @@
 /// <summary>
 /// The 32-bit r77 DLL.
 /// </summary>
-LPBYTE Dll32;
+LPBYTE RootkitDll32;
 /// <summary>
 /// The size of the 32-bit r77 DLL.
 /// </summary>
-DWORD Dll32Size;
+DWORD RootkitDll32Size;
 /// <summary>
 /// The 64-bit r77 DLL.
 /// </summary>
-LPBYTE Dll64;
+LPBYTE RootkitDll64;
 /// <summary>
 /// The size of the 64-bit r77 DLL.
 /// </summary>
-DWORD Dll64Size;
+DWORD RootkitDll64Size;
+
 /// <summary>
 /// The thread that listens for notifications about created child processes.
 /// </summary>
