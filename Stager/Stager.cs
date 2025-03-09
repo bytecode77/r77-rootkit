@@ -8,7 +8,7 @@ using System.IO.Compression;
 
 /// <summary>
 /// Fileless stager for the r77 service.
-/// <para>This executable is spawned by a scheduled task (powershell) and starts the r77 service.</para>
+/// <para>This executable is spawned by a Windows service (powershell) and starts the r77 service.</para>
 /// </summary>
 public static class Program
 {

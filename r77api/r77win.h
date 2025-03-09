@@ -226,35 +226,24 @@ BOOL CreateTempFile(LPBYTE file, DWORD fileSize, LPCWSTR extension, LPWSTR resul
 /// </returns>
 BOOL ExecuteFile(LPCWSTR path, BOOL deleteFile);
 /// <summary>
-/// Creates a scheduled task that is set to run under the SYSTEM account before the user logs in.
+/// Creates and starts a Windows service.
 /// </summary>
-/// <param name="name">The name of the scheduled task.</param>
-/// <param name="directory">The working directory of the scheduled task.</param>
-/// <param name="fileName">The application name of the scheduled task.</param>
-/// <param name="arguments">The commandline arguments to pass to the created process.</param>
+/// <param name="name">The name of the Windows service.</param>
+/// <param name="binPath">The commandline for the new Windows service.</param>
 /// <returns>
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
-BOOL CreateScheduledTask(LPCWSTR name, LPCWSTR directory, LPCWSTR fileName, LPCWSTR arguments);
+BOOL CreateWindowsService(LPCWSTR name, LPCWSTR binPath);
 /// <summary>
-/// Starts a scheduled task.
+/// Deletes a Windows service.
 /// </summary>
-/// <param name="name">The name of the scheduled task.</param>
+/// <param name="name">The name of the Windows service.</param>
 /// <returns>
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
-BOOL RunScheduledTask(LPCWSTR name);
-/// <summary>
-/// Deletes a scheduled task.
-/// </summary>
-/// <param name="name">The name of the scheduled task.</param>
-/// <returns>
-/// TRUE, if this function succeeds;
-/// otherwise, FALSE.
-/// </returns>
-BOOL DeleteScheduledTask(LPCWSTR name);
+BOOL DeleteWindowsService(LPCWSTR name);
 /// <summary>
 /// Creates a named pipe that is accessible by every process.
 /// </summary>

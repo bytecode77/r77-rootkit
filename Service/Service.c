@@ -167,8 +167,7 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 				RegDeleteValueW(key, HIDE_PREFIX L"dll64");
 			}
 
-			DeleteScheduledTask(R77_SERVICE_NAME32);
-			DeleteScheduledTask(R77_SERVICE_NAME64);
+			DeleteWindowsService(R77_SERVICE_NAME);
 			DetachAllInjectedProcesses();
 			UninstallR77Config();
 			UninitializeService();

