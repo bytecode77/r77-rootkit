@@ -507,34 +507,48 @@ BOOL DeleteWindowsService(LPCWSTR name)
 HANDLE CreatePublicNamedPipe(LPCWSTR name)
 {
 	// Get security attributes for "EVERYONE", so the named pipe is accessible to all processes.
+	HANDLE result = INVALID_HANDLE_VALUE;
 
 	SID_IDENTIFIER_AUTHORITY authority = SECURITY_WORLD_SID_AUTHORITY;
 	PSID everyoneSid;
-	if (!AllocateAndInitializeSid(&authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSid)) return INVALID_HANDLE_VALUE;
+	if (AllocateAndInitializeSid(&authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSid))
+	{
+		EXPLICIT_ACCESSW explicitAccess;
+		i_memset(&explicitAccess, 0, sizeof(EXPLICIT_ACCESSW));
+		explicitAccess.grfAccessPermissions = FILE_ALL_ACCESS;
+		explicitAccess.grfAccessMode = SET_ACCESS;
+		explicitAccess.grfInheritance = NO_INHERITANCE;
+		explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+		explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+		explicitAccess.Trustee.ptstrName = (LPWSTR)everyoneSid;
 
-	EXPLICIT_ACCESSW explicitAccess;
-	i_memset(&explicitAccess, 0, sizeof(EXPLICIT_ACCESSW));
-	explicitAccess.grfAccessPermissions = FILE_ALL_ACCESS;
-	explicitAccess.grfAccessMode = SET_ACCESS;
-	explicitAccess.grfInheritance = NO_INHERITANCE;
-	explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	explicitAccess.Trustee.ptstrName = (LPWSTR)everyoneSid;
+		PACL acl;
+		if (SetEntriesInAclW(1, &explicitAccess, NULL, &acl) == ERROR_SUCCESS)
+		{
+			PSECURITY_DESCRIPTOR securityDescriptor = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+			if (securityDescriptor)
+			{
+				if (InitializeSecurityDescriptor(securityDescriptor, SECURITY_DESCRIPTOR_REVISION) &&
+					SetSecurityDescriptorDacl(securityDescriptor, TRUE, acl, FALSE))
+				{
+					SECURITY_ATTRIBUTES securityAttributes;
+					securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+					securityAttributes.lpSecurityDescriptor = securityDescriptor;
+					securityAttributes.bInheritHandle = FALSE;
 
-	PACL acl;
-	if (SetEntriesInAclW(1, &explicitAccess, NULL, &acl) != ERROR_SUCCESS) return INVALID_HANDLE_VALUE;
+					result = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, &securityAttributes);
+				}
 
-	PSECURITY_DESCRIPTOR securityDescriptor = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
-	if (!securityDescriptor ||
-		!InitializeSecurityDescriptor(securityDescriptor, SECURITY_DESCRIPTOR_REVISION) ||
-		!SetSecurityDescriptorDacl(securityDescriptor, TRUE, acl, FALSE)) return INVALID_HANDLE_VALUE;
+				LocalFree(securityDescriptor);
+			}
 
-	SECURITY_ATTRIBUTES securityAttributes;
-	securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-	securityAttributes.lpSecurityDescriptor = securityDescriptor;
-	securityAttributes.bInheritHandle = FALSE;
+			LocalFree(acl);
+		}
 
-	return CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, &securityAttributes);
+		FreeSid(everyoneSid);
+	}
+
+	return result;
 }
 
 BOOL IsExecutable64Bit(LPBYTE image, LPBOOL is64Bit)
