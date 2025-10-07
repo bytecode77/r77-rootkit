@@ -19,6 +19,7 @@ static NT_NTENUMERATEVALUEKEY OriginalNtEnumerateValueKey;
 static NT_NTUSERBUILDHWNDLIST OriginalNtUserBuildHwndList;
 static NT_ENUMSERVICEGROUPW OriginalEnumServiceGroupW;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW;
+static NT_ENUMSERVICESSTATUSEXA OriginalEnumServicesStatusExA;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
 static NT_NTDEVICEIOCONTROLFILE OriginalNtDeviceIoControlFile;
 static NT_PDHGETRAWCOUNTERARRAYW OriginalPdhGetRawCounterArrayW;
@@ -48,6 +49,7 @@ VOID InitializeHooks()
 	InstallHook("win32u.dll", "NtUserBuildHwndList", (LPVOID*)&OriginalNtUserBuildHwndList, HookedNtUserBuildHwndList);
 	InstallHook("advapi32.dll", "EnumServiceGroupW", (LPVOID*)&OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
 	InstallHook("advapi32.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
+	InstallHook("advapi32.dll", "EnumServicesStatusExA", (LPVOID*)&OriginalEnumServicesStatusExA, HookedEnumServicesStatusExA);
 	InstallHook("sechost.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	InstallHook("ntdll.dll", "NtDeviceIoControlFile", (LPVOID*)&OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 	InstallHook("pdh.dll", "PdhGetRawCounterArrayW", (LPVOID*)&OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
@@ -59,7 +61,6 @@ VOID InitializeHooks()
 	// Unfortunately, the actual enumeration of services happens in services.exe - a protected process that cannot be injected.
 	// EnumServiceGroupW and EnumServicesStatusExW from advapi32.dll access services.exe through RPC.
 	// There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
-	// EnumServicesStatusA and EnumServicesStatusExA also implement the RPC, but do not seem to be used by any applications out there.
 
 	TlsNtEnumerateKeyCacheKey = TlsAlloc();
 	TlsNtEnumerateKeyCacheIndex = TlsAlloc();
@@ -84,6 +85,7 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalNtUserBuildHwndList, HookedNtUserBuildHwndList);
 	UninstallHook(OriginalEnumServiceGroupW, HookedEnumServiceGroupW);
 	UninstallHook(OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
+	UninstallHook(OriginalEnumServicesStatusExA, HookedEnumServicesStatusExA);
 	UninstallHook(OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	UninstallHook(OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 	UninstallHook(OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
@@ -580,7 +582,18 @@ static BOOL WINAPI HookedEnumServicesStatusExW(SC_HANDLE serviceManager, SC_ENUM
 
 	if (result && services && servicesReturned)
 	{
-		FilterEnumServiceStatusProcess((LPENUM_SERVICE_STATUS_PROCESSW)services, servicesReturned);
+		FilterEnumServiceStatusProcessW((LPENUM_SERVICE_STATUS_PROCESSW)services, servicesReturned);
+	}
+
+	return result;
+}
+static BOOL WINAPI HookedEnumServicesStatusExA(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCSTR groupName)
+{
+	BOOL result = OriginalEnumServicesStatusExA(serviceManager, infoLevel, serviceType, serviceState, services, servicesLength, bytesNeeded, servicesReturned, resumeHandle, groupName);
+
+	if (result && services && servicesReturned)
+	{
+		FilterEnumServiceStatusProcessA((LPENUM_SERVICE_STATUS_PROCESSA)services, servicesReturned);
 	}
 
 	return result;
@@ -592,7 +605,7 @@ static BOOL WINAPI HookedEnumServicesStatusExW2(SC_HANDLE serviceManager, SC_ENU
 
 	if (result && services && servicesReturned)
 	{
-		FilterEnumServiceStatusProcess((LPENUM_SERVICE_STATUS_PROCESSW)services, servicesReturned);
+		FilterEnumServiceStatusProcessW((LPENUM_SERVICE_STATUS_PROCESSW)services, servicesReturned);
 	}
 
 	return result;
@@ -919,7 +932,7 @@ static VOID FilterEnumServiceStatus(LPENUM_SERVICE_STATUSW services, LPDWORD ser
 		}
 	}
 }
-static VOID FilterEnumServiceStatusProcess(LPENUM_SERVICE_STATUS_PROCESSW services, LPDWORD servicesReturned)
+static VOID FilterEnumServiceStatusProcessW(LPENUM_SERVICE_STATUS_PROCESSW services, LPDWORD servicesReturned)
 {
 	for (DWORD i = 0; i < *servicesReturned; i++)
 	{
@@ -933,6 +946,28 @@ static VOID FilterEnumServiceStatusProcess(LPENUM_SERVICE_STATUS_PROCESSW servic
 			(*servicesReturned)--;
 			i--;
 		}
+	}
+}
+static VOID FilterEnumServiceStatusProcessA(LPENUM_SERVICE_STATUS_PROCESSA services, LPDWORD servicesReturned)
+{
+	for (DWORD i = 0; i < *servicesReturned; i++)
+	{
+		LPCWSTR serviceNameW = ConvertAStringToString(services[i].lpServiceName);
+		LPCWSTR displayNameW = ConvertAStringToString(services[i].lpDisplayName);
+
+		// If hidden, move all following entries up by one and decrease count.
+		if (HasPrefix(serviceNameW) ||
+			HasPrefix(displayNameW) ||
+			IsServiceNameHidden(serviceNameW) ||
+			IsServiceNameHidden(displayNameW))
+		{
+			memmove(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUS_PROCESSA));
+			(*servicesReturned)--;
+			i--;
+		}
+
+		if (serviceNameW) FREE(serviceNameW);
+		if (displayNameW) FREE(displayNameW);
 	}
 }
 static BOOL GetIsHiddenFromPdhString(LPCWSTR str)
