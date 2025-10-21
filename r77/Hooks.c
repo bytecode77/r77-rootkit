@@ -958,6 +958,7 @@ static VOID FilterEnumServiceStatusA(LPENUM_SERVICE_STATUSA services, LPDWORD se
 			IsServiceNameHidden(displayNameW))
 		{
 			memmove(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUSA));
+			i_memset(&services[*servicesReturned - 1], 0, sizeof(ENUM_SERVICE_STATUSA));
 			(*servicesReturned)--;
 			i--;
 		}
@@ -977,6 +978,7 @@ static VOID FilterEnumServiceStatusW(LPENUM_SERVICE_STATUSW services, LPDWORD se
 			IsServiceNameHidden(services[i].lpDisplayName))
 		{
 			memmove(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUSW));
+			i_memset(&services[*servicesReturned - 1], 0, sizeof(ENUM_SERVICE_STATUSW));
 			(*servicesReturned)--;
 			i--;
 		}
@@ -996,6 +998,7 @@ static VOID FilterEnumServiceStatusProcessA(LPENUM_SERVICE_STATUS_PROCESSA servi
 			IsServiceNameHidden(displayNameW))
 		{
 			memmove(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUS_PROCESSA));
+			i_memset(&services[*servicesReturned - 1], 0, sizeof(ENUM_SERVICE_STATUS_PROCESSA));
 			(*servicesReturned)--;
 			i--;
 		}
@@ -1015,6 +1018,7 @@ static VOID FilterEnumServiceStatusProcessW(LPENUM_SERVICE_STATUS_PROCESSW servi
 			IsServiceNameHidden(services[i].lpDisplayName))
 		{
 			memmove(&services[i], &services[i + 1], (*servicesReturned - i - 1) * sizeof(ENUM_SERVICE_STATUS_PROCESSW));
+			i_memset(&services[*servicesReturned - 1], 0, sizeof(ENUM_SERVICE_STATUS_PROCESSW));
 			(*servicesReturned)--;
 			i--;
 		}
