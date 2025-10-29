@@ -57,6 +57,26 @@ LPCSTR ConvertStringToAString(LPCWSTR str)
 
 	return result;
 }
+LPCWSTR ConvertAStringToString(LPCSTR str)
+{
+	PWCHAR result = NULL;
+
+	if (str)
+	{
+		int length = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+		if (length > 0)
+		{
+			result = NEW_ARRAY(WCHAR, length);
+			if (MultiByteToWideChar(CP_ACP, 0, str, -1, result, length) <= 0)
+			{
+				FREE(result);
+				result = NULL;
+			}
+		}
+	}
+
+	return result;
+}
 LPWSTR ConvertUnicodeStringToString(UNICODE_STRING str)
 {
 	if (str.Buffer)

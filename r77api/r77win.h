@@ -32,6 +32,14 @@ BOOL GetRandomString(PWCHAR str, DWORD length);
 /// </returns>
 LPCSTR ConvertStringToAString(LPCWSTR str);
 /// <summary>
+/// Converts a LPCSTR into a null terminated LPCWSTR.
+/// </summary>
+/// <param name="str">The LPCSTR to convert.</param>
+/// <returns>
+/// A newly allocated LPCWSTR with the converted LPCSTR.
+/// </returns>
+LPCWSTR ConvertAStringToString(LPCSTR str);
+/// <summary>
 /// Converts a UNICODE_STRING into a null terminated LPWSTR.
 /// </summary>
 /// <param name="str">The UNICODE_STRING to convert.</param>
