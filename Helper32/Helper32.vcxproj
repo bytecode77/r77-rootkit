@@ -61,8 +61,8 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir "$(SolutionDir)$Build"
-xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"</Command>
+      <Command>mkdir "$(SolutionDir)$Build\TestConsole\x86"
+xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build\TestConsole\x86"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,16 +1,18 @@
-﻿using System;
+﻿namespace TestConsole.Model;
 
-namespace TestConsole
+public sealed class LogLinkItem : LogItem
 {
-	public sealed class LogLinkItem : LogItem
-	{
-		public string Text { get; set; }
-		public Action Action { get; set; }
+	public string Text { get; private init; }
+	public Action Action { get; private init; }
 
-		public LogLinkItem(string text, Action action)
-		{
-			Text = text;
-			Action = action;
-		}
+	public LogLinkItem(string text, Action action)
+	{
+		Text = text;
+		Action = action;
+	}
+
+	public override string ToString()
+	{
+		return Text;
 	}
 }

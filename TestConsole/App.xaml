@@ -3,67 +3,23 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:local="clr-namespace:TestConsole"
-	xmlns:api="https://schemas.bytecode77.com/2019/xaml/api"
-	xmlns:ui="https://schemas.bytecode77.com/2019/xaml/presentation"
-	StartupUri="Windows/MainWindow.xaml" Startup="Application_Startup" ShutdownMode="OnMainWindowClose" DispatcherUnhandledException="Application_DispatcherUnhandledException">
+	xmlns:ui="http://schemas.bytecode77.com/2023/xaml/presentation"
+	xmlns:cui="http://schemas.bytecode77.com/2025/xaml/cui"
+	StartupUri="Windows/MainWindow/MainWindow.xaml" ShutdownMode="OnMainWindowClose" Startup="Application_Startup" DispatcherUnhandledException="Application_DispatcherUnhandledException">
 	<Application.Resources>
-		<Style TargetType="{x:Type Image}">
-			<Style.Triggers>
-				<Trigger Property="IsEnabled" Value="False">
-					<Setter Property="Opacity" Value=".5" />
-					<Setter Property="Effect">
-						<Setter.Value>
-							<ui:GrayscaleEffect />
-						</Setter.Value>
-					</Setter>
-				</Trigger>
-			</Style.Triggers>
-		</Style>
-		<Style TargetType="{x:Type GridSplitter}">
-			<Setter Property="HorizontalAlignment" Value="Stretch" />
-			<Setter Property="VerticalAlignment" Value="Stretch" />
-		</Style>
-		<Style TargetType="{x:Type StatusBar}">
-			<Setter Property="Padding" Value="5,0,0,0" />
-			<Setter Property="BorderThickness" Value="0,1,0,0" />
-			<Setter Property="BorderBrush" Value="#30000000" />
-		</Style>
-		<Style x:Key="{x:Static StatusBar.SeparatorStyleKey}" TargetType="{x:Type Separator}">
-			<Setter Property="Opacity" Value=".3" />
-		</Style>
-		<Style TargetType="{x:Type Hyperlink}">
-			<Style.Triggers>
-				<Trigger Property="IsEnabled" Value="False">
-					<Setter Property="Foreground" Value="#a0a0a0" />
-				</Trigger>
-			</Style.Triggers>
-		</Style>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source="pack://application:,,,/BytecodeApi.Wpf.Cui;component/Themes/Controls.xaml" />
+				<ResourceDictionary Source="/TestConsole;component/Controls/LoadingOverlay.xaml" />
+			</ResourceDictionary.MergedDictionaries>
 
-		<Style TargetType="{x:Type GridViewColumnHeader}">
-			<Setter Property="Padding" Value="6,3" />
-			<Setter Property="HorizontalContentAlignment" Value="Left" />
-		</Style>
-
-		<Style x:Key="UIBUtton" TargetType="{x:Type Button}">
-			<Setter Property="MinWidth" Value="80" />
-			<Setter Property="Padding" Value="8,3" />
-		</Style>
-		<Style x:Key="UITextBox" TargetType="{x:Type TextBox}">
-			<Setter Property="Padding" Value="3" />
-			<Style.Triggers>
-				<Trigger Property="IsReadOnly" Value="True">
-					<Setter Property="IsReadOnlyCaretVisible" Value="True" />
-					<Setter Property="Background" Value="#f0f0f0" />
-				</Trigger>
-				<Trigger Property="IsEnabled" Value="False">
-					<Setter Property="Background" Value="#f0f0f0" />
-				</Trigger>
-			</Style.Triggers>
-		</Style>
-		<Style x:Key="UIGroupBox" TargetType="{x:Type GroupBox}">
-			<Setter Property="Padding" Value="10" />
-		</Style>
-
-		<Style x:Key="ImageNoDisabledEffect" TargetType="{x:Type Image}" />
+			<Style TargetType="{x:Type cui:UiSvgImage}">
+				<Setter Property="Stretch" Value="None" />
+				<Setter Property="HorizontalContentAlignment" Value="Center" />
+				<Setter Property="VerticalContentAlignment" Value="Center" />
+				<Setter Property="Width" Value="16" />
+				<Setter Property="Height" Value="16" />
+			</Style>
+		</ResourceDictionary>
 	</Application.Resources>
 </Application>

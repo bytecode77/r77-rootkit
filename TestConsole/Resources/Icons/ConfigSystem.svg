@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <defs>
+    <style>.canvas{fill: none; opacity: 0;}.light-defaultgrey-10{fill: #212121; opacity: 0.1;}.light-defaultgrey{fill: #212121; opacity: 1;}.cls-1{opacity:0.75;}</style>
+  </defs>
+  <title>IconLightConfigureComputer</title>
+  <g id="canvas">
+    <path class="canvas" d="M16,16H0V0H16Z" />
+  </g>
+  <g id="level-1">
+    <path class="light-defaultgrey-10" d="M13.5,2.5v12H10v-.328L6.851,11.02a3.98,3.98,0,0,0-1.03-3.864A3.942,3.942,0,0,0,5.5,6.869V2.5a1,1,0,0,1,1-1h6A1,1,0,0,1,13.5,2.5Z" />
+    <path class="light-defaultgrey" d="M14,2.5v12l-.5.5H10v-.828L9.832,14H13V2.5a.5.5,0,0,0-.5-.5h-6a.5.5,0,0,0-.5.5V7.347c-.057-.065-.117-.129-.179-.191A4.013,4.013,0,0,0,5,6.526V2.5A1.5,1.5,0,0,1,6.5,1h6A1.5,1.5,0,0,1,14,2.5Z" />
+    <g class="cls-1">
+      <path class="light-defaultgrey" d="M7.5,4V5h4V4Z" />
+      <path class="light-defaultgrey" d="M11.5,12v1H8.832l-1-1Z" />
+      <path class="light-defaultgrey" d="M7.5,10v1h4V10Z" />
+    </g>
+    <path class="light-defaultgrey" d="M.042,10.5A2.994,2.994,0,0,1,.3,8.705L2.286,10.7,3.7,9.282l-2-1.991a2.983,2.983,0,0,1,3.988,3.983L9,14.586v.707L8.3,16H7.59L4.278,12.688A2.98,2.98,0,0,1,.042,10.5Z" />
+  </g>
+</svg>

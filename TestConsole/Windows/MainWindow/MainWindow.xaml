@@ -1,0 +1,135 @@
+<cui:UiApplicationWindow
+	x:Class="TestConsole.MainWindow"
+	x:Name="mainWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:TestConsole"
+	xmlns:api="clr-namespace:BytecodeApi;assembly=BytecodeApi"
+	xmlns:ui="http://schemas.bytecode77.com/2023/xaml/presentation"
+	xmlns:cui="http://schemas.bytecode77.com/2025/xaml/cui"
+	xmlns:ctrl="clr-namespace:TestConsole.Controls"
+	DataContext="{Binding ViewModel, ElementName=mainWindow}"
+	Title="r77 Test Console" Width="1250" Height="800" Padding="0" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" Loaded="MainWindow_Loaded">
+	<cui:UiApplicationWindow.IconControl>
+		<Image Source="/TestConsole;component/Resources/Images/WindowLogo.png" Width="20" Height="20" />
+	</cui:UiApplicationWindow.IconControl>
+	<cui:UiApplicationWindow.Menu>
+		<Menu>
+			<MenuItem Header="_File">
+				<MenuItem Header="Run as _administrator" Command="{Binding ElevateCommand}">
+					<MenuItem.Icon>
+						<Image Source="/TestConsole;component/Resources/Icons/Uac16.png" Stretch="None" />
+					</MenuItem.Icon>
+				</MenuItem>
+				<Separator />
+				<MenuItem Header="E_xit" InputGestureText="Alt+F4" Command="{Binding ExitCommand}" />
+			</MenuItem>
+			<MenuItem Header="_Run">
+				<MenuItem Header="$77-_Example.exe" Command="{Binding RunCommand}" CommandParameter="Example">
+					<MenuItem.Icon>
+						<Image Source="/TestConsole;component/Resources/Icons/Example16.png" Stretch="None" />
+					</MenuItem.Icon>
+				</MenuItem>
+				<Separator />
+				<MenuItem Header="Install.exe" Command="{Binding RunCommand}" CommandParameter="Install">
+					<MenuItem.Icon>
+						<Image Source="/TestConsole;component/Resources/Icons/ExeUac16.png" Stretch="None" />
+					</MenuItem.Icon>
+				</MenuItem>
+				<MenuItem Header="Uninstall.exe" Command="{Binding RunCommand}" CommandParameter="Uninstall">
+					<MenuItem.Icon>
+						<Image Source="/TestConsole;component/Resources/Icons/ExeUac16.png" Stretch="None" />
+					</MenuItem.Icon>
+				</MenuItem>
+			</MenuItem>
+			<MenuItem Header="_Processes">
+				<MenuItem Header="_Inject All" Command="{Binding InjectAllCommand}" />
+				<MenuItem Header="_Detach All" Command="{Binding DetachAllCommand}" />
+			</MenuItem>
+			<MenuItem Header="_Help">
+				<MenuItem Header="Technical _Documentation" Command="{Binding DocumentationCommand}">
+					<MenuItem.Icon>
+						<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/Documentation.svg" />
+					</MenuItem.Icon>
+				</MenuItem>
+				<Separator />
+				<MenuItem Header="_About" Command="{Binding AboutCommand}">
+					<MenuItem.Icon>
+						<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/Information.svg" />
+					</MenuItem.Icon>
+				</MenuItem>
+			</MenuItem>
+		</Menu>
+	</cui:UiApplicationWindow.Menu>
+	<cui:UiApplicationWindow.StatusBar>
+		<StatusBar>
+			<StatusBarItem>
+				<TextBlock Text="Version ">
+					<Run Text="{Binding Source={x:Static api:ApplicationBase.Version}, Mode=OneWay, Converter={ui:VersionConverter 3}}" />
+				</TextBlock>
+			</StatusBarItem>
+			<Separator />
+			<StatusBarItem Visibility="{Binding Source={x:Static api:ApplicationBase+Process.IsElevated}, Converter={ui:BooleanConverter VisibilityInverse}}">
+				<DockPanel>
+					<Image Source="/TestConsole;component/Resources/Icons/Uac16.png" Stretch="None" Margin="0,0,5,0" IsEnabled="False" />
+					<TextBlock Text="Not elevated" />
+				</DockPanel>
+			</StatusBarItem>
+			<StatusBarItem Visibility="{Binding Source={x:Static api:ApplicationBase+Process.IsElevated}, Converter={ui:BooleanConverter Visibility}}">
+				<DockPanel>
+					<Image Source="/TestConsole;component/Resources/Icons/Uac16.png" Stretch="None" Margin="0,0,5,0" />
+					<TextBlock Text="Elevated" />
+				</DockPanel>
+			</StatusBarItem>
+		</StatusBar>
+	</cui:UiApplicationWindow.StatusBar>
+	<ctrl:LoadingOverlay ShowBusyIndicator="{Binding ShowBusyIndicator}">
+		<Grid Margin="6">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="5*" />
+				<ColumnDefinition Width="7" />
+				<ColumnDefinition Width="2*" />
+			</Grid.ColumnDefinitions>
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="5*" />
+					<RowDefinition Height="7" />
+					<RowDefinition Height="2*" />
+				</Grid.RowDefinitions>
+				<cui:UiApplicationTabControl>
+					<TabItem Name="ProcessesTabPage" Header="Processes">
+						<local:ProcessListUserControl />
+					</TabItem>
+					<TabItem Name="ControlPipeTabPage" Header="Control Pipe">
+						<local:ControlPipeUserControl />
+					</TabItem>
+				</cui:UiApplicationTabControl>
+				<cui:UiGridSplitter Grid.Row="1" />
+				<cui:UiDockingTabControl Grid.Row="2">
+					<TabItem Header="Log">
+						<local:LogUserControl />
+					</TabItem>
+				</cui:UiDockingTabControl>
+			</Grid>
+			<cui:UiGridSplitter Grid.Column="1" />
+			<Grid Grid.Column="2">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="*" />
+					<RowDefinition Height="7" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
+				<cui:UiDockingTabControl>
+					<TabItem Header="Config System">
+						<local:ConfigSystemUserControl />
+					</TabItem>
+				</cui:UiDockingTabControl>
+				<cui:UiGridSplitter Grid.Row="1" />
+				<cui:UiDockingTabControl Grid.Row="2">
+					<TabItem Header="r77 Service">
+						<local:R77ServiceUserControl />
+					</TabItem>
+				</cui:UiDockingTabControl>
+			</Grid>
+		</Grid>
+	</ctrl:LoadingOverlay>
+</cui:UiApplicationWindow>

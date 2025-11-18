@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <defs>
+    <style>.canvas{fill: none; opacity: 0;}.light-defaultgrey-10{fill: #212121; opacity: 0.1;}.light-defaultgrey{fill: #212121; opacity: 1;}.cls-1{opacity:0.75;}</style>
+  </defs>
+  <title>ExpandAll</title>
+  <g id="canvas">
+    <path class="canvas" d="M16,16H0V0H16Z" />
+  </g>
+  <g id="level-1">
+    <g class="cls-1">
+      <path class="light-defaultgrey-10" d="M15.5.5v12h-2V2.5H3.5V.5Z" />
+      <path class="light-defaultgrey" d="M16,.5v12l-.5.5h-2V12H15V1H4V2.5H3V.5L3.5,0h12Z" />
+    </g>
+    <path class="light-defaultgrey-10" d="M13.5,2.5v12H1.5V2.5Z" />
+    <path class="light-defaultgrey" d="M13.5,2H1.5L1,2.5v12l.5.5h12l.5-.5V2.5ZM13,14H2V3H13ZM7,9H4V8H7V5H8V8h3V9H8v3H7Z" />
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 15">
+  <defs>
+    <style>.canvas{fill: none; opacity: 0;}.light-red{fill: #c50b17; opacity: 1;}.white{fill: #ffffff; opacity: 1;}</style>
+  </defs>
+  <title>StatusError.15.15</title>
+  <title>StatusError.15.15</title>
+  <g id="canvas">
+    <path class="canvas" d="M15,15H0V0H15Z" />
+  </g>
+  <g id="level-1">
+    <path class="light-red" d="M7.5,1A6.5,6.5,0,1,0,14,7.5,6.506,6.506,0,0,0,7.5,1Z" />
+    <path class="white" d="M8.384,7.5l2.808,2.808-.884.884L7.5,8.384,4.692,11.192l-.884-.884L6.616,7.5,3.808,4.692l.884-.884L7.5,6.616l2.808-2.808.884.884Z" />
+  </g>
+</svg>

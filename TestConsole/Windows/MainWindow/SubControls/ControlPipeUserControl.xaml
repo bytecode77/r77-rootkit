@@ -1,0 +1,164 @@
+<ui:ObservableUserControl
+	x:Class="TestConsole.ControlPipeUserControl"
+	x:Name="controlPipeUserControl"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:TestConsole"
+	xmlns:global="clr-namespace:Global"
+	xmlns:model="clr-namespace:TestConsole.Model"
+	xmlns:helper="clr-namespace:TestConsole.Helper"
+	xmlns:converter="clr-namespace:TestConsole.Converters"
+	xmlns:ui="http://schemas.bytecode77.com/2023/xaml/presentation"
+	xmlns:cui="http://schemas.bytecode77.com/2025/xaml/cui"
+	DataContext="{Binding ViewModel, ElementName=controlPipeUserControl}">
+	<ScrollViewer VerticalScrollBarVisibility="Auto">
+		<StackPanel Margin="10">
+			<TextBlock Text="When r77 is installed, the r77 service provides a named pipe that handles commands from any process regardless of privilege level. Below is a collection of examples that demonstrate connecting to the control pipe. Typically, commands are sent to the control pipe programmatically." TextWrapping="Wrap" Margin="0,0,0,20" />
+			<cui:UiGroupBox Header="Status" Margin="0,0,0,20">
+				<StackPanel>
+					<TextBlock Visibility="{Binding IsR77ServiceRunning, Converter={ui:BooleanConverter Visibility}}">
+						<Run Text="The r77 service is running." Foreground="#00a000" FontWeight="Bold" />
+						<LineBreak />
+						<Run Text="The named pipe" />
+						<Run Text="{x:Static global:R77Const.ControlPipeName}" FontWeight="Bold" />
+						<Run Text="is open to receive commands." />
+					</TextBlock>
+					<TextBlock Visibility="{Binding IsR77ServiceRunning, Converter={ui:BooleanConverter VisibilityInverse}}">
+						<Run Text="The r77 service is not running." Foreground="#c00000" FontWeight="Bold" />
+						<LineBreak />
+						<Run Text="Install r77 to connect to the control pipe." />
+					</TextBlock>
+				</StackPanel>
+			</cui:UiGroupBox>
+			<StackPanel IsEnabled="{Binding IsR77ServiceRunning}">
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.R77TerminateService}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command terminates the r77 service. The rootkit will reactivate when the computer is restarted." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiButton Content="Terminate r77 Service" HorizontalAlignment="Left" Command="{Binding R77TerminateServiceCommand}" />
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.R77Uninstall}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command instructs r77 to fully uninstall itself." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiButton Content="Uninstall r77" HorizontalAlignment="Left" Command="{Binding R77UninstallCommand}" />
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.R77PauseInjection}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command pauses the injection of new processes." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiButton Content="Pause r77" HorizontalAlignment="Left" Command="{Binding R77PauseInjectionCommand}" />
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.R77ResumeInjection}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command resumes the injection of new processes." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiButton Content="Resume r77" HorizontalAlignment="Left" Command="{Binding R77ResumeInjectionCommand}" />
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.ProcessesInject}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command injects r77 into a process." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<StackPanel Orientation="Horizontal">
+							<cui:UiButton Content="Inject" HorizontalAlignment="Left" Command="{Binding ProcessesInjectCommand}" />
+							<Label Content="r77 into process ID" Margin="5,0" />
+							<cui:UiTextBox Width="80" Text="{Binding InjectProcessId, Converter={converter:TextBoxConverter Int32}}" />
+						</StackPanel>
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.ProcessesInjectAll}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command injects r77 into all processes." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiButton Content="Inject All" HorizontalAlignment="Left" Command="{Binding ProcessesInjectAllCommand}" />
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.ProcessesDetach}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command detaches r77 from a process." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<StackPanel Orientation="Horizontal">
+							<cui:UiButton Content="Detach" HorizontalAlignment="Left" Command="{Binding ProcessesDetachCommand}" />
+							<Label Content="r77 from process ID" Margin="5,0" />
+							<cui:UiTextBox Width="80" Text="{Binding DetachProcessId, Converter={converter:TextBoxConverter Int32}}" />
+						</StackPanel>
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.ProcessesDetachAll}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command detaches r77 from all processes." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiButton Content="Detach All" HorizontalAlignment="Left" Command="{Binding ProcessesDetachAllCommand}" />
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.UserShellExec}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command performs a ShellExecute. The new process will spawn under the SYSTEM user." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiFieldSet LabelWidth="120">
+							<cui:UiFieldSetItem Header="Path">
+								<cui:UiTextBox Text="{Binding ShellExecPath}" />
+							</cui:UiFieldSetItem>
+							<cui:UiFieldSetItem Header="Command Line">
+								<cui:UiTextBox Text="{Binding ShellExecCommandLine}" />
+							</cui:UiFieldSetItem>
+							<cui:UiFieldSetItem Header="">
+								<cui:UiButton Content="ShellExecute" HorizontalAlignment="Left" Command="{Binding UserShellExecCommand}" />
+							</cui:UiFieldSetItem>
+						</cui:UiFieldSet>
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.UserRunPE}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command executes an EXE file in memory using process hollowing. The new process will spawn under the SYSTEM user." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiFieldSet LabelWidth="120">
+							<cui:UiFieldSetItem Header="Target Path">
+								<cui:UiTextBox Text="{Binding RunPETargetPath}" />
+							</cui:UiFieldSetItem>
+							<cui:UiFieldSetItem Header="Payload Executable">
+								<cui:UiTextBox Text="{Binding RunPEPayloadPath}" />
+							</cui:UiFieldSetItem>
+							<cui:UiFieldSetItem Header="">
+								<cui:UiButton Content="RunPE" HorizontalAlignment="Left" Command="{Binding UserRunPECommand}" />
+							</cui:UiFieldSetItem>
+						</cui:UiFieldSet>
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox>
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.SystemBsod}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command will trigger a blue screen." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<cui:UiButton Content="BSOD" HorizontalAlignment="Left" Foreground="#c00000" Command="{Binding SystemBsodCommand}" />
+					</StackPanel>
+				</cui:UiGroupBox>
+			</StackPanel>
+		</StackPanel>
+	</ScrollViewer>
+</ui:ObservableUserControl>

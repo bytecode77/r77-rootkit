@@ -1,230 +1,107 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E55F7214-8CC4-4E1D-AEDB-C908D23902A4}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>TestConsole</RootNamespace>
-    <AssemblyName>TestConsole</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <WarningLevel>4</WarningLevel>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationIcon>TestConsole.ico</ApplicationIcon>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>none</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="BytecodeApi">
-      <HintPath>..\SlnBin\BytecodeApi.dll</HintPath>
-    </Reference>
-    <Reference Include="BytecodeApi.UI">
-      <HintPath>..\SlnBin\BytecodeApi.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Xaml">
-      <RequiredTargetFramework>4.0</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-  </ItemGroup>
-  <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
-    <Compile Include="..\Global\GlobalAssemblyInfo.cs">
-      <Link>Properties\GlobalAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\Global\R77Const.cs">
-      <Link>Properties\R77Const.cs</Link>
-    </Compile>
-    <Compile Include="Helper\HelperDll.cs" />
-    <Compile Include="Model\ConfigSystem\ConfigSystemEntry.cs" />
-    <Compile Include="Model\ConfigSystem\ConfigSystemDirectory.cs" />
-    <Compile Include="Helper\ConfigSystem.cs" />
-    <Compile Include="Helper\ControlCode.cs" />
-    <Compile Include="Helper\ControlPipe.cs" />
-    <Compile Include="Model\Logging\Log.cs" />
-    <Compile Include="Model\Logging\LogDetailsItem.cs" />
-    <Compile Include="Model\Logging\LogLinkItem.cs" />
-    <Compile Include="Model\Logging\LogMessageType.cs" />
-    <Compile Include="Model\Logging\LogMessage.cs" />
-    <Compile Include="Model\Logging\LogItem.cs" />
-    <Compile Include="Model\Logging\LogFileItem.cs" />
-    <Compile Include="Model\Logging\LogTextItem.cs" />
-    <Compile Include="Views\AboutPopupViewModel.cs" />
-    <Compile Include="Windows\ConfigSystemValueWindowViewModel.cs" />
-    <Compile Include="Windows\MainWindowViewModel.cs" />
-    <Compile Include="Views\ConfigSystemUserControlViewModel.cs" />
-    <Compile Include="Views\ControlPipeUserControlViewModel.cs" />
-    <Compile Include="Views\ProcessesUserControlViewModel.cs" />
-    <Compile Include="Windows\ConfigSystemValueWindow.xaml.cs">
-      <DependentUpon>ConfigSystemValueWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\ConfigSystemUserControl.xaml.cs">
-      <DependentUpon>ConfigSystemUserControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\ControlPipeUserControl.xaml.cs">
-      <DependentUpon>ControlPipeUserControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\ProcessesUserControl.xaml.cs">
-      <DependentUpon>ProcessesUserControl.xaml</DependentUpon>
-    </Compile>
-    <Page Include="Views\AboutPopup.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Windows\ConfigSystemValueWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Windows\MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Helper\ProcessList.cs" />
-    <Compile Include="Views\AboutPopup.xaml.cs">
-      <DependentUpon>AboutPopup.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Windows\MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
-    <Page Include="Views\ConfigSystemUserControl.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\ControlPipeUserControl.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\ProcessesUserControl.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Model\ProcessView.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="TestConsole.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Uac16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Information16.png" />
-    <Resource Include="Resources\Warning16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Error16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Example16.png" />
-    <Resource Include="Resources\Exe16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\ExeUac16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\R77Service16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\R77Helper16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\DllDetach16.png" />
-    <Resource Include="Resources\DllInject16.png" />
-    <Resource Include="Resources\DllInjected16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\AboutBanner.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\AboutTitle.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Hidden16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Unhidden16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\AboutGitHub16.png" />
-    <Resource Include="Resources\AboutWebsite16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Pdf16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Processes16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\ControlPipe16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\ConfigSystem16.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\ConfigSystemDelete16.png" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
-mkdir "$(SolutionDir)$Build"
-xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
-xcopy /Y "$(TargetDir)BytecodeApi.dll" "$(SolutionDir)$Build"
-xcopy /Y "$(TargetDir)BytecodeApi.UI.dll" "$(SolutionDir)$Build"
-xcopy /Y "$(SolutionDir)$Build\Helper32.dll" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)$Build\Helper64.dll" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)$Build\r77-x86.dll" "$(TargetDir)"
-xcopy /Y "$(SolutionDir)$Build\r77-x64.dll" "$(TargetDir)"</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
+		<Prefer32Bit>false</Prefer32Bit>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<ApplicationIcon>TestConsole.ico</ApplicationIcon>
+		<SatelliteResourceLanguages>none</SatelliteResourceLanguages>
+	</PropertyGroup>
+	<PropertyGroup>
+		<Version>1.7.2</Version>
+		<AssemblyVersion>1.7.2</AssemblyVersion>
+		<FileVersion>1.7.2</FileVersion>
+	</PropertyGroup>
+	<PropertyGroup>
+		<Product>r77 Test Console</Product>
+		<Title>r77 Test Console</Title>
+		<Description>r77 Test Console</Description>
+		<Company>bytecode77</Company>
+		<Authors>bytecode77</Authors>
+		<Copyright>© bytecode77, 2025.</Copyright>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="BytecodeApi.Rest" Version="4.0.0" />
+		<PackageReference Include="BytecodeApi.Win32" Version="4.0.0" />
+		<PackageReference Include="BytecodeApi.Wpf" Version="4.0.1" />
+		<PackageReference Include="BytecodeApi.Wpf.Cui" Version="4.0.2" />
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\Global\R77Const.cs" Link="Properties\R77Const.cs" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove="Resources\Icons\ClearList.svg" />
+		<None Remove="Resources\Icons\CollapseAll.svg" />
+		<None Remove="Resources\Icons\ConfigSystem.svg" />
+		<None Remove="Resources\Icons\DeleteFolder.svg" />
+		<None Remove="Resources\Icons\DeleteItem.svg" />
+		<None Remove="Resources\Icons\Documentation.svg" />
+		<None Remove="Resources\Icons\Error.svg" />
+		<None Remove="Resources\Icons\Example16.png" />
+		<None Remove="Resources\Icons\Exe16.png" />
+		<None Remove="Resources\Icons\ExeUac16.png" />
+		<None Remove="Resources\Icons\ExpandAll.svg" />
+		<None Remove="Resources\Icons\FolderClosed.svg" />
+		<None Remove="Resources\Icons\FolderOpened.svg" />
+		<None Remove="Resources\Icons\GitHub.svg" />
+		<None Remove="Resources\Icons\Hidden.svg" />
+		<None Remove="Resources\Icons\Information.svg" />
+		<None Remove="Resources\Icons\Injected.svg" />
+		<None Remove="Resources\Icons\NewItem.svg" />
+		<None Remove="Resources\Icons\R77Helper.svg" />
+		<None Remove="Resources\Icons\R77Service.svg" />
+		<None Remove="Resources\Icons\Registry.svg" />
+		<None Remove="Resources\Icons\RegistryIntegerValue.svg" />
+		<None Remove="Resources\Icons\RegistryStringValue.svg" />
+		<None Remove="Resources\Icons\Uac16.png" />
+		<None Remove="Resources\Icons\Visible.svg" />
+		<None Remove="Resources\Icons\Warning.svg" />
+		<None Remove="Resources\Icons\Website.svg" />
+		<None Remove="Resources\Images\AboutBanner.png" />
+		<None Remove="Resources\Images\WindowLogo.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<Resource Include="Resources\Icons\ClearList.svg" />
+		<Resource Include="Resources\Icons\CollapseAll.svg" />
+		<Resource Include="Resources\Icons\ConfigSystem.svg" />
+		<Resource Include="Resources\Icons\DeleteFolder.svg" />
+		<Resource Include="Resources\Icons\DeleteItem.svg" />
+		<Resource Include="Resources\Icons\Documentation.svg" />
+		<Resource Include="Resources\Icons\Error.svg" />
+		<Resource Include="Resources\Icons\Example16.png" />
+		<Resource Include="Resources\Icons\Exe16.png" />
+		<Resource Include="Resources\Icons\ExeUac16.png" />
+		<Resource Include="Resources\Icons\ExpandAll.svg" />
+		<Resource Include="Resources\Icons\FolderClosed.svg" />
+		<Resource Include="Resources\Icons\FolderOpened.svg" />
+		<Resource Include="Resources\Icons\GitHub.svg" />
+		<Resource Include="Resources\Icons\Hidden.svg" />
+		<Resource Include="Resources\Icons\Information.svg" />
+		<Resource Include="Resources\Icons\Injected.svg" />
+		<Resource Include="Resources\Icons\NewItem.svg" />
+		<Resource Include="Resources\Icons\R77Helper.svg" />
+		<Resource Include="Resources\Icons\R77Service.svg" />
+		<Resource Include="Resources\Icons\Registry.svg" />
+		<Resource Include="Resources\Icons\RegistryIntegerValue.svg" />
+		<Resource Include="Resources\Icons\RegistryStringValue.svg" />
+		<Resource Include="Resources\Icons\Uac16.png" />
+		<Resource Include="Resources\Icons\Visible.svg" />
+		<Resource Include="Resources\Icons\Warning.svg" />
+		<Resource Include="Resources\Icons\Website.svg" />
+		<Resource Include="Resources\Images\AboutBanner.png" />
+		<Resource Include="Resources\Images\WindowLogo.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="TestConsole.ico" />
+	</ItemGroup>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="xcopy /Y &quot;$(SolutionDir)$Build\TestConsole\x86\Helper32.dll&quot; &quot;$(TargetDir)&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)$Build\TestConsole\x64\Helper64.dll&quot; &quot;$(TargetDir)&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)$Build\r77-x86.dll&quot; &quot;$(TargetDir)&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)$Build\r77-x64.dll&quot; &quot;$(TargetDir)&quot;" />
+	</Target>
+	<Target Name="PostPublish" AfterTargets="Publish">
+		<Exec Command="&quot;$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe&quot; &quot;$(SolutionDir)$Build\TestConsole\$(PlatformTarget)\TestConsole.exe&quot; -r77helper" />
+	</Target>
 </Project>

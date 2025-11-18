@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <defs>
+    <style>.canvas{fill: none; opacity: 0;}.light-teal-10{fill: #006758; opacity: 0.1;}.light-teal{fill: #006758; opacity: 1;}.light-yellow{fill: #996f00; opacity: 1;}</style>
+  </defs>
+  <title>IconLightNewConnection</title>
+  <g id="canvas" class="canvas">
+    <path class="canvas" d="M16,16H0V0H16Z" />
+  </g>
+  <g id="level-1">
+    <path class="light-teal-10" d="M15.5,3.372v3.5a3.5,3.5,0,0,1-7,0v-3.5Z" />
+    <path class="light-teal" d="M15.5,3H14V0H13V3H11V0H10V3H8.5L8,3.5V7a3.991,3.991,0,0,0,3.5,3.949V16h1V10.949A3.991,3.991,0,0,0,16,7V3.5ZM15,7A3,3,0,0,1,9,7V4h6Z" />
+  </g>
+</svg>

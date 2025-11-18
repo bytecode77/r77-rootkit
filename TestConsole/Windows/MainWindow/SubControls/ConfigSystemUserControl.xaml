@@ -1,0 +1,105 @@
+<ui:ObservableUserControl
+	x:Class="TestConsole.ConfigSystemUserControl"
+	x:Name="configSystemUserControl"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:TestConsole"
+	xmlns:model="clr-namespace:TestConsole.Model"
+	xmlns:ui="http://schemas.bytecode77.com/2023/xaml/presentation"
+	xmlns:cui="http://schemas.bytecode77.com/2025/xaml/cui"
+	DataContext="{Binding ViewModel, ElementName=configSystemUserControl}">
+	<DockPanel>
+		<cui:UiToolBarTray DockPanel.Dock="Top">
+			<cui:UiToolBar>
+				<Button ToolTip="Open in RegEdit" Command="{Binding ExpandAllCommand}">
+					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/ExpandAll.svg" />
+				</Button>
+				<Button ToolTip="Open in RegEdit" Command="{Binding CollapseAllCommand}">
+					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/CollapseAll.svg" />
+				</Button>
+				<Separator />
+				<Button ToolTip="Open in RegEdit" Command="{Binding OpenConfigSystemKeyCommand}">
+					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/Registry.svg" />
+				</Button>
+			</cui:UiToolBar>
+		</cui:UiToolBarTray>
+		<Border DockPanel.Dock="Top" Padding="8,5" BorderThickness="0,0,0,1" BorderBrush="#e2dfc7" Background="#f7f2da" Visibility="{Binding IsConfigSystemAvailable, Converter={ui:BooleanConverter VisibilityInverse}}">
+			<TextBlock TextWrapping="Wrap">
+				<Hyperlink Command="{Binding ElevateCommand}">Run as administrator</Hyperlink>
+				<Run Text="or install r77 to initialize the configuration system." />
+				<Run Text="Elevated privileges are required only once." FontStyle="Italic" />
+			</TextBlock>
+		</Border>
+		<cui:UiTreeView ItemsSource="{Binding TreeNodes}" SelectedItemBinding="{Binding SelectedTreeNode, Mode=TwoWay}" BorderThickness="0" SelectOnRightClick="True" IsEnabled="{Binding IsConfigSystemAvailable}">
+			<cui:UiTreeView.Resources>
+				<DataTemplate DataType="{x:Type model:TreeViewNode}">
+					<DockPanel>
+						<cui:UiSvgImage x:Name="Icon" Source="{Binding IconCollapsed}" Margin="0,0,5,0" />
+						<TextBlock Text="{Binding Header}" />
+					</DockPanel>
+					<DataTemplate.Triggers>
+						<DataTrigger Binding="{Binding IsExpanded}" Value="True">
+							<Setter TargetName="Icon" Property="Source" Value="{Binding IconExpanded}" />
+						</DataTrigger>
+					</DataTemplate.Triggers>
+				</DataTemplate>
+			</cui:UiTreeView.Resources>
+			<TreeView.ItemContainerStyle>
+				<Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+					<Setter Property="ItemsSource" Value="{Binding Children}" />
+					<Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+					<Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+					<Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type local:ConfigSystemUserControl}}}" />
+					<EventSetter Event="MouseDoubleClick" Handler="TreeViewItem_MouseDoubleClick" />
+					<EventSetter Event="KeyDown" Handler="TreeViewItem_KeyDown" />
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding Converter={ui:TypeConverter TypeEqual}, ConverterParameter={x:Type model:ConfigSystemDirectoryTreeNode}}" Value="True">
+							<Setter Property="ContextMenu">
+								<Setter.Value>
+									<ContextMenu>
+										<MenuItem Header="New..." Command="{Binding CreateEntryCommand}">
+											<MenuItem.Icon>
+												<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/NewItem.svg" />
+											</MenuItem.Icon>
+										</MenuItem>
+										<Separator />
+										<MenuItem Header="Delete All" Command="{Binding DeleteDirectoryCommand}">
+											<MenuItem.Icon>
+												<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/DeleteFolder.svg" />
+											</MenuItem.Icon>
+										</MenuItem>
+									</ContextMenu>
+								</Setter.Value>
+							</Setter>
+						</DataTrigger>
+						<DataTrigger Binding="{Binding Converter={ui:TypeConverter TypeEqual}, ConverterParameter={x:Type model:ConfigSystemEntryTreeNode}}" Value="True">
+							<Setter Property="ContextMenu">
+								<Setter.Value>
+									<ContextMenu>
+										<MenuItem Header="Edit" FontWeight="Bold" Command="{Binding EditEntryCommand}" />
+										<MenuItem Header="New..." Command="{Binding CreateEntryCommand}">
+											<MenuItem.Icon>
+												<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/NewItem.svg" />
+											</MenuItem.Icon>
+										</MenuItem>
+										<Separator />
+										<MenuItem Header="Delete" InputGestureText="Del" Command="{Binding DeleteEntryCommand}">
+											<MenuItem.Icon>
+												<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/DeleteItem.svg" />
+											</MenuItem.Icon>
+										</MenuItem>
+									</ContextMenu>
+								</Setter.Value>
+							</Setter>
+						</DataTrigger>
+					</Style.Triggers>
+					<Style.Resources>
+						<Style TargetType="{x:Type ContextMenu}" BasedOn="{StaticResource {x:Type ContextMenu}}">
+							<Setter Property="DataContext" Value="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}" />
+						</Style>
+					</Style.Resources>
+				</Style>
+			</TreeView.ItemContainerStyle>
+		</cui:UiTreeView>
+	</DockPanel>
+</ui:ObservableUserControl>

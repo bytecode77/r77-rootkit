@@ -1,0 +1,28 @@
+﻿<cui:UiWindow
+	x:Class="TestConsole.ConfigSystemEntryDialog"
+	x:Name="configSystemEntryDialog"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:TestConsole"
+	xmlns:api="clr-namespace:BytecodeApi;assembly=BytecodeApi"
+	xmlns:ui="http://schemas.bytecode77.com/2023/xaml/presentation"
+	xmlns:cui="http://schemas.bytecode77.com/2025/xaml/cui"
+	DataContext="{Binding ViewModel, ElementName=configSystemEntryDialog}"
+	Title="Config System Entry" Width="300" SizeToContent="Height" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize" Background="White" Loaded="ConfigSystemEntryDialog_Loaded">
+	<DockPanel>
+		<Border DockPanel.Dock="Bottom" Padding="15,10" Background="#f0f0f0" BorderThickness="0,1,0,0" BorderBrush="#d0d0d0">
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+				<cui:UiButton Content="OK" Margin="0,0,10,0" IsDefault="True" Command="{Binding SaveCommand}" />
+				<cui:UiButton Content="Cancel" IsCancel="True" />
+			</StackPanel>
+		</Border>
+		<cui:UiFieldSet Orientation="Vertical" Margin="15">
+			<cui:UiFieldSetItem Header="Name">
+				<cui:UiTextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsCreate, Converter={ui:BooleanConverter Inverse}}" />
+			</cui:UiFieldSetItem>
+			<cui:UiFieldSetItem Header="Value">
+				<cui:UiTextBox x:Name="txtValue" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+			</cui:UiFieldSetItem>
+		</cui:UiFieldSet>
+	</DockPanel>
+</cui:UiWindow>

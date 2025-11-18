@@ -1,12 +1,16 @@
-﻿namespace TestConsole
-{
-	public sealed class LogFileItem : LogItem
-	{
-		public string FileName { get; set; }
+﻿namespace TestConsole.Model;
 
-		public LogFileItem(string fileName)
-		{
-			FileName = fileName;
-		}
+public sealed class LogFileItem : LogItem
+{
+	public string FileName { get; private init; }
+
+	public LogFileItem(string fileName)
+	{
+		FileName = fileName;
+	}
+
+	public override string ToString()
+	{
+		return FileName;
 	}
 }
