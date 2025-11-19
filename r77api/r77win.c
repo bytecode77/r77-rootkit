@@ -175,6 +175,12 @@ BOOL Is64BitProcess(DWORD processId, LPBOOL is64Bit)
 LPVOID GetFunction(LPCSTR dll, LPCSTR function)
 {
 	HMODULE module = GetModuleHandleA(dll);
+
+	if (!module)
+	{
+		module = LoadLibraryA(dll);
+	}
+
 	return module ? (LPVOID)GetProcAddress(module, function) : NULL;
 }
 BOOL GetProcessIntegrityLevel(HANDLE process, LPDWORD integrityLevel)
