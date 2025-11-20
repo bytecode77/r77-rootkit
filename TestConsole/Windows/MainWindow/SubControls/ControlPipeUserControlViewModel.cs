@@ -20,6 +20,8 @@ public sealed class ControlPipeUserControlViewModel : ViewModel
 	private DelegateCommand? _ProcessesInjectAllCommand;
 	private DelegateCommand? _ProcessesDetachCommand;
 	private DelegateCommand? _ProcessesDetachAllCommand;
+	private DelegateCommand? _ProcessesTerminateIdCommand;
+	private DelegateCommand? _ProcessesTerminateNameCommand;
 	private DelegateCommand? _UserShellExecCommand;
 	private DelegateCommand? _UserRunPECommand;
 	private DelegateCommand? _SystemBsodCommand;
@@ -31,6 +33,8 @@ public sealed class ControlPipeUserControlViewModel : ViewModel
 	public DelegateCommand ProcessesInjectAllCommand => _ProcessesInjectAllCommand ??= new(ProcessesInjectAllCommand_Execute);
 	public DelegateCommand ProcessesDetachCommand => _ProcessesDetachCommand ??= new(ProcessesDetachCommand_Execute, ProcessesDetachCommand_CanExecute);
 	public DelegateCommand ProcessesDetachAllCommand => _ProcessesDetachAllCommand ??= new(ProcessesDetachAllCommand_Execute);
+	public DelegateCommand ProcessesTerminateIdCommand => _ProcessesTerminateIdCommand ??= new(ProcessesTerminateIdCommand_Execute, ProcessesTerminateIdCommand_CanExecute);
+	public DelegateCommand ProcessesTerminateNameCommand => _ProcessesTerminateNameCommand ??= new(ProcessesTerminateNameCommand_Execute, ProcessesTerminateNameCommand_CanExecute);
 	public DelegateCommand UserShellExecCommand => _UserShellExecCommand ??= new(UserShellExecCommand_Execute);
 	public DelegateCommand UserRunPECommand => _UserRunPECommand ??= new(UserRunPECommand_Execute);
 	public DelegateCommand SystemBsodCommand => _SystemBsodCommand ??= new(SystemBsodCommand_Execute);
@@ -38,6 +42,8 @@ public sealed class ControlPipeUserControlViewModel : ViewModel
 	private bool _IsR77ServiceRunning;
 	private int? _InjectProcessId;
 	private int? _DetachProcessId;
+	private int? _TerminateProcessId;
+	private string? _TerminateProcessName;
 	private string? _ShellExecPath;
 	private string? _ShellExecCommandLine;
 	private string? _RunPETargetPath;
@@ -56,6 +62,16 @@ public sealed class ControlPipeUserControlViewModel : ViewModel
 	{
 		get => _DetachProcessId;
 		set => Set(ref _DetachProcessId, value);
+	}
+	public int? TerminateProcessId
+	{
+		get => _TerminateProcessId;
+		set => Set(ref _TerminateProcessId, value);
+	}
+	public string? TerminateProcessName
+	{
+		get => _TerminateProcessName;
+		set => Set(ref _TerminateProcessName, value);
 	}
 	public string? ShellExecPath
 	{
@@ -133,6 +149,28 @@ public sealed class ControlPipeUserControlViewModel : ViewModel
 	private void ProcessesDetachAllCommand_Execute()
 	{
 		ControlPipe.Write(ControlCode.ProcessesDetachAll);
+	}
+	private bool ProcessesTerminateIdCommand_CanExecute()
+	{
+		return TerminateProcessId != null;
+	}
+	private void ProcessesTerminateIdCommand_Execute()
+	{
+		ControlPipe.Write(ControlCode.ProcessesTerminateId, BitConverter.GetBytes(TerminateProcessId!.Value), TerminateProcessId.ToString());
+	}
+	private bool ProcessesTerminateNameCommand_CanExecute()
+	{
+		return TerminateProcessName != null;
+	}
+	private void ProcessesTerminateNameCommand_Execute()
+	{
+		using MemoryStream memoryStream = new();
+		using BinaryWriter writer = new(memoryStream);
+
+		writer.Write(TerminateProcessName!.ToUnicodeBytes());
+		writer.Write((short)0);
+
+		ControlPipe.Write(ControlCode.ProcessesTerminateName, memoryStream.ToArray(), TerminateProcessName);
 	}
 	private void UserShellExecCommand_Execute()
 	{

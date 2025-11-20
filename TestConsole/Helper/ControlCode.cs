@@ -48,6 +48,16 @@ public enum ControlCode
 	[Description("CONTROL_PROCESSES_DETACH_ALL")]
 	ProcessesDetachAll = 0x2004,
 	/// <summary>
+	/// The control code that terminates a process by a specified ID.
+	/// </summary>
+	[Description("CONTROL_PROCESSES_TERMINATE_ID")]
+	ProcessesTerminateId = 0x2005,
+	/// <summary>
+	/// The control code that terminates a process by a specified name.
+	/// </summary>
+	[Description("CONTROL_PROCESSES_TERMINATE_NAME")]
+	ProcessesTerminateName = 0x2006,
+	/// <summary>
 	/// The control code that executes a file using ShellExecute.
 	/// </summary>
 	[Description("CONTROL_USER_SHELLEXEC")]

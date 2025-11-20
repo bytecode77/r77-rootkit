@@ -74,7 +74,7 @@
 					<StackPanel>
 						<TextBlock Text="This command injects r77 into a process." TextWrapping="Wrap" Margin="0,0,0,5" />
 						<StackPanel Orientation="Horizontal">
-							<cui:UiButton Content="Inject" HorizontalAlignment="Left" Command="{Binding ProcessesInjectCommand}" />
+							<cui:UiButton Content="Inject" Command="{Binding ProcessesInjectCommand}" />
 							<Label Content="r77 into process ID" Margin="5,0" />
 							<cui:UiTextBox Width="80" Text="{Binding InjectProcessId, Converter={converter:TextBoxConverter Int32}}" />
 						</StackPanel>
@@ -96,7 +96,7 @@
 					<StackPanel>
 						<TextBlock Text="This command detaches r77 from a process." TextWrapping="Wrap" Margin="0,0,0,5" />
 						<StackPanel Orientation="Horizontal">
-							<cui:UiButton Content="Detach" HorizontalAlignment="Left" Command="{Binding ProcessesDetachCommand}" />
+							<cui:UiButton Content="Detach" Command="{Binding ProcessesDetachCommand}" />
 							<Label Content="r77 from process ID" Margin="5,0" />
 							<cui:UiTextBox Width="80" Text="{Binding DetachProcessId, Converter={converter:TextBoxConverter Int32}}" />
 						</StackPanel>
@@ -109,6 +109,32 @@
 					<StackPanel>
 						<TextBlock Text="This command detaches r77 from all processes." TextWrapping="Wrap" Margin="0,0,0,5" />
 						<cui:UiButton Content="Detach All" HorizontalAlignment="Left" Command="{Binding ProcessesDetachAllCommand}" />
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.ProcessesTerminateId}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command terminates a process by a specified ID." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<StackPanel Orientation="Horizontal">
+							<cui:UiButton Content="Terminate" Command="{Binding ProcessesTerminateIdCommand}" />
+							<Label Content="process with ID" Margin="5,0" />
+							<cui:UiTextBox Width="80" Text="{Binding TerminateProcessId, Converter={converter:TextBoxConverter Int32}}" />
+						</StackPanel>
+					</StackPanel>
+				</cui:UiGroupBox>
+				<cui:UiGroupBox Margin="0,0,0,10">
+					<cui:UiGroupBox.Header>
+						<TextBlock Text="{Binding Source={x:Static helper:ControlCode.ProcessesTerminateName}, Converter={ui:EnumConverter Description}}" />
+					</cui:UiGroupBox.Header>
+					<StackPanel>
+						<TextBlock Text="This command terminates a process by a specified name." TextWrapping="Wrap" Margin="0,0,0,5" />
+						<StackPanel Orientation="Horizontal">
+							<cui:UiButton Content="Terminate" Command="{Binding ProcessesTerminateNameCommand}" />
+							<Label Content="process with name" Margin="5,0" />
+							<cui:UiTextBox Width="80" Text="{Binding TerminateProcessName}" />
+						</StackPanel>
 					</StackPanel>
 				</cui:UiGroupBox>
 				<cui:UiGroupBox Margin="0,0,0,10">
