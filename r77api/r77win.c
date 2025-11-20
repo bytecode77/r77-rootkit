@@ -211,7 +211,7 @@ BOOL GetProcessIntegrityLevel(HANDLE process, LPDWORD integrityLevel)
 
 	return result;
 }
-BOOL GetProcessFileName(DWORD processId, LPWSTR fileName, DWORD fileNameLength)
+BOOL GetProcessFileName(DWORD processId, PWCHAR fileName, DWORD fileNameLength)
 {
 	BOOL result = FALSE;
 
@@ -234,7 +234,7 @@ BOOL GetProcessFileName(DWORD processId, LPWSTR fileName, DWORD fileNameLength)
 
 	return result;
 }
-BOOL GetProcessPath(DWORD processId, LPWSTR fileName, DWORD fileNameLength)
+BOOL GetProcessPath(DWORD processId, PWCHAR fileName, DWORD fileNameLength)
 {
 	BOOL result = FALSE;
 
@@ -256,7 +256,7 @@ BOOL GetProcessPath(DWORD processId, LPWSTR fileName, DWORD fileNameLength)
 
 	return result;
 }
-BOOL GetProcessUserName(HANDLE process, PWCHAR name, LPDWORD nameLength)
+BOOL GetProcessUserName(HANDLE process, PWCHAR name, DWORD nameLength)
 {
 	BOOL result = FALSE;
 
@@ -274,7 +274,7 @@ BOOL GetProcessUserName(HANDLE process, PWCHAR name, LPDWORD nameLength)
 					WCHAR domain[256];
 					DWORD domainLength = 256;
 					SID_NAME_USE sidType;
-					result = LookupAccountSidW(NULL, tokenUser->User.Sid, name, nameLength, domain, &domainLength, &sidType);
+					result = LookupAccountSidW(NULL, tokenUser->User.Sid, name, &nameLength, domain, &domainLength, &sidType);
 				}
 
 				LocalFree(tokenUser);
@@ -285,6 +285,60 @@ BOOL GetProcessUserName(HANDLE process, PWCHAR name, LPDWORD nameLength)
 	}
 
 	return result;
+}
+BOOL GetRegistryKeyName(HANDLE key, PWCHAR name, DWORD nameLength)
+{
+	BYTE buffer[1000];
+	if (NT_SUCCESS(R77_NtQueryObject(key, ObjectNameInformation, buffer, 1000, NULL)))
+	{
+		PUNICODE_STRING keyNameInfo = (PUNICODE_STRING)buffer;
+		if (keyNameInfo->Length / sizeof(WCHAR) < min(nameLength, 950))
+		{
+			keyNameInfo->Buffer[keyNameInfo->Length / sizeof(WCHAR)] = L'\0';
+
+			if (!StrCmpIW(keyNameInfo->Buffer, L"\\REGISTRY\\MACHINE"))
+			{
+				StrCpyW(name, L"HKEY_LOCAL_MACHINE");
+				return TRUE;
+			}
+			else if (!StrCmpIW(keyNameInfo->Buffer, L"\\REGISTRY\\USER"))
+			{
+				StrCpyW(name, L"HKEY_USERS");
+				return TRUE;
+			}
+			else if (!StrCmpNIW(keyNameInfo->Buffer, L"\\REGISTRY\\MACHINE\\", 18))
+			{
+				StrCpyW(name, L"HKEY_LOCAL_MACHINE\\");
+				StrCatW(name, &keyNameInfo->Buffer[18]);
+				return TRUE;
+			}
+			else if (!StrCmpNIW(keyNameInfo->Buffer, L"\\REGISTRY\\USER\\S-", 17))
+			{
+				StrCpyW(name, L"HKEY_CURRENT_USER");
+
+				LPCWSTR sidEnd = StrChrW(&keyNameInfo->Buffer[17], L'\\');
+				if (sidEnd)
+				{
+					StrCatW(name, sidEnd);
+				}
+
+				return TRUE;
+			}
+			else if (!StrCmpNIW(keyNameInfo->Buffer, L"\\REGISTRY\\USER\\", 15))
+			{
+				StrCpyW(name, L"HKEY_USERS\\");
+				StrCatW(name, &keyNameInfo->Buffer[15]);
+				return TRUE;
+			}
+			else
+			{
+				StrCpyW(name, keyNameInfo->Buffer);
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
 }
 BOOL EnabledDebugPrivilege()
 {
@@ -335,7 +389,7 @@ BOOL GetResource(DWORD resourceID, PCSTR type, LPBYTE *data, LPDWORD size)
 
 	return FALSE;
 }
-BOOL GetPathFromHandle(HANDLE file, LPWSTR fileName, DWORD fileNameLength)
+BOOL GetPathFromHandle(HANDLE file, PWCHAR fileName, DWORD fileNameLength)
 {
 	BOOL result = FALSE;
 

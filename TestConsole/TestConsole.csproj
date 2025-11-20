@@ -101,7 +101,11 @@
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="xcopy /Y &quot;$(SolutionDir)$Build\TestConsole\x86\Helper32.dll&quot; &quot;$(TargetDir)&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)$Build\TestConsole\x64\Helper64.dll&quot; &quot;$(TargetDir)&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)$Build\r77-x86.dll&quot; &quot;$(TargetDir)&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)$Build\r77-x64.dll&quot; &quot;$(TargetDir)&quot;" />
 	</Target>
+	<PropertyGroup>
+		<Arch Condition=" '$(RuntimeIdentifier)' == 'win-x86' ">x86</Arch>
+		<Arch Condition=" '$(RuntimeIdentifier)' == 'win-x64' ">x64</Arch>
+	</PropertyGroup>
 	<Target Name="PostPublish" AfterTargets="Publish">
-		<Exec Command="&quot;$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe&quot; &quot;$(SolutionDir)$Build\TestConsole\$(PlatformTarget)\TestConsole.exe&quot; -r77helper" />
+		<Exec Command="&quot;$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe&quot; &quot;$(SolutionDir)$Build\TestConsole\$(Arch)\TestConsole.exe&quot; -r77helper" />
 	</Target>
 </Project>

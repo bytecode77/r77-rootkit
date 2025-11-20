@@ -17,6 +17,7 @@ public static class ConfigSystem
 		["pid"] = RegistryValueKind.DWord,
 		["process_names"] = RegistryValueKind.String,
 		["paths"] = RegistryValueKind.String,
+		["registry_paths"] = RegistryValueKind.String,
 		["service_names"] = RegistryValueKind.String,
 		["tcp_local"] = RegistryValueKind.DWord,
 		["tcp_remote"] = RegistryValueKind.DWord,

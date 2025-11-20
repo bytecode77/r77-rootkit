@@ -50,6 +50,15 @@ BOOL IsProcessNameHiddenU(UNICODE_STRING name);
 /// </returns>
 BOOL IsPathHidden(LPCWSTR path);
 /// <summary>
+/// Determines whether a registry key or value should be hidden based on its full path.
+/// </summary>
+/// <param name="path">The full path to check.</param>
+/// <returns>
+/// TRUE, if the registry key or value with the specified full path should be hidden;
+/// otherwise, FALSE.
+/// </returns>
+BOOL IsRegistryPathHidden(LPCWSTR path);
+/// <summary>
 /// Determines whether a service should be hidden based on a specific name.
 /// </summary>
 /// <param name="name">The service name to check.</param>

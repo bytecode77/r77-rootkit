@@ -133,13 +133,13 @@ public static class HelperDll
 	public struct ProcessListEntry
 	{
 		public int ProcessId;
-		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 261)]
 		public string Name;
-		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 261)]
 		public string FullName;
 		public int Platform;
 		public ProcessIntegrityLevel IntegrityLevel;
-		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 261)]
 		public string UserName;
 		public bool IsInjected;
 		public bool IsR77Service;
