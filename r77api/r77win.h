@@ -112,7 +112,7 @@ BOOL GetProcessIntegrityLevel(HANDLE process, LPDWORD integrityLevel);
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
-BOOL GetProcessFileName(DWORD processId, LPWSTR fileName, DWORD fileNameLength);
+BOOL GetProcessFileName(DWORD processId, PWCHAR fileName, DWORD fileNameLength);
 /// <summary>
 /// Gets the full path of a process.
 /// </summary>
@@ -123,18 +123,29 @@ BOOL GetProcessFileName(DWORD processId, LPWSTR fileName, DWORD fileNameLength);
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
-BOOL GetProcessPath(DWORD processId, LPWSTR fileName, DWORD fileNameLength);
+BOOL GetProcessPath(DWORD processId, PWCHAR fileName, DWORD fileNameLength);
 /// <summary>
 /// Gets the username of a process.
 /// </summary>
 /// <param name="process">The handle to the process to check.</param>
 /// <param name="name">A buffer of unicode characters to write the result to.</param>
-/// <param name="nameLength">The length of the result buffer.</param>
+/// <param name="nameLength">The length of the buffer.</param>
 /// <returns>
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
-BOOL GetProcessUserName(HANDLE process, PWCHAR name, LPDWORD nameLength);
+BOOL GetProcessUserName(HANDLE process, PWCHAR name, DWORD nameLength);
+/// <summary>
+/// Gets the name of a registry key in the format "HKEY_LOCAL_MACHINE\Software\Example", "HKEY_CURRENT_USER\Example", etc.
+/// </summary>
+/// <param name="key">The handle to the registry key to check.</param>
+/// <param name="name">A buffer of unicode characters to write the result to.</param>
+/// <param name="nameLength">The length of the buffer.</param>
+/// <returns>
+/// TRUE, if this function succeeds;
+/// otherwise, FALSE.
+/// </returns>
+BOOL GetRegistryKeyName(HANDLE key, PWCHAR name, DWORD nameLength);
 /// <summary>
 /// Obtains the SeDebugPrivilege.
 /// </summary>
@@ -165,7 +176,7 @@ BOOL GetResource(DWORD resourceID, PCSTR type, LPBYTE *data, LPDWORD size);
 /// TRUE, if this function succeeds;
 /// otherwise, FALSE.
 /// </returns>
-BOOL GetPathFromHandle(HANDLE file, LPWSTR fileName, DWORD fileNameLength);
+BOOL GetPathFromHandle(HANDLE file, PWCHAR fileName, DWORD fileNameLength);
 /// <summary>
 /// Reads the contents of a file.
 /// </summary>

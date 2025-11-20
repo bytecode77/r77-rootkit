@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <defs>
+    <style>.canvas{fill: none; opacity: 0;}.light-defaultgrey-10{fill: #212121; opacity: 0.1;}.light-defaultgrey{fill: #212121; opacity: 1;}</style>
+  </defs>
+  <title>IconLightRegistry</title>
+  <g id="canvas" class="canvas">
+    <path class="canvas" d="M16,16H0V0H16Z" />
+  </g>
+  <g id="level-1">
+    <path class="light-defaultgrey-10" d="M6.5,11.5h2v2h-2Zm-5-3h2v-2h-2Zm0,3h2v2h-2Zm10,0h2v2h-2Zm-5-3h2v-2h-2Zm-5-5h2v-2h-2Zm9.268-.682,1.414,1.414L10.768,5.647,9.353,4.232Z" />
+    <path class="light-defaultgrey" d="M6,13.5v-2l.5-.5h2l.5.5v2l-.5.5h-2ZM8,12H7v1H8ZM1,8.5v-2L1.5,6h2l.5.5v2L3.5,9h-2ZM3,7H2V8H3ZM1,13.5v-2l.5-.5h2l.5.5v2l-.5.5h-2ZM3,12H2v1H3Zm8,1.5v-2l.5-.5h2l.5.5v2l-.5.5h-2ZM13,12H12v1h1ZM6,8.5v-2L6.5,6h2l.5.5v2L8.5,9h-2ZM8,7H7V8H8ZM1,3.5v-2L1.5,1h2l.5.5v2L3.5,4h-2ZM3,2H2V3H3Zm8.121,4h-.707L9,4.586V3.879l1.414-1.414h.707l1.414,1.414v.707Zm-1.06-1.768.707.707.707-.707-.707-.707Z" />
+  </g>
+</svg>

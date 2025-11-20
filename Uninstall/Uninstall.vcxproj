@@ -71,7 +71,7 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
+      <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe" "$(TargetPath)" -r77helper
 mkdir "$(SolutionDir)$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"</Command>
     </PostBuildEvent>
@@ -102,7 +102,7 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"</Command>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
+      <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe" "$(TargetPath)" -r77helper
 mkdir "$(SolutionDir)$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"</Command>
     </PostBuildEvent>

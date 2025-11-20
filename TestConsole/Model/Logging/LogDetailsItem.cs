@@ -1,12 +1,16 @@
-﻿namespace TestConsole
-{
-	public sealed class LogDetailsItem : LogItem
-	{
-		public string Text { get; set; }
+﻿namespace TestConsole.Model;
 
-		public LogDetailsItem(string text)
-		{
-			Text = text;
-		}
+public sealed class LogDetailsItem : LogItem
+{
+	public string Text { get; private init; }
+
+	public LogDetailsItem(string text)
+	{
+		Text = text;
+	}
+
+	public override string ToString()
+	{
+		return Text;
 	}
 }

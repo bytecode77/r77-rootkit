@@ -1,10 +1,8 @@
-﻿namespace TestConsole
+﻿namespace TestConsole.Model;
+
+public enum LogMessageType
 {
-	public enum LogMessageType
-	{
-		Default,
-		Information,
-		Warning,
-		Error
-	}
+	Information,
+	Warning,
+	Error
 }

@@ -80,6 +80,14 @@
 /// </summary>
 #define CONTROL_PROCESSES_DETACH_ALL			0x2004
 /// <summary>
+/// The control code that terminates a process by a specified ID.
+/// </summary>
+#define CONTROL_PROCESSES_TERMINATE_ID			0x2005
+/// <summary>
+/// The control code that terminates a process by a specified name.
+/// </summary>
+#define CONTROL_PROCESSES_TERMINATE_NAME		0x2006
+/// <summary>
 /// The control code that executes a file using ShellExecute.
 /// </summary>
 #define CONTROL_USER_SHELLEXEC					0x3001

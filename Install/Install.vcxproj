@@ -74,7 +74,7 @@
       <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
 mkdir "$(SolutionDir)$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
-"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" -shellcodeinstaller "$(SolutionDir)\"</Command>
+"$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe" -shellcodeinstaller "$(SolutionDir)\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>
@@ -110,7 +110,7 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
       <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
 mkdir "$(SolutionDir)$Build"
 xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
-"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" -shellcodeinstaller "$(SolutionDir)\"</Command>
+"$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe" -shellcodeinstaller "$(SolutionDir)\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>

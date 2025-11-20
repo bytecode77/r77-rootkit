@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <defs>
+    <style>.canvas{fill: none; opacity: 0;}.light-yellow-10{fill: #996f00; opacity: 0.1;}.light-yellow{fill: #996f00; opacity: 1;}.light-red{fill: #c50b17; opacity: 1;}</style>
+  </defs>
+  <title>IconLightDeleteFolder</title>
+  <g id="canvas">
+    <path class="canvas" d="M16,16H0V0H16Z" />
+  </g>
+  <g id="level-1">
+    <path class="light-yellow-10" d="M15.5,6.5v9H2.5V5.621L2.621,5.5h.758L4.879,7h.535l1.5-1.5H8.5l1,1Z" />
+    <path class="light-yellow" d="M15.5,6H9.707l-.853-.854L8.5,5H7.121l.147.146L6.414,6H8.293l.488.488L8.268,7H3V6h.879L3,5.121l-1,1V15.5l.5.5h13l.5-.5v-9ZM15,15H3V8H8.475l.354-.146L9.682,7H15Z" />
+    <path class="light-red" d="M3.707,3,5.854,5.146l-.708.708L3,3.707.854,5.854.146,5.146,2.293,3,.146.854.854.146,3,2.293,5.146.146l.708.708Z" />
+  </g>
+</svg>

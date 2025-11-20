@@ -75,7 +75,7 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
+      <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe" "$(TargetPath)" -r77helper
 xcopy /Y "$(TargetPath)" "$(SolutionDir)Uninstall\Resources"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -104,7 +104,7 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)Uninstall\Resources"</Command>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(TargetPath)" -r77helper
+      <Command>"$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe" "$(TargetPath)" -r77helper
 xcopy /Y "$(TargetPath)" "$(SolutionDir)Uninstall\Resources"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

@@ -1,4 +1,3 @@
-﻿using System.Reflection;
+using System.Windows;
 
-[assembly: AssemblyTitle("r77 Test Console")]
-[assembly: AssemblyProduct("r77 Test Console")]
+[assembly: ThemeInfo(ResourceDictionaryLocation.None, ResourceDictionaryLocation.SourceAssembly)]

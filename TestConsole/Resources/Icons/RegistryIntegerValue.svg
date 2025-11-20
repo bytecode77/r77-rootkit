@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <defs>
+    <style>.canvas{fill: none; opacity: 0;}.light-defaultgrey{fill: #212121; opacity: 1;}.light-defaultgrey-10{fill: #212121; opacity: 0.1;}.cls-1{opacity:0.75;}</style>
+  </defs>
+  <title>IconLightBinaryRegistryValue</title>
+  <g id="canvas">
+    <path class="canvas" d="M16,16H0V0H16Z" />
+  </g>
+  <g id="level-1">
+    <g class="cls-1">
+      <path class="light-defaultgrey" d="M2,13H3v1H2Zm2,1H5V13H4Zm2,0H7V13H6Zm2,0H9V13H8Zm2,0h1V13H10Zm2-1v1h1V13Z" />
+      <path class="light-defaultgrey-10" d="M12.5,1.5V12H2.5V1.5Z" />
+      <path class="light-defaultgrey" d="M13,1.5V12H12V2H3V12H2V1.5L2.5,1h10Z" />
+    </g>
+    <path class="light-defaultgrey" d="M6,10.037a1.346,1.346,0,0,1-1.174-.614A3.129,3.129,0,0,1,4.4,7.648a3.466,3.466,0,0,1,.44-1.929,1.434,1.434,0,0,1,1.268-.655Q7.7,5.064,7.7,7.531A3.254,3.254,0,0,1,7.248,9.4,1.442,1.442,0,0,1,6,10.037Zm.077-4.353q-.876,0-.877,1.93,0,1.8.859,1.806T6.9,7.584Q6.9,5.685,6.072,5.684Z" />
+    <path class="light-defaultgrey" d="M10.018,5.037V9.956H9.239V5.99a2.462,2.462,0,0,1-.454.257,3.83,3.83,0,0,1-.555.186V5.769c.129-.043.255-.088.376-.135s.239-.1.357-.157.236-.124.356-.2.242-.153.371-.245Z" />
+  </g>
+</svg>

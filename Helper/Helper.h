@@ -3,11 +3,11 @@
 typedef struct _PROCESS_LIST_ENTRY
 {
 	DWORD ProcessId;
-	WCHAR Name[MAX_PATH];
-	WCHAR FullName[MAX_PATH];
+	WCHAR Name[MAX_PATH + 1];
+	WCHAR FullName[MAX_PATH + 1];
 	LONG Platform;
 	DWORD IntegrityLevel;
-	WCHAR UserName[MAX_PATH];
+	WCHAR UserName[MAX_PATH + 1];
 	BOOL IsInjected;
 	BOOL IsR77Service;
 	BOOL IsHelper;

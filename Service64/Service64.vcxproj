@@ -77,7 +77,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetPath)" "$(SolutionDir)Stager\Resources"
-"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(SolutionDir)Stager\Resources\$(TargetName).dll" -compress -encrypt</Command>
+"$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe" "$(SolutionDir)Stager\Resources\$(TargetName).dll" -compress -encrypt</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -106,7 +106,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetPath)" "$(SolutionDir)Stager\Resources"
-"$(SolutionDir)BuildTask\bin\$(Configuration)\BuildTask.exe" "$(SolutionDir)Stager\Resources\$(TargetName).dll" -compress -encrypt</Command>
+"$(SolutionDir)BuildTask\bin\$(Configuration)\net9.0-windows\BuildTask.exe" "$(SolutionDir)Stager\Resources\$(TargetName).dll" -compress -encrypt</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
