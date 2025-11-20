@@ -12,9 +12,9 @@
 		<SatelliteResourceLanguages>none</SatelliteResourceLanguages>
 	</PropertyGroup>
 	<PropertyGroup>
-		<Version>1.7.2</Version>
-		<AssemblyVersion>1.7.2</AssemblyVersion>
-		<FileVersion>1.7.2</FileVersion>
+		<Version>1.8.0</Version>
+		<AssemblyVersion>1.8.0</AssemblyVersion>
+		<FileVersion>1.8.0</FileVersion>
 	</PropertyGroup>
 	<PropertyGroup>
 		<Product>r77 Test Console</Product>
