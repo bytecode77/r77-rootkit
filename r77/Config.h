@@ -94,5 +94,14 @@ BOOL IsTcpRemotePortHidden(USHORT port);
 /// otherwise, FALSE.
 /// </returns>
 BOOL IsUdpPortHidden(USHORT port);
+/// <summary>
+/// Determines whether a SAM user should be hidden based on a specific name.
+/// </summary>
+/// <param name="name">The user name to check.</param>
+/// <returns>
+/// TRUE, if the user with the specified name should be hidden;
+/// otherwise, FALSE.
+/// </returns>
+BOOL IsUserNameHidden(LPCWSTR name);
 
 #endif

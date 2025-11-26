@@ -21,7 +21,8 @@ public static class ConfigSystem
 		["service_names"] = RegistryValueKind.String,
 		["tcp_local"] = RegistryValueKind.DWord,
 		["tcp_remote"] = RegistryValueKind.DWord,
-		["udp"] = RegistryValueKind.DWord
+		["udp"] = RegistryValueKind.DWord,
+		["user_names"] = RegistryValueKind.String
 	};
 	/// <summary>
 	/// A <see cref="bool" /> value, indicating whether the configuration system registry key exists.

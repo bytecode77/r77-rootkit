@@ -568,6 +568,12 @@ typedef struct _NT_NSI_PARAM
 	SIZE_T Count;
 } NT_NSI_PARAM, *PNT_NSI_PARAM;
 
+typedef struct _NT_SAM_RID_ENUMERATION
+{
+	ULONG RelativeId;
+	UNICODE_STRING Name;
+} NT_SAM_RID_ENUMERATION, *PNT_SAM_RID_ENUMERATION;
+
 typedef enum _NT_OBJECT_INFORMATION_CLASS
 {
 	ObjectNameInformation = 1,
@@ -792,6 +798,7 @@ typedef BOOL(WINAPI *NT_ENUMSERVICEGROUPW)(SC_HANDLE serviceManager, DWORD servi
 typedef BOOL(WINAPI *NT_ENUMSERVICESSTATUSEXA)(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCSTR groupName);
 typedef BOOL(WINAPI *NT_ENUMSERVICESSTATUSEXW)(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName);
 typedef NTSTATUS(NTAPI *NT_NTDEVICEIOCONTROLFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, ULONG ioControlCode, LPVOID inputBuffer, ULONG inputBufferLength, LPVOID outputBuffer, ULONG outputBufferLength);
+typedef NTSTATUS(NTAPI *NT_SAMENUMERATEUSERSINDOMAIN)(HANDLE domainHandle, PULONG enumerationContext, ULONG userAccountControl, LPVOID *buffer, ULONG preferedMaximumLength, PULONG countReturned);
 typedef PDH_STATUS(WINAPI *NT_PDHGETCOUNTERINFOW)(PDH_HCOUNTER counter, BOOLEAN retrieveExplainText, LPDWORD bufferSize, PNT_PDH_COUNTER_INFO_W buffer);
 typedef PDH_STATUS(WINAPI *NT_PDHGETRAWCOUNTERARRAYW)(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_RAW_COUNTER_ITEM_W itemBuffer);
 typedef PDH_STATUS(WINAPI *NT_PDHGETFORMATTEDCOUNTERARRAYW)(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_FMT_COUNTERVALUE_ITEM_W itemBuffer);

