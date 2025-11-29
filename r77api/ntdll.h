@@ -14,6 +14,7 @@
 #define DEVICE_NSI						L"\\Device\\Nsi"
 #define IOCTL_NSI_GETALLPARAM			0x12001b
 
+typedef DWORD NET_API_STATUS;
 typedef LONG PDH_STATUS;
 typedef HANDLE PDH_HCOUNTER;
 
@@ -416,6 +417,15 @@ typedef struct _NT_FILE_NAMES_INFORMATION
 	WCHAR FileName[1];
 } NT_FILE_NAMES_INFORMATION, *PNT_FILE_NAMES_INFORMATION;
 
+typedef struct _NT_FILE_STANDARD_INFORMATION
+{
+	LARGE_INTEGER AllocationSize;
+	LARGE_INTEGER EndOfFile;
+	ULONG NumberOfLinks;
+	BOOLEAN DeletePending;
+	BOOLEAN Directory;
+} NT_FILE_STANDARD_INFORMATION, *PNT_FILE_STANDARD_INFORMATION;
+
 typedef enum _NT_KEY_INFORMATION_CLASS
 {
 	KeyBasicInformation,
@@ -694,14 +704,15 @@ typedef struct _NT_IMAGE_RUNTIME_FUNCTION_ENTRY
 	} DUMMYUNIONNAME;
 } NT_IMAGE_RUNTIME_FUNCTION_ENTRY, *PNT_IMAGE_RUNTIME_FUNCTION_ENTRY;
 
-typedef struct _NT_FILE_STANDARD_INFORMATION
+typedef struct _NT_NET_DISPLAY_USER
 {
-	LARGE_INTEGER AllocationSize;
-	LARGE_INTEGER EndOfFile;
-	ULONG NumberOfLinks;
-	BOOLEAN DeletePending;
-	BOOLEAN Directory;
-} NT_FILE_STANDARD_INFORMATION, *PNT_FILE_STANDARD_INFORMATION;
+	LPWSTR Name;
+	LPWSTR Comment;
+	DWORD Flags;
+	LPWSTR FullName;
+	DWORD UserId;
+	DWORD NextIndex;
+} NT_NET_DISPLAY_USER, *PNT_NET_DISPLAY_USER;
 
 typedef struct _NT_PDH_DATA_ITEM_PATH_ELEMENTS_W
 {
@@ -799,6 +810,7 @@ typedef BOOL(WINAPI *NT_ENUMSERVICESSTATUSEXA)(SC_HANDLE serviceManager, SC_ENUM
 typedef BOOL(WINAPI *NT_ENUMSERVICESSTATUSEXW)(SC_HANDLE serviceManager, SC_ENUM_TYPE infoLevel, DWORD serviceType, DWORD serviceState, LPBYTE services, DWORD servicesLength, LPDWORD bytesNeeded, LPDWORD servicesReturned, LPDWORD resumeHandle, LPCWSTR groupName);
 typedef NTSTATUS(NTAPI *NT_NTDEVICEIOCONTROLFILE)(HANDLE fileHandle, HANDLE event, PIO_APC_ROUTINE apcRoutine, LPVOID apcContext, PIO_STATUS_BLOCK ioStatusBlock, ULONG ioControlCode, LPVOID inputBuffer, ULONG inputBufferLength, LPVOID outputBuffer, ULONG outputBufferLength);
 typedef NTSTATUS(NTAPI *NT_SAMENUMERATEUSERSINDOMAIN)(HANDLE domainHandle, PULONG enumerationContext, ULONG userAccountControl, LPVOID *buffer, ULONG preferedMaximumLength, PULONG countReturned);
+typedef NET_API_STATUS(WINAPI *NT_NETQUERYDISPLAYINFORMATION)(LPCWSTR serverName, DWORD level, DWORD index, DWORD entriesRequested, DWORD preferredMaximumLength, LPDWORD returnedEntryCount, PVOID *sortedBuffer);
 typedef PDH_STATUS(WINAPI *NT_PDHGETCOUNTERINFOW)(PDH_HCOUNTER counter, BOOLEAN retrieveExplainText, LPDWORD bufferSize, PNT_PDH_COUNTER_INFO_W buffer);
 typedef PDH_STATUS(WINAPI *NT_PDHGETRAWCOUNTERARRAYW)(PDH_HCOUNTER counter, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_RAW_COUNTER_ITEM_W itemBuffer);
 typedef PDH_STATUS(WINAPI *NT_PDHGETFORMATTEDCOUNTERARRAYW)(PDH_HCOUNTER counter, DWORD format, LPDWORD bufferSize, LPDWORD itemCount, PNT_PDH_FMT_COUNTERVALUE_ITEM_W itemBuffer);

