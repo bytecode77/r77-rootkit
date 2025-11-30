@@ -18,7 +18,7 @@
 			<MenuItem Header="_File">
 				<MenuItem Header="Run as _administrator" Command="{Binding ElevateCommand}">
 					<MenuItem.Icon>
-						<Image Source="/TestConsole;component/Resources/Icons/Uac16.png" Stretch="None" />
+						<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/Uac.svg" />
 					</MenuItem.Icon>
 				</MenuItem>
 				<Separator />
@@ -43,8 +43,16 @@
 				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="_Processes">
-				<MenuItem Header="_Inject All" Command="{Binding InjectAllCommand}" />
-				<MenuItem Header="_Detach All" Command="{Binding DetachAllCommand}" />
+				<MenuItem Header="_Inject All" Command="{Binding InjectAllCommand}">
+					<MenuItem.Icon>
+						<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/InjectAll.svg" />
+					</MenuItem.Icon>
+				</MenuItem>
+				<MenuItem Header="_Detach All" Command="{Binding DetachAllCommand}">
+					<MenuItem.Icon>
+						<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/DetachAll.svg" />
+					</MenuItem.Icon>
+				</MenuItem>
 			</MenuItem>
 			<MenuItem Header="_Help">
 				<MenuItem Header="Technical _Documentation" Command="{Binding DocumentationCommand}">
@@ -61,6 +69,22 @@
 			</MenuItem>
 		</Menu>
 	</cui:UiApplicationWindow.Menu>
+	<cui:UiApplicationWindow.ToolBarTray>
+		<cui:UiToolBarTray>
+			<cui:UiToolBar>
+				<Button ToolTip="Run as Administrator" Command="{Binding ElevateCommand}">
+					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/Uac.svg" />
+				</Button>
+				<Separator />
+				<Button ToolTip="Inject All" Command="{Binding InjectAllCommand}">
+					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/InjectAll.svg" />
+				</Button>
+				<Button ToolTip="Detach All" Command="{Binding DetachAllCommand}">
+					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/DetachAll.svg" />
+				</Button>
+			</cui:UiToolBar>
+		</cui:UiToolBarTray>
+	</cui:UiApplicationWindow.ToolBarTray>
 	<cui:UiApplicationWindow.StatusBar>
 		<StatusBar>
 			<StatusBarItem>
@@ -71,13 +95,13 @@
 			<Separator />
 			<StatusBarItem Visibility="{Binding Source={x:Static api:ApplicationBase+Process.IsElevated}, Converter={ui:BooleanConverter VisibilityInverse}}">
 				<DockPanel>
-					<Image Source="/TestConsole;component/Resources/Icons/Uac16.png" Stretch="None" Margin="0,0,5,0" IsEnabled="False" />
+					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/Uac.svg" Margin="0,0,5,0" IsEnabled="False" />
 					<TextBlock Text="Not elevated" />
 				</DockPanel>
 			</StatusBarItem>
 			<StatusBarItem Visibility="{Binding Source={x:Static api:ApplicationBase+Process.IsElevated}, Converter={ui:BooleanConverter Visibility}}">
 				<DockPanel>
-					<Image Source="/TestConsole;component/Resources/Icons/Uac16.png" Stretch="None" Margin="0,0,5,0" />
+					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/Uac.svg" Margin="0,0,5,0" />
 					<TextBlock Text="Elevated" />
 				</DockPanel>
 			</StatusBarItem>

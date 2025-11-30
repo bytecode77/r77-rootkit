@@ -39,6 +39,7 @@
 		<None Remove="Resources\Icons\ConfigSystem.svg" />
 		<None Remove="Resources\Icons\DeleteFolder.svg" />
 		<None Remove="Resources\Icons\DeleteItem.svg" />
+		<None Remove="Resources\Icons\DetachAll.svg" />
 		<None Remove="Resources\Icons\Documentation.svg" />
 		<None Remove="Resources\Icons\Error.svg" />
 		<None Remove="Resources\Icons\Example16.png" />
@@ -50,6 +51,7 @@
 		<None Remove="Resources\Icons\GitHub.svg" />
 		<None Remove="Resources\Icons\Hidden.svg" />
 		<None Remove="Resources\Icons\Information.svg" />
+		<None Remove="Resources\Icons\InjectAll.svg" />
 		<None Remove="Resources\Icons\Injected.svg" />
 		<None Remove="Resources\Icons\NewItem.svg" />
 		<None Remove="Resources\Icons\R77Helper.svg" />
@@ -57,7 +59,7 @@
 		<None Remove="Resources\Icons\Registry.svg" />
 		<None Remove="Resources\Icons\RegistryIntegerValue.svg" />
 		<None Remove="Resources\Icons\RegistryStringValue.svg" />
-		<None Remove="Resources\Icons\Uac16.png" />
+		<None Remove="Resources\Icons\Uac.svg" />
 		<None Remove="Resources\Icons\Visible.svg" />
 		<None Remove="Resources\Icons\Warning.svg" />
 		<None Remove="Resources\Icons\Website.svg" />
@@ -70,6 +72,7 @@
 		<Resource Include="Resources\Icons\ConfigSystem.svg" />
 		<Resource Include="Resources\Icons\DeleteFolder.svg" />
 		<Resource Include="Resources\Icons\DeleteItem.svg" />
+		<Resource Include="Resources\Icons\DetachAll.svg" />
 		<Resource Include="Resources\Icons\Documentation.svg" />
 		<Resource Include="Resources\Icons\Error.svg" />
 		<Resource Include="Resources\Icons\Example16.png" />
@@ -81,6 +84,7 @@
 		<Resource Include="Resources\Icons\GitHub.svg" />
 		<Resource Include="Resources\Icons\Hidden.svg" />
 		<Resource Include="Resources\Icons\Information.svg" />
+		<Resource Include="Resources\Icons\InjectAll.svg" />
 		<Resource Include="Resources\Icons\Injected.svg" />
 		<Resource Include="Resources\Icons\NewItem.svg" />
 		<Resource Include="Resources\Icons\R77Helper.svg" />
@@ -88,7 +92,7 @@
 		<Resource Include="Resources\Icons\Registry.svg" />
 		<Resource Include="Resources\Icons\RegistryIntegerValue.svg" />
 		<Resource Include="Resources\Icons\RegistryStringValue.svg" />
-		<Resource Include="Resources\Icons\Uac16.png" />
+		<Resource Include="Resources\Icons\Uac.svg" />
 		<Resource Include="Resources\Icons\Visible.svg" />
 		<Resource Include="Resources\Icons\Warning.svg" />
 		<Resource Include="Resources\Icons\Website.svg" />

