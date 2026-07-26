@@ -47,16 +47,21 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <CompileAs>CompileAsC</CompileAs>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ntdll.lib;shlwapi.lib;pathcch.lib;windowscodecs.lib</AdditionalDependencies>
+      <AdditionalDependencies>ntdll.lib;kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;comctl32.lib;shlwapi.lib;ole32.lib;windowscodecs.lib;msimg32.lib;pathcch.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <EntryPointSymbol>EntryPoint</EntryPointSymbol>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -80,12 +85,15 @@ copy /Y "$(TargetPath)" "$(SolutionDir)$Build/$77-Example.exe"</Command>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>ntdll.lib;shlwapi.lib;pathcch.lib;windowscodecs.lib</AdditionalDependencies>
+      <AdditionalDependencies>ntdll.lib;kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;comctl32.lib;shlwapi.lib;ole32.lib;windowscodecs.lib;msimg32.lib;pathcch.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <EntryPointSymbol>EntryPoint</EntryPointSymbol>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -96,10 +104,6 @@ mkdir "$(SolutionDir)$Build"
 copy /Y "$(TargetPath)" "$(SolutionDir)$Build/$77-Example.exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Example.cpp" />
-    <ClCompile Include="CpuUsage.cpp" />
-  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CpuUsage.h" />
     <ClInclude Include="Example.h" />
@@ -113,6 +117,10 @@ copy /Y "$(TargetPath)" "$(SolutionDir)$Build/$77-Example.exe"</Command>
     <Image Include="Resources\Example32.png" />
     <Image Include="Resources\Help16.png" />
     <Image Include="Resources\Warning16.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CpuUsage.c" />
+    <ClCompile Include="Example.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

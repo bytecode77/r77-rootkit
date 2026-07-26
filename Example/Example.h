@@ -1,12 +1,9 @@
+#define CUSTOM_ENTRY
 #include "r77mindef.h"
-#include <Windows.h>
-#include <atlimage.h>
-#include <Commctrl.h>
-using namespace Gdiplus;
 
-int WindowWidth;
-int WindowHeight;
-bool ShowWarningIcon;
+DWORD WindowWidth;
+DWORD WindowHeight;
+BOOL ShowWarningIcon;
 WCHAR Title[500];
 WCHAR Text[1000];
 
@@ -26,3 +23,4 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 HBITMAP GetImageResource(DWORD resourceID, LPCSTR type);
 HBITMAP CreateImage(LPCBYTE data, DWORD size);
+VOID DrawBitmapAlpha(HDC destination, HBITMAP image, DWORD x, DWORD y);

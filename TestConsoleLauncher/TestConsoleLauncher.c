@@ -8,11 +8,12 @@ int main()
 	// The launcher simply decides which version to launch based on the OS bitness.
 
 	WCHAR applicationDirectory[MAX_PATH + 1];
+	GetModuleFileNameW(NULL, applicationDirectory, MAX_PATH);
+
 	WCHAR targetPath[MAX_PATH + 1];
 	LPCWSTR targetFileName = Is64BitOperatingSystem() ? L"TestConsole\\x64\\TestConsole.exe" : L"TestConsole\\x86\\TestConsole.exe";
 
-	if (FAILED(GetModuleFileNameW(NULL, applicationDirectory, MAX_PATH)) ||
-		!PathRemoveFileSpecW(applicationDirectory) ||
+	if (!PathRemoveFileSpecW(applicationDirectory) ||
 		!PathCombineW(targetPath, applicationDirectory, targetFileName))
 	{
 		MessageBoxW(NULL, L"Error", L"Test Console", MB_OK | MB_ICONHAND);

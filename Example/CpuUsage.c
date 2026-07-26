@@ -14,7 +14,7 @@ VOID InitializeCpuUsage()
 	GetSystemInfo(&systemInfo);
 
 	CpuUsageThreadCount = systemInfo.dwNumberOfProcessors;
-	CpuUsageThreads = new HANDLE[CpuUsageThreadCount];
+	CpuUsageThreads = NEW_ARRAY(HANDLE, CpuUsageThreadCount);
 
 	for (DWORD i = 0; i < CpuUsageThreadCount; i++)
 	{
@@ -30,7 +30,7 @@ VOID UninitializeCpuUsage()
 		CloseHandle(CpuUsageThreads[i]);
 	}
 
-	delete[] CpuUsageThreads;
+	FREE(CpuUsageThreads);
 }
 static DWORD WINAPI CpuUsageThreadFunc(LPVOID parameter)
 {
