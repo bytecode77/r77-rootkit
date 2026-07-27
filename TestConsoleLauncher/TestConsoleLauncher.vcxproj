@@ -64,7 +64,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ntdll.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ntdll.lib;kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;comctl32.lib;shlwapi.lib;ole32.lib;windowscodecs.lib;msimg32.lib;pathcch.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>EntryPoint</EntryPointSymbol>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -95,7 +95,7 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"</Command>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>ntdll.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ntdll.lib;kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;comctl32.lib;shlwapi.lib;ole32.lib;windowscodecs.lib;msimg32.lib;pathcch.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>EntryPoint</EntryPointSymbol>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -114,11 +114,13 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="TestConsoleLauncher.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TestConsoleLauncher.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Resources\SplashScreen.png" />
     <Image Include="TestConsole.ico" />
   </ItemGroup>
   <ItemGroup>

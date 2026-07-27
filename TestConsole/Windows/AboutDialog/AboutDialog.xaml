@@ -45,7 +45,7 @@
 					<Hyperlink Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/bytecode77/r77-rootkit">bytecode77/r77-rootkit</Hyperlink>
 				</TextBlock>
 			</DockPanel>
-			<TextBlock Text="© bytecode77, 2025." Opacity=".6" />
+			<TextBlock Text="© bytecode77, 2026." Opacity=".6" />
 		</StackPanel>
 	</DockPanel>
 </cui:UiWindow>

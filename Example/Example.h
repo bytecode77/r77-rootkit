@@ -22,5 +22,4 @@ HBITMAP WarningImage;
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 HBITMAP GetImageResource(DWORD resourceID, LPCSTR type);
-HBITMAP CreateImage(LPCBYTE data, DWORD size);
 VOID DrawBitmapAlpha(HDC destination, HBITMAP image, DWORD x, DWORD y);

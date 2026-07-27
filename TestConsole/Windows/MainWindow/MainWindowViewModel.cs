@@ -1,4 +1,5 @@
 using BytecodeApi;
+using BytecodeApi.Extensions;
 using BytecodeApi.IO;
 using BytecodeApi.Rest;
 using BytecodeApi.Wpf;
@@ -118,5 +119,26 @@ public sealed class MainWindowViewModel : ViewModel
 				true
 			);
 		}
+	}
+	public async void TerminateLauncher()
+	{
+		// The TestConsole launcher created this process and must be terminated.
+
+		await Task.Run(async () =>
+		{
+			await Task.Delay(250);
+
+			using Process process = Process.GetCurrentProcess();
+			using Process? parentProcess = process.GetParentProcess();
+
+			if (parentProcess?.ProcessName.Equals("TestConsole", StringComparison.OrdinalIgnoreCase) == true)
+			{
+				parentProcess.Kill();
+			}
+			else
+			{
+				// TestConsole.exe was not started by the launcher, possibly by explorer.
+			}
+		});
 	}
 }

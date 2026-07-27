@@ -18,6 +18,7 @@ public partial class MainWindow : UiApplicationWindow
 
 		ProcessesTabPage.Focus();
 		ViewModel.WriteInitialLogEntries();
+		ViewModel.TerminateLauncher();
 	}
 
 	public void OpenControlPipeTabPage()

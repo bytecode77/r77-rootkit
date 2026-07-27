@@ -22,7 +22,7 @@
 		<Description>r77 Test Console</Description>
 		<Company>bytecode77</Company>
 		<Authors>bytecode77</Authors>
-		<Copyright>© bytecode77, 2025.</Copyright>
+		<Copyright>© bytecode77, 2026.</Copyright>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="BytecodeApi.Rest" Version="5.0.1" />
