@@ -26,8 +26,8 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="BytecodeApi.Rest" Version="5.0.1" />
-		<PackageReference Include="BytecodeApi.Win32" Version="5.0.0" />
-		<PackageReference Include="BytecodeApi.Wpf" Version="5.0.1" />
+		<PackageReference Include="BytecodeApi.Win32" Version="5.0.1" />
+		<PackageReference Include="BytecodeApi.Wpf" Version="5.1.1" />
 		<PackageReference Include="BytecodeApi.Wpf.Cui" Version="5.0.1" />
 	</ItemGroup>
 	<ItemGroup>

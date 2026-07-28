@@ -9,7 +9,7 @@
 	xmlns:cui="http://schemas.bytecode77.com/2025/xaml/cui"
 	xmlns:ctrl="clr-namespace:TestConsole.Controls"
 	DataContext="{Binding ViewModel, ElementName=mainWindow}"
-	Title="r77 Test Console" Width="1250" Height="800" Padding="0" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" Loaded="MainWindow_Loaded">
+	Title="r77 Test Console" Width="1250" Height="800" Padding="0" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" ui:WindowService.DisableTransitions="True" Loaded="MainWindow_Loaded">
 	<cui:UiApplicationWindow.IconControl>
 		<Image Source="/TestConsole;component/Resources/Images/WindowLogo.png" Width="20" Height="20" />
 	</cui:UiApplicationWindow.IconControl>

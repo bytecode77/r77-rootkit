@@ -3,6 +3,7 @@ using BytecodeApi.Extensions;
 using BytecodeApi.IO;
 using BytecodeApi.Rest;
 using BytecodeApi.Wpf;
+using BytecodeApi.Wpf.Services;
 using Global;
 using System.Diagnostics;
 using TestConsole.Helper;
@@ -139,6 +140,8 @@ public sealed class MainWindowViewModel : ViewModel
 			{
 				// TestConsole.exe was not started by the launcher, possibly by explorer.
 			}
+
+			View.Dispatch(() => WindowService.SetDisableTransitions(View, false));
 		});
 	}
 }

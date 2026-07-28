@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="BytecodeApi" Version="5.0.1" />
+		<PackageReference Include="BytecodeApi" Version="5.0.2" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\Global\R77Const.cs" Link="Properties\R77Const.cs" />
