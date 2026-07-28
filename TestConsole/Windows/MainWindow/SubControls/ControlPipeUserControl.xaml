@@ -12,8 +12,8 @@
 	xmlns:cui="http://schemas.bytecode77.com/2025/xaml/cui"
 	DataContext="{Binding ViewModel, ElementName=controlPipeUserControl}">
 	<ScrollViewer VerticalScrollBarVisibility="Auto">
-		<DockPanel DockPanel.Dock="Top">
-			<Border DockPanel.Dock="Top" Padding="8,5" BorderThickness="0,0,0,1" BorderBrush="#e2dfc7" Background="#f7f2da" Visibility="{Binding IsConfigSystemAvailable, Converter={ui:BooleanConverter VisibilityInverse}}">
+		<DockPanel>
+			<Border DockPanel.Dock="Top" Padding="8,5" BorderThickness="0,0,0,1" BorderBrush="#e2dfc7" Background="#f7f2da">
 				<StackPanel>
 					<TextBlock Visibility="{Binding IsR77ServiceRunning, Converter={ui:BooleanConverter Visibility}}">
 						<Run Text="The r77 service is running." Foreground="#00a000" FontWeight="Bold" />

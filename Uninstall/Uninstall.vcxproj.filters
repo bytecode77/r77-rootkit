@@ -9,7 +9,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Resource.rc" />
+    <ResourceCompile Include="Uninstall.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Uninstall64.exe">

@@ -122,7 +122,7 @@ xcopy /Y "$(TargetPath)" "$(SolutionDir)$Build"
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Resource.rc" />
+    <ResourceCompile Include="Install.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Install.c" />
